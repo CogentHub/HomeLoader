@@ -20,8 +20,8 @@ If $Install_DIR = "" Then
 	IniWrite($config_ini, "Settings", "Install_Folder", $Install_DIR)
 EndIf
 
-Global $Home_Path = IniRead($Config_INI, "Settings", "Home_Path", "")
-Global $WinName = IniRead($Config_INI, "Settings", "WindowsName", "")
+Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
+Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowsName", "")
 Global $Time_Interval = IniRead($Config_INI, "Settings", "Time_Interval", "")
 Global $Status_Checkbox_Minimize_OVRS = IniRead($config_ini,"Settings", "Minimize_Oculus", "")
 Global $gfx = $Install_DIR & "gfx\"
@@ -74,8 +74,16 @@ If $USE_FB_GUI = "true" Then
 	WinActivate($WinName)
 EndIf
 
+
+If Not ProcessExists("vrmonitor.exe") Then
+	ShellExecute("steam://rungameid/250820")
+	Do
+		Sleep(1000)
+	Until ProcessExists("vrmonitor.exe")
+EndIf
+
 If Not WinExists($WinName) Then
-	ShellExecute($Home_Path, "", $Install_DIR)
+	ShellExecute($Home_Path)
 	Sleep(2000)
 EndIf
 
@@ -149,20 +157,16 @@ Do
 			If $USE_FB_GUI = "true" Then WinSetState("Home Loader", "", @SW_DISABLE)
 
 			If Not WinExists($GameStarted) Then
-				If FileExists($Home_Path) Then
-					ShellExecute($Home_Path, "", $Install_DIR)
-				EndIf
+				ShellExecute($Home_Path)
 				Sleep(500)
 				If FileExists($Install_DIR & "HomeLoader.exe") Then
 					ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
 				Else
 					ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
 				EndIf
-
 				Exit
 			EndIf
 		EndIf
-
 	Else
 		$SteamVR_Status = "false"
 	EndIf
