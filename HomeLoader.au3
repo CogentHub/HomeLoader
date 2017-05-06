@@ -1,3 +1,6 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=..\..\PCDSG_1.31\ICONS\AutoDataUpdate.ico
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #include <MsgBoxConstants.au3>
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
@@ -68,13 +71,11 @@ If $USE_FB_GUI = "true" Then
 	GUICtrlSetOnEvent($Button_Exit, "_Exit")
 
 	GUISetState(@SW_SHOW, $GUI)
-	WinActivate("$WinName")
+	WinActivate($WinName)
 EndIf
 
 If Not WinExists($WinName) Then
-	If FileExists($Home_Path) Then
-		ShellExecute($Home_Path, "", $Install_DIR)
-	EndIf
+	ShellExecute($Home_Path, "", $Install_DIR)
 	Sleep(2000)
 EndIf
 
