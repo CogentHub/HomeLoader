@@ -1,6 +1,3 @@
-#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Icon=..\VIVEHIM_0.62\GUI_ICONS\InfoWindow.ico
-#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 #include <GuiToolbar.au3>
 #include <GuiButton.au3>
@@ -35,6 +32,8 @@
 #include <IE.au3>
 #include <MsgBoxConstants.au3>
 
+#include <GuiSlider.au3>
+
 
 Opt("GUIOnEventMode", 1)
 
@@ -42,11 +41,11 @@ Opt("GUIOnEventMode", 1)
 Global $GUI_Loading, $GUI_Loading_2, $AddGame2Library_GUI, $Settings_GUI, $Button_Exit_Settings_GUI, $HTML_GUI, $NR_Applications
 Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library, $NR_Library_temp
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
-Global $ListView_ImageList_Temp
+Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.39"
+Global $Version = "0.42"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -62,6 +61,19 @@ Global $Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 
 Global $Steam_tools_vrmanifest_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+
+Global $default_vrsettings_File = IniRead($Config_INI, "Folders", "Steam_default_vrsettings", "")
+Global $default_vrsettings_File_Backup = $default_vrsettings_File & ".bak"
+Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
+
+If $default_vrsettings_File = "" Then
+	$default_vrsettings_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+	$default_vrsettings_File_Backup = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings.bak"
+	$default_vrsettings_File_new = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings.new"
+	IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
+	If Not FileExists($default_vrsettings_File) Then MsgBox(0, "", "default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+EndIf
 
 Global $gfx = @ScriptDir & "\" & "gfx\"
 Global $Icons = $Install_DIR & "Icons\"
@@ -278,6 +290,16 @@ _Create_ListView_4()
 _Create_ListView_5()
 _Create_ListView_6()
 
+Global $contextmenu = GUICtrlCreateContextMenu($listview)
+Global $RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+Global $RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+Global $RM_Item4 = GUICtrlCreateMenuItem("RM_Item3", $contextmenu)
+Global $RM_Item5 = GUICtrlCreateMenuItem("RM_Item4", $contextmenu)
+Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+Global $RM_Item7 = GUICtrlCreateMenuItem("RM_Item5", $contextmenu)
+Global $RM_Item8 = GUICtrlCreateMenuItem("RM_Item6", $contextmenu)
+
 If $ButtonTAB_State = "1" Then GUICtrlSetState($listview, $GUI_SHOW)
 If $ButtonTAB_State = "2" Then GUICtrlSetState($listview_2, $GUI_SHOW)
 If $ButtonTAB_State = "3" Then GUICtrlSetState($listview_3, $GUI_SHOW)
@@ -347,6 +369,14 @@ GUICtrlSetOnEvent($Checkbox_Close_Window_Label, "_Checkbox_Close_Window")
 
 GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
 GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
+
+GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+GUICtrlSetOnEvent($RM_Item4, "_RM_Menu_4")
+;GUICtrlSetOnEvent($RM_Item5, "_RM_Item_5")
+;GUICtrlSetOnEvent($RM_Item6, "_RM_Item_6")
+;GUICtrlSetOnEvent($RM_Item7, "_RM_Item_7")
+;GUICtrlSetOnEvent($RM_Item8, "_RM_Item_8")
 #endregion
 
 
@@ -583,6 +613,122 @@ Func _AddGame2Library_GUI()
 	GUICtrlSetState($Icon_Preview, $GUI_HIDE)
 	GUICtrlSetState($Button_SAVE_APP, $GUI_HIDE)
 EndFunc
+
+Func _SS_GUI()
+	$SS_Settings_GUI = GUICreate("Steam VR Settings Menu", 285, 290 , - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	$VRSettings_Group = GUICtrlCreateGroup("VR Settings - " & $Steam_app_Name, 5, 5, 275, 240)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $rTM_1 = StringLeft($renderTargetMultiplier_value, 1)
+	Local $rTM_2 = StringRight($renderTargetMultiplier_value, 1)
+	Local $rTM_value = $rTM_1 & $rTM_2
+	Local $rTM_Input_value = $rTM_1 & "." & $rTM_2
+	If $rTM_1 = "0" Then $rTM_value = $rTM_2
+	If $rTM_1 = "0" Then $rTM_Input_value = "0." & $rTM_2
+	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $ssS_1 = StringLeft($supersampleScale_value, 1)
+	Local $ssS_2 = StringRight($supersampleScale_value, 1)
+	Local $ssS_value = $ssS_1 & $ssS_2
+	Local $ssS_Input_value = $ssS_1 & "." & $ssS_2
+	If $ssS_1 = "0" Then $ssS_value = $ssS_2
+	If $ssS_1 = "0" Then $ssS_Input_value = "0." & $ssS_2
+	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
+	If $allowSupersampleFiltering_value = "true" Then $aSsF_value = 0
+	If $allowSupersampleFiltering_value = "false" Then $aSsF_value = 1
+
+
+	GUICtrlCreateLabel("Render Target Multiplier:", 10, 40, 265, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+
+	Global $Slider_1 = GUICtrlCreateSlider(10, 65, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	GUICtrlSetLimit($Slider_1, 25, 5)
+	GUICtrlSetData ($Slider_1, $rTM_value)
+	GUICtrlSetOnEvent(- 1, "_Slider_1")
+
+	Global $Input_renderTargetMultiplier = GUICtrlCreateInput($rTM_Input_value, 205, 65, 65, 30)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
+	Global $UpDown_renderTargetMultiplier = GUICtrlCreateUpdown($Input_renderTargetMultiplier)
+	GUICtrlSetOnEvent(- 1, "_UpDown_renderTargetMultiplier")
+
+
+	GUICtrlCreateLabel("Supersample Scale:", 10, 110, 265, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+
+	Global $Slider_2 = GUICtrlCreateSlider(10, 135, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	GUICtrlSetLimit($Slider_2, 25, 5)
+	GUICtrlSetData ($Slider_2, $ssS_value)
+	GUICtrlSetOnEvent(- 1, "_Slider_2")
+
+	Global $Input_supersampleScale = GUICtrlCreateInput($ssS_Input_value, 205, 135, 65, 30)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
+	Global $UpDown_supersampleScale = GUICtrlCreateUpdown($Input_supersampleScale)
+	GUICtrlSetOnEvent(- 1, "_UpDown_supersampleScale")
+
+	GUICtrlCreateLabel("Allow Supersample Filtering:", 10, 180, 265, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+
+	Global $Slider_3 = GUICtrlCreateSlider(10, 205, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	GUICtrlSetLimit($Slider_3, 1, 0)
+	GUICtrlSetData ($Slider_3, $aSsF_value)
+	GUICtrlSetOnEvent(- 1, "_Slider_3")
+
+    Global $ComboBox_3 = GUICtrlCreateCombo("", 205, 205, 65, 30)
+	GUICtrlSetFont(-1, 13, 400, 1, $font_arial)
+	GUICtrlSetData($ComboBox_3, "true|false", $allowSupersampleFiltering_value)
+	GUICtrlSetOnEvent(- 1, "_ComboBox_3")
+
+
+	Global $Button_Save_Settings_GUI = GUICtrlCreateButton("Save", 5, 250, 35, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Save_Settings_GUI")
+	_GUICtrlButton_SetImage(- 1, $gfx & "Speichern.bmp")
+	GuiCtrlSetTip(-1, "Closes GUI Window.")
+
+	Global $Button_Add2Steam_Settings_GUI = GUICtrlCreateButton("Add to Steam", 52, 250, 85, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Add2Steam_Settings_GUI")
+	_GUICtrlButton_SetImage(- 1, $gfx & "Add2Steam.bmp")
+	GuiCtrlSetTip(-1, "Closes GUI Window.")
+
+	Global $Button_StartGame_Settings_GUI = GUICtrlCreateButton("Start Game", 148, 250, 85, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_StartGame_Settings_GUI")
+	_GUICtrlButton_SetImage(- 1, $gfx & "StartGame.bmp")
+	GuiCtrlSetTip(-1, "Closes GUI Window.")
+
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 245, 250, 35, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Exit_SS_Settings_GUI")
+	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
+	GuiCtrlSetTip(-1, "Closes GUI Window.")
+
+	GUISetState()
+EndFunc
+
+Func _Update_StatusBar()
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $rTM_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $ssS_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $aSF_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
+
+	_GUICtrlStatusBar_SetText($Statusbar, $Steam_app_Name & " [" & $Game_ID & "] " & @TAB & "RTM: " & $rTM_value & " / " & "SSS: " & $ssS_value &  " / " & "ASF: " & $aSF_value & @TAB & "'Version " & $Version & "'")
+EndFunc
+
 
 Func _Tab()
 	Global $TAB_Name = GUICtrlRead($TAB_NR)
@@ -1152,6 +1298,52 @@ Func _ADD_Icons_32x32_to_ListView()
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
 
+Func _RM_Menu_4() ; Create new default.vrsettings" File
+	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
+
+	$FileLines = _FileCountLines($default_vrsettings_File)
+
+	$renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "renderTargetMultiplier", "1.0")
+	$supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "supersampleScale", "1.0")
+	$allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "allowSupersampleFiltering", "true")
+
+	FileWriteLine($default_vrsettings_File_new, '{')
+	FileWriteLine($default_vrsettings_File_new, '	"steamvr" : {')
+
+	For $LOOP_vrsettings = 3 To $FileLines
+		$ReadLine = FileReadLine($default_vrsettings_File, $LOOP_vrsettings)
+		$ReadLine_Split_value = $ReadLine
+
+		If $ReadLine <> '	},' Then
+			$ReadLine_Split = StringSplit($ReadLine, ':')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '"', '')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')
+		EndIf
+
+		If $ReadLine_Split_value = 'renderTargetMultiplier' Then
+			FileWriteLine($default_vrsettings_File_new, '        "renderTargetMultiplier" : ' & $renderTargetMultiplier_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value = 'supersampleScale' Then
+			FileWriteLine($default_vrsettings_File_new, '        "supersampleScale" : ' & $supersampleScale_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value = 'allowSupersampleFiltering' Then
+			FileWriteLine($default_vrsettings_File_new, '        "allowSupersampleFiltering" : ' & $allowSupersampleFiltering_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then
+			FileWriteLine($default_vrsettings_File_new, $ReadLine)
+		EndIf
+
+	Next
+EndFunc
+
+
+
+
+
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     Local $tagNMHDR, $event, $hwndFrom, $code
     $tagNMHDR = DllStructCreate("int;int;int", $lParam)
@@ -1160,6 +1352,8 @@ Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     If $wParam = $ListView Then
         If $event = $NM_CLICK Then
 			_Change_Preview_Icon_ListView()
+			If WinExists("Steam VR Settings Menu") Then _Update_VRSettings_GUI_Items()
+			_Update_StatusBar()
         EndIf
 
         If $event = $NM_DBLCLK Then
@@ -1219,9 +1413,48 @@ Func _Change_Preview_Icon_ListView()
 	GUICtrlSetImage($Icon_Preview_Image, $CheckImagePath)
 EndFunc
 
+Func _Update_VRSettings_GUI_Items()
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $rTM_1 = StringLeft($renderTargetMultiplier_value, 1)
+	Local $rTM_2 = StringRight($renderTargetMultiplier_value, 1)
+	Local $rTM_value = $rTM_1 & $rTM_2
+	Local $rTM_Input_value = $rTM_1 & "." & $rTM_2
+	If $rTM_1 = "0" Then $rTM_value = $rTM_2
+	If $rTM_1 = "0" Then $rTM_Input_value = "0." & $rTM_2
+	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $ssS_1 = StringLeft($supersampleScale_value, 1)
+	Local $ssS_2 = StringRight($supersampleScale_value, 1)
+	Local $ssS_value = $ssS_1 & $ssS_2
+	Local $ssS_Input_value = $ssS_1 & "." & $ssS_2
+	If $ssS_1 = "0" Then $ssS_value = $ssS_2
+	If $ssS_1 = "0" Then $ssS_Input_value = "0." & $ssS_2
+	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
+	If $allowSupersampleFiltering_value = "true" Then $aSsF_value = 0
+	If $allowSupersampleFiltering_value = "false" Then $aSsF_value = 1
+
+	GUICtrlSetData($ComboBox_3, "", "")
+	GUICtrlSetData($VRSettings_Group, "VR Settings - " & $Steam_app_Name)
+	GUICtrlSetData($Slider_1, $rTM_value)
+	GUICtrlSetData($Input_renderTargetMultiplier, $rTM_Input_value)
+	GUICtrlSetData($Slider_2, $ssS_value)
+	GUICtrlSetData($Input_supersampleScale, $ssS_Input_value)
+	GUICtrlSetData($Slider_3, $aSsF_value)
+	GUICtrlSetData($ComboBox_3, "true|false", $allowSupersampleFiltering_value)
+EndFunc
+
+
+
+
 Func _Create_HTMLView_GUI()
-	Local $Button_Exit_HTML_GUI, $TreeView_Steam_app_NR, $TreeView_Steam_app_Name, $TreeView_Steam_app_ID, $TreeView_Steam_app_IS_Favorite
-	Local $TreeView_Steam_app_PO_right_now, $TreeView_Steam_app_PO_24h_peak, $TreeView_Steam_app_PO_all_time_peak, $Text_SplitNR
+	Local $Button_Exit_HTML_GUI, $TreeView_Steam_app_PO_right_now, $TreeView_Steam_app_PO_24h_peak, $TreeView_Steam_app_PO_all_time_peak, $Text_SplitNR
 	Local $Handle_2, $Text_2
 
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
@@ -1234,7 +1467,7 @@ Func _Create_HTMLView_GUI()
 
 	Local $oIE = ObjCreate("Shell.Explorer.2")
 
-	Global $HTML_GUI = GUICreate($TreeView_Steam_app_Name & " - " & $Game_ID, 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	Global $HTML_GUI = GUICreate($Steam_app_Name & " - " & "steam.app." & $Game_ID, 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 	GUICtrlCreateObj($oIE, 0, 0, 979, 550)
 
 	Global $Button_Exit_HTML_GUI = GUICtrlCreateButton("Exit", 940, 560, 35, 35, $BS_BITMAP)
@@ -2153,6 +2386,170 @@ Func _Button_Install_Folder_Steam_5_save()
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 		EndIf
 	EndIf
+EndFunc
+#endregion
+
+#Region Func SS_Settings GUI
+
+Func _Slider_1()
+	$Value_Slider_1 = GUICtrlRead($Slider_1)
+	Local $rTM_1 = StringLeft($Value_Slider_1, 1)
+	Local $rTM_2 = StringRight($Value_Slider_1, 1)
+	Local $rTM_value = $rTM_1 & $rTM_2
+	Local $rTM_Input_value = $rTM_1 & "." & $rTM_2
+	If StringLen($Value_Slider_1) = 1 Then $rTM_value = $rTM_2
+	If StringLen($Value_Slider_1) = 1 Then $rTM_Input_value = "0." & $rTM_2
+	GUICtrlSetData($Input_renderTargetMultiplier, $rTM_Input_value)
+EndFunc
+
+Func _Slider_2()
+	$Value_Slider_2 = GUICtrlRead($Slider_2)
+	Local $ssS_1 = StringLeft($Value_Slider_2, 1)
+	Local $ssS_2 = StringRight($Value_Slider_2, 1)
+	Local $ssS_value = $ssS_1 & $ssS_2
+	Local $ssS_Input_value = $ssS_1 & "." & $ssS_2
+	If StringLen($Value_Slider_2) = 1 Then $ssS_value = $ssS_2
+	If StringLen($Value_Slider_2) = 1 Then $ssS_Input_value = "0." & $ssS_2
+	GUICtrlSetData($Input_supersampleScale, $ssS_Input_value)
+EndFunc
+
+Func _Slider_3()
+	$Value_Slider_3 = GUICtrlRead($Slider_3)
+	If $Value_Slider_3 = 0 Then $Value_Slider_3 = "true"
+	If $Value_Slider_3 = 1 Then $Value_Slider_3 = "false"
+	GUICtrlSetData($ComboBox_3, "", "")
+	GUICtrlSetData($ComboBox_3, "true|false", $Value_Slider_3)
+EndFunc
+
+Func _UpDown_renderTargetMultiplier()
+	$Value_UpDown = GUICtrlRead($Input_renderTargetMultiplier)
+	Local $rTM_1 = StringLeft($Value_UpDown, 1)
+	Local $rTM_2 = StringRight($Value_UpDown, 1)
+	Local $rTM_value = $rTM_1 & $rTM_2
+	Local $rTM_Input_value = $rTM_1 & "." & $rTM_2
+	If StringLen($Value_UpDown) = 1 Then $rTM_value = $rTM_2
+	If StringLen($Value_UpDown) = 1 Then $rTM_Input_value = "0." & $rTM_2
+	If $Value_UpDown < 5 Then $rTM_Input_value = "0.5"
+	If $Value_UpDown > 25 Then $rTM_Input_value = "2.5"
+	GUICtrlSetData($Input_renderTargetMultiplier, $rTM_Input_value)
+	GUICtrlSetData($Slider_1, $Value_UpDown)
+EndFunc
+
+Func _UpDown_supersampleScale()
+	$Value_UpDown = GUICtrlRead($Input_supersampleScale)
+	Local $ssS_1 = StringLeft($Value_UpDown, 1)
+	Local $ssS_2 = StringRight($Value_UpDown, 1)
+	Local $ssS_value = $ssS_1 & $ssS_2
+	Local $ssS_Input_value = $ssS_1 & "." & $ssS_2
+	If StringLen($Value_UpDown) = 1 Then $ssS_value = $ssS_2
+	If StringLen($Value_UpDown) = 1 Then $ssS_Input_value = "0." & $ssS_2
+	If $Value_UpDown < 5 Then $ssS_Input_value = "0.5"
+	If $Value_UpDown > 25 Then $ssS_Input_value = "2.5"
+	GUICtrlSetData($Input_supersampleScale, $ssS_Input_value)
+	GUICtrlSetData($Slider_2, $Value_UpDown)
+EndFunc
+
+Func _ComboBox_3()
+	$Value_ComboBox = GUICtrlRead($ComboBox_3)
+	If $Value_ComboBox = "true" Then $Value_Slider_3 = 0
+	If $Value_ComboBox = "false" Then $Value_Slider_3 = 1
+	GUICtrlSetData($Slider_3, $Value_Slider_3)
+EndFunc
+
+
+Func _Button_Save_Settings_GUI()
+	$Input_renderTargetMultiplier = GUICtrlRead($Input_renderTargetMultiplier)
+	$Input_supersampleScale = GUICtrlRead($Input_supersampleScale)
+	$Input_allowSupersampleFiltering = GUICtrlRead($ComboBox_3)
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $App_NR = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "NR", "")
+
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "renderTargetMultiplier", $Input_renderTargetMultiplier)
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "supersampleScale", $Input_supersampleScale)
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "allowSupersampleFiltering", $Input_allowSupersampleFiltering)
+
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", $Input_renderTargetMultiplier)
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", $Input_supersampleScale)
+	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", $Input_allowSupersampleFiltering)
+EndFunc
+
+Func _Button_Add2Steam_Settings_GUI()
+	_Button_Save_Settings_GUI()
+
+	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	$FileLines = _FileCountLines($default_vrsettings_File)
+
+	$renderTargetMultiplier_value = GUICtrlRead($Input_renderTargetMultiplier)
+	$supersampleScale_value = GUICtrlRead($Input_supersampleScale)
+	$allowSupersampleFiltering_value = GUICtrlRead($ComboBox_3)
+
+	FileWriteLine($default_vrsettings_File_new, '{')
+	FileWriteLine($default_vrsettings_File_new, '	"steamvr" : {')
+
+	For $LOOP_vrsettings = 3 To $FileLines
+		$ReadLine = FileReadLine($default_vrsettings_File, $LOOP_vrsettings)
+		$ReadLine_Split_value = $ReadLine
+
+		If $ReadLine <> '	},' Then
+			$ReadLine_Split = StringSplit($ReadLine, ':')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '"', '')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')
+			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')
+		EndIf
+
+		If $ReadLine_Split_value = 'renderTargetMultiplier' Then
+			FileWriteLine($default_vrsettings_File_new, '        "renderTargetMultiplier" : ' & $renderTargetMultiplier_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value = 'supersampleScale' Then
+			FileWriteLine($default_vrsettings_File_new, '        "supersampleScale" : ' & $supersampleScale_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value = 'allowSupersampleFiltering' Then
+			FileWriteLine($default_vrsettings_File_new, '        "allowSupersampleFiltering" : ' & $allowSupersampleFiltering_value & ',')
+		EndIf
+
+		If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then
+			;MsgBox(0, "2", $ReadLine_Split_value & @CRLF & @CRLF & $renderTargetMultiplier_value & @CRLF & $supersampleScale_value & @CRLF & $allowSupersampleFiltering_value)
+			FileWriteLine($default_vrsettings_File_new, $ReadLine)
+		EndIf
+
+	Next
+EndFunc
+
+Func _Button_StartGame_Settings_GUI()
+	_Button_Add2Steam_Settings_GUI()
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	ShellExecute("steam://launch/" & $Game_ID & "/VR\")
+EndFunc
+
+Func _Button_Exit_SS_Settings_GUI()
+	GUIDelete($SS_Settings_GUI)
 EndFunc
 #endregion
 
