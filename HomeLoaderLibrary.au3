@@ -1,3 +1,6 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=..\..\coding\Home_Loader\Compile_Icons\InfoWindow.ico
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 #include <GuiToolbar.au3>
 #include <GuiButton.au3>
@@ -45,7 +48,7 @@ Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.42"
+Global $Version = "0.43"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -59,6 +62,16 @@ Global $Install_Folder_Steam_2 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Install_Folder_Steam_3 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_3", "")
 Global $Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
+
+Global $Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
+If $Icon_Folder_1 = "" Then
+	If FileExists("C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\") Then
+		$Icon_Folder_1 = "C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\"
+		IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
+	EndIf
+EndIf
+Global $Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
+Global $Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
 
 Global $Steam_tools_vrmanifest_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
 
@@ -203,11 +216,11 @@ GuiCtrlSetTip(-1, "Settings")
 
 Global $Button_Restart = GUICtrlCreateButton("Restart", 660, $DesktopHeight - 100, 65, 65, $BS_BITMAP) ;
 _GUICtrlButton_SetImage($Button_Restart, $gfx & "Restart.bmp")
-GuiCtrlSetTip(-1, "Restarts VIVEHIM.")
+GuiCtrlSetTip(-1, "Restart.")
 
 Global $Button_Exit = GUICtrlCreateButton("Exit", 730, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 _GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
-GuiCtrlSetTip(-1, "Closes VIVEHIM.")
+GuiCtrlSetTip(-1, "Close.")
 
 ; TABS ERSTELLEN
 Global $TAB_NR = GUICtrlCreateTab(2, 150, 1095, 575, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
@@ -291,11 +304,12 @@ _Create_ListView_5()
 _Create_ListView_6()
 
 Global $contextmenu = GUICtrlCreateContextMenu($listview)
+Global $RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 Global $RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 Global $RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
 Global $RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-Global $RM_Item5 = GUICtrlCreateMenuItem("", $contextmenu)
+Global $RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
 Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 
 
@@ -369,13 +383,15 @@ GUICtrlSetOnEvent($Checkbox_Close_Window_Label, "_Checkbox_Close_Window")
 GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
 GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
 
+;GUICtrlSetOnEvent($RM_Item0, "_RM_Menu__Item_0")
 GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+;GUICtrlSetOnEvent($RM_Item2, "_RM_Menu__Item_2")
 GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-GUICtrlSetOnEvent($RM_Item4, "_RM_Menu_4")
-;GUICtrlSetOnEvent($RM_Item5, "_RM_Item_5")
-;GUICtrlSetOnEvent($RM_Item6, "_RM_Item_6")
-;GUICtrlSetOnEvent($RM_Item7, "_RM_Item_7")
-;GUICtrlSetOnEvent($RM_Item8, "_RM_Item_8")
+;GUICtrlSetOnEvent($RM_Item4, "_RM_Menu_Item_4")
+GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+;GUICtrlSetOnEvent($RM_Item6, "_RM_Menu__Item_6")
+;GUICtrlSetOnEvent($RM_Item7, "_RM_Menu__Item_7")
+;GUICtrlSetOnEvent($RM_Item8, "_RM_Menu__Item_8")
 #endregion
 
 
@@ -433,7 +449,7 @@ Func _Loading_GUI()
 EndFunc
 
 Func _Settings_GUI()
-	$Settings_GUI = GUICreate("Settings", 540, 375 , - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	$Settings_GUI = GUICreate("Settings", 540, 600, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 #Region Folders
 	GUICtrlCreateGroup("Steam Library Folders", 5, 5, 531, 325)
@@ -441,7 +457,7 @@ Func _Settings_GUI()
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
-	GUICtrlCreateLabel("Steamapps 1:", 10, 40, 270, 25)
+	GUICtrlCreateLabel("Steamapps 1:", 10, 42, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_1 = GUICtrlCreateInput($Install_Folder_Steam_1, 10, 65, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -458,7 +474,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 2:", 10, 95, 270, 25)
+	GUICtrlCreateLabel("Steamapps 2:", 10, 97, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_2 = GUICtrlCreateInput($Install_Folder_Steam_2, 10, 120, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -475,7 +491,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 3:", 10, 150, 270, 25)
+	GUICtrlCreateLabel("Steamapps 3:", 10, 152, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_3 = GUICtrlCreateInput($Install_Folder_Steam_3, 10, 175, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -492,7 +508,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 4:", 10, 205, 270, 25)
+	GUICtrlCreateLabel("Steamapps 4:", 10, 207, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_4 = GUICtrlCreateInput($Install_Folder_Steam_4, 10, 230, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -509,7 +525,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 5:", 10, 260, 270, 25)
+	GUICtrlCreateLabel("Steamapps 5:", 10, 262, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_5 = GUICtrlCreateInput($Install_Folder_Steam_5, 10, 285, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -527,7 +543,73 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_5_save, $gfx & "Save_small.bmp")
 #endregion
 
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, 335, 35, 35, $BS_BITMAP)
+
+#Region Icon Folders
+	GUICtrlCreateGroup("Icon Folders", 5, 335, 531, 215)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
+
+	Local $Label_Icon_Path_1 = "Custom 1:"
+
+	If $Icon_Folder_1 = "C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\" Then
+		$Label_Icon_Path_1 = "Vive Home:"
+	EndIf
+
+	GUICtrlCreateLabel($Label_Icon_Path_1, 10, 372, 270, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+	Global $Input_Icon_Folder_1 = GUICtrlCreateInput($Icon_Folder_1, 10, 395, 410, 30)
+	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
+	GuiCtrlSetTip(-1, "Enter Folder path.")
+	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", 430, 396, 30, 30, 0)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1")
+	GuiCtrlSetTip(-1, "Choose Folder.")
+	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", 465, 396, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_open")
+	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
+	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", 500, 396, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_save")
+	GuiCtrlSetTip(-1, "Saves Folder Path.")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_1_open, $gfx & "Folder_small.bmp")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_1_save, $gfx & "Save_small.bmp")
+
+	GUICtrlCreateLabel("Custom 2:", 10, 427, 270, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+	Global $Input_Icon_Folder_2 = GUICtrlCreateInput($Icon_Folder_2, 10, 450, 410, 30)
+	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
+	GuiCtrlSetTip(-1, "Enter Folder path.")
+	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", 430, 451, 30, 30, 0)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2")
+	GuiCtrlSetTip(-1, "Choose Folder.")
+	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", 465, 451, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_open")
+	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
+	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", 500, 451, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
+	GuiCtrlSetTip(-1, "Saves Folder Path.")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_2_open, $gfx & "Folder_small.bmp")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_2_save, $gfx & "Save_small.bmp")
+
+	GUICtrlCreateLabel("Custom 3:", 10, 482, 270, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+	Global $Input_Icon_Folder_3 = GUICtrlCreateInput($Icon_Folder_3, 10, 505, 410, 30)
+	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
+	GuiCtrlSetTip(-1, "Enter Folder path.")
+	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", 430, 506, 30, 30, 0)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3")
+	GuiCtrlSetTip(-1, "Choose Folder.")
+	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", 465, 506, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_open")
+	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
+	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", 500, 506, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
+	GuiCtrlSetTip(-1, "Saves Folder Path.")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_3_open, $gfx & "Folder_small.bmp")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_3_save, $gfx & "Save_small.bmp")
+#endregion
+
+
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, 560, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
 	GuiCtrlSetTip(-1, "Closes GUI Window.")
@@ -692,17 +774,17 @@ Func _SS_GUI()
 	Global $Button_Save_Settings_GUI = GUICtrlCreateButton("Save", 5, 250, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Save_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Speichern.bmp")
-	GuiCtrlSetTip(-1, "Closes GUI Window.")
+	GuiCtrlSetTip(-1, "Save values to HomeLoaderLibrary File.")
 
 	Global $Button_Add2Steam_Settings_GUI = GUICtrlCreateButton("Add to Steam", 52, 250, 85, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Add2Steam_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Add2Steam.bmp")
-	GuiCtrlSetTip(-1, "Closes GUI Window.")
+	GuiCtrlSetTip(-1, "Add values to the Steam VR settings File [default.vrsettings].")
 
 	Global $Button_StartGame_Settings_GUI = GUICtrlCreateButton("Start Game", 148, 250, 85, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_StartGame_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "StartGame.bmp")
-	GuiCtrlSetTip(-1, "Closes GUI Window.")
+	GuiCtrlSetTip(-1, "Saves, Adds and Starts the selected game using the current values.")
 
 	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 245, 250, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_SS_Settings_GUI")
@@ -1297,7 +1379,8 @@ Func _ADD_Icons_32x32_to_ListView()
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
 
-Func _RM_Menu_4() ; Create new default.vrsettings" File
+
+Func _RM_Menu_Item_4() ; Create new default.vrsettings" File
 	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
 
 	$FileLines = _FileCountLines($default_vrsettings_File)
@@ -1339,8 +1422,92 @@ Func _RM_Menu_4() ; Create new default.vrsettings" File
 	Next
 EndFunc
 
+Func _RM_Menu_Item_5() ; Create Shortcut File
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Steam_app_Name_Replaced = StringReplace($Steam_app_Name, ' ', '_')
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
+	$allowSupersampleFiltering_value = StringLeft($allowSupersampleFiltering_value, 1)
+
+	Local $Abfrage = MsgBox (4, "Create SS Shortcut", "Selected Game:" & @CRLF & @CRLF & _
+														$Steam_app_Name & " [" & $Game_ID & "]" & @CRLF & @CRLF & _
+														"Do you want to create the Shortcut File?" & @CRLF)
+
+	If $Abfrage = 6 Then
+		_Create_SS_Shortcut()
+		$IN = $Install_DIR & "temp.au3"
+		$OUT = $Install_DIR & "SS_" & $renderTargetMultiplier_value & "_" & $supersampleScale_value & "_" & $allowSupersampleFiltering_value & "___" & $Steam_app_Name_Replaced & ".exe"
+		RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe' & ' /in ' & $IN & ' /out ' & $OUT, "", @SW_HIDE)
+		FileDelete($IN)
+		MsgBox (0, "Creation completed", "New Shortcut File was created in Home Loader folder:" & @CRLF & @CRLF & _
+																$OUT & @CRLF & @CRLF & _
+																"Copy the new Shortcut wherever you want and rename the File if wanted.")
+	Else
+
+	EndIf
+EndFunc
+
+Func _Create_SS_Shortcut()
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $FileLines = _FileCountLines($default_vrsettings_File)
+
+	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
 
 
+	FileWrite($Install_DIR & 'temp.au3', 'If Not FileExists("' & $default_vrsettings_File_Backup & '") Then FileCopy("' & $default_vrsettings_File & '", "' & $default_vrsettings_File_Backup & '",' & $FC_OVERWRITE & ')' & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '"' & ", '{')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'	" & '"steamvr" : {' & "')" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "For $LOOP_vrsettings = 3 To " & $FileLines & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', '	$ReadLine = FileReadLine("' & $default_vrsettings_File & '", $LOOP_vrsettings)' & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	$ReadLine_Split_value = $ReadLine" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine <> '	},' Then" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split = StringSplit($ReadLine, ':')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '" & '"' & "', ''" & ")" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'renderTargetMultiplier' Then" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"renderTargetMultiplier" : ' & $renderTargetMultiplier_value & ",')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'supersampleScale' Then" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"supersampleScale" : ' & $supersampleScale_value & ",')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'allowSupersampleFiltering' Then" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"allowSupersampleFiltering" : ' & $allowSupersampleFiltering_value & ",')" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", $ReadLine)' & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', "Next" & @CRLF)
+
+	FileWrite($Install_DIR & 'temp.au3', 'ShellExecute("steam://rungameid/' & $Game_ID & '")' & @CRLF)
+
+EndFunc
 
 
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
@@ -1448,8 +1615,6 @@ Func _Update_VRSettings_GUI_Items()
 	GUICtrlSetData($Slider_3, $aSsF_value)
 	GUICtrlSetData($ComboBox_3, "true|false", $allowSupersampleFiltering_value)
 EndFunc
-
-
 
 
 Func _Create_HTMLView_GUI()
@@ -2386,6 +2551,104 @@ Func _Button_Install_Folder_Steam_5_save()
 		EndIf
 	EndIf
 EndFunc
+
+
+Func _Button_Icon_Folder_1()
+	Local $FileSelectFolder = FileSelectFolder($install_dir, "")
+	If $FileSelectFolder <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_1, $FileSelectFolder & "\")
+		IniWrite($config_ini, "Folders", "Icon_Folder_1", $FileSelectFolder & "\")
+	Else
+		IniWrite($Config_INI, "Folders", "Icon_Folder_1", "")
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_2()
+	Local $FileSelectFolder = FileSelectFolder($install_dir, "")
+	If $FileSelectFolder <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_2, $FileSelectFolder & "\")
+		IniWrite($config_ini, "Folders", "Icon_Folder_2", $FileSelectFolder & "\")
+	Else
+		IniWrite($Config_INI, "Folders", "Icon_Folder_2", "")
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_3()
+	Local $FileSelectFolder = FileSelectFolder($install_dir, "")
+	If $FileSelectFolder <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_3, $FileSelectFolder & "\")
+		IniWrite($config_ini, "Folders", "Icon_Folder_3", $FileSelectFolder & "\")
+	Else
+		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		IniWrite($Config_INI, "Folders", "Icon_Folder_3", "")
+	EndIf
+EndFunc
+
+
+Func _Button_Icon_Folder_1_open()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_1)
+	If $Value_Input <> "" Then
+		ShellExecute($Value_Input)
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_2_open()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_2)
+	If $Value_Input <> "" Then
+		ShellExecute($Value_Input)
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_3_open()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_3)
+	If $Value_Input <> "" Then
+		ShellExecute($Value_Input)
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_1_save()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_1)
+	Local $Check_Value_Input = StringRight($Value_Input, 1)
+	If $Check_Value_Input <> "" And $Check_Value_Input <> "\" Then $Value_Input = $Value_Input & "\"
+	If $Value_Input <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_1, $Value_Input)
+		IniWrite($config_ini, "Folders", "Icon_Folder_1", $Value_Input)
+	Else
+		If $Check_Value_Input <> "" Then
+			IniWrite($Config_INI, "Folders", "Icon_Folder_1", "")
+		EndIf
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_2_save()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_2)
+	Local $Check_Value_Input = StringRight($Value_Input, 1)
+	If $Check_Value_Input <> "" And $Check_Value_Input <> "\" Then $Value_Input = $Value_Input & "\"
+	If $Value_Input <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_2, $Value_Input)
+		IniWrite($config_ini, "Folders", "Icon_Folder_2", $Value_Input)
+	Else
+		If $Check_Value_Input <> "" Then
+			IniWrite($Config_INI, "Folders", "Icon_Folder_2", "")
+		EndIf
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_3_save()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_3)
+	Local $Check_Value_Input = StringRight($Value_Input, 1)
+	If $Check_Value_Input <> "" And $Check_Value_Input <> "\" Then $Value_Input = $Value_Input & "\"
+	If $Value_Input <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_3, $Value_Input)
+		IniWrite($config_ini, "Folders", "Icon_Folder_3", $Value_Input)
+	Else
+		If $Check_Value_Input <> "" Then
+			IniWrite($Config_INI, "Folders", "Icon_Folder_3", "")
+		EndIf
+	EndIf
+EndFunc
+
+
 #endregion
 
 #Region Func SS_Settings GUI
@@ -2526,11 +2789,12 @@ Func _Button_Add2Steam_Settings_GUI()
 		EndIf
 
 		If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then
-			;MsgBox(0, "2", $ReadLine_Split_value & @CRLF & @CRLF & $renderTargetMultiplier_value & @CRLF & $supersampleScale_value & @CRLF & $allowSupersampleFiltering_value)
 			FileWriteLine($default_vrsettings_File_new, $ReadLine)
 		EndIf
-
 	Next
+	FileCopy($default_vrsettings_File_new, $default_vrsettings_File, $FC_OVERWRITE)
+	FileDelete($default_vrsettings_File_new)
+	If Not FileExists($default_vrsettings_File) Then FileCopy($default_vrsettings_File_Backup, $default_vrsettings_File, $FC_OVERWRITE)
 EndFunc
 
 Func _Button_StartGame_Settings_GUI()

@@ -1,3 +1,6 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=..\..\coding\Home_Loader\Compile_Icons\Play_Starten.ico
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #include <File.au3>
 #include <Misc.au3>
 #include <_IsPressed360.au3>
@@ -9,6 +12,7 @@ Opt("GUIOnEventMode", 1)
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
+Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "false")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $State_USE_Key_Presses = IniRead($Config_INI, "Settings", "USE_Key_Presses", "")
 Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
@@ -18,7 +22,8 @@ If $State_USE_Key_Presses = "true" Then
 	_Key_Presses_Detection()
 EndIf
 
-_Start_Home_APP()
+If $Start_HomeLoader_with_HomeApp = "true" Then _Start_Home_Loader()
+If $Start_HomeLoader_with_HomeApp = "false" Then _Start_Home_APP()
 _Exit()
 
 Func _Key_Presses_Detection()
@@ -99,6 +104,16 @@ Func _Start_Home_APP()
 	If Not ProcessExists("vrmonitor.exe") Then ShellExecute("steam://rungameid/250820")
 	If $WindowName <> "SteamVR Home" Then ShellExecute($Home_Path)
 	Exit
+EndFunc
+
+Func _Start_Home_Loader()
+	If Not WinExists("Home Loader") Then
+		If FileExists($Install_DIR & "HomeLoader.exe") Then
+			ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+		Else
+			ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+		EndIf
+	EndIf
 EndFunc
 
 Func _Start_Button_Pressed()

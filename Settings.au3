@@ -1,3 +1,6 @@
+#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_Icon=..\..\coding\Home_Loader\Compile_Icons\Settings.ico
+#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 #include <MsgBoxConstants.au3>
 #include <GUIConstantsEx.au3>
@@ -153,7 +156,7 @@ EndFunc
 
 Func _StartUp_settings()
 	If $Show_Settings_at_Startup = "First Start" Then IniWrite($Config_INI, "Settings", "Show_Settings_at_Startup", "")
-    Global $GUI_StartUp_settings = GUICreate("Home Loader - Settings", 250, 355, -1, -1, $WS_EX_TOPMOST)
+    Global $GUI_StartUp_settings = GUICreate("Home Loader - Settings", 250, 415, -1, -1, $WS_EX_TOPMOST)
 	GUISetIcon(@AutoItExe, -2, $GUI_StartUp_settings)
     GUISetState(@SW_SHOW, $GUI_StartUp_settings)
 
@@ -192,7 +195,7 @@ Func _StartUp_settings()
 	Global $Button_Restore_DefaultSteamVRHome = GUICtrlCreateButton("Restore Default SteamVR Home Path", 10, 68, 223, 25)
 	GUICtrlSetOnEvent($Button_Restore_DefaultSteamVRHome, "_Restore_Default_SteamVR_Home")
 
-	GUICtrlCreateGroup("Home Loader Settings:", 5, 105, 235, 65)
+	GUICtrlCreateGroup("Home Loader Settings:", 5, 105, 235, 125)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
@@ -210,22 +213,40 @@ Func _StartUp_settings()
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_USE_Key_Presses, "_Checkbox_USE_Key_Presses")
 
+	$State_Checkbox_Add_PlayersOnline_to_Icons = IniRead($config_ini,"Settings", "Add_PlayersOnline_to_Icons", "")
+	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add Players Online to Icons", 10, 165, 220, 20) ; 430
+		If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
+	GUICtrlSetOnEvent($Checkbox_Add_PlayersOnline_to_Icons, "_Checkbox_Add_PlayersOnline_to_Icons")
 
-	GUICtrlCreateGroup("Oculus Home:", 5, 175, 235, 72)
+	$State_Checkbox_Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
+	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automaticly add SS per game", 10, 185, 220, 20) ; 430
+		If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
+	GUICtrlSetOnEvent($Checkbox_Add_SS_per_game, "_Checkbox_Add_SS_per_game")
+
+	$State_Checkbox_Start_HomeLoader_with_HomeApp = IniRead($config_ini,"Settings", "Start_HomeLoader_with_HomeApp", "")
+	Global $Checkbox_Start_HomeLoader_with_HomeApp = GUICtrlCreateCheckbox(" Start HomeLoader with HomeApp", 10, 205, 228, 20) ; 430
+		If $State_Checkbox_Start_HomeLoader_with_HomeApp = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 10, 400, 1, $font_StartUp_arial)
+	GUICtrlSetOnEvent($Checkbox_Start_HomeLoader_with_HomeApp, "_Checkbox_Start_HomeLoader_with_HomeApp")
+
+
+	GUICtrlCreateGroup("Oculus Home:", 5, 235, 235, 72)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
 	$State_Checkbox_Minimize_Oculus = IniRead($config_ini,"Settings", "Minimize_Oculus", "")
-	Global $Checkbox_Minimize_Oculus = GUICtrlCreateCheckbox(" Minimize Oculus Shop", 10, 195, 170, 20) ; 430
+	Global $Checkbox_Minimize_Oculus = GUICtrlCreateCheckbox(" Minimize Oculus Shop", 10, 255, 170, 20) ; 430
 		If $State_Checkbox_Minimize_Oculus = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Minimize_Oculus, "_Checkbox_Minimize_Oculus")
 
-	Global $Button_Add_Shortcut_2_OH = GUICtrlCreateButton("Add 'Home App' Shortcut to Oculus Home", 10, 215, 223, 25)
+	Global $Button_Add_Shortcut_2_OH = GUICtrlCreateButton("Add 'Home App' Shortcut to Oculus Home", 10, 275, 223, 25)
 	GUICtrlSetOnEvent($Button_Add_Shortcut_2_OH, "_Button_Add_Shortcut_2_OH")
 
-	Global $Exit = GUICtrlCreateButton("Close", 5, 255, 235, 30)
+	Global $Exit = GUICtrlCreateButton("Close", 5, 315, 235, 30)
 	GUICtrlSetFont(-1, 14, 600, 2, $font_StartUp_arial)
 	GUICtrlSetColor(-1, "0x006600")
 	GUICtrlSetOnEvent($Exit, "_Exit")
@@ -237,7 +258,7 @@ Func _StartUp_settings()
 	Global $State_StartUp_Radio_5 = GUICtrlRead($StartUp_Radio_5)
 	Global $State_StartUp_Radio_6 = GUICtrlRead($StartUp_Radio_6)
 
-	Global $Button_Start_HomeLoader = GUICtrlCreateButton("Start Home Loader", 5, 290, 235, 30)
+	Global $Button_Start_HomeLoader = GUICtrlCreateButton("Start Home Loader", 5, 350, 235, 30)
 	GUICtrlSetFont(-1, 14, 600, 2, $font_StartUp_arial)
 	GUICtrlSetColor(-1, "0x006600")
 	GUICtrlSetOnEvent($Button_Start_HomeLoader, "_Button_Start_HomeLoader")
@@ -246,7 +267,7 @@ Func _StartUp_settings()
 		GUICtrlSetState($Button_Start_HomeLoader, $GUI_SHOW)
 	Else
 		GUICtrlSetState($Button_Start_HomeLoader, $GUI_HIDE)
-		Global $Select_HomeApp_Label = GUICtrlCreateLabel("Select Home App first", 18, 292, 235, 40)
+		Global $Select_HomeApp_Label = GUICtrlCreateLabel("Select Home App first", 18, 352, 235, 40)
 		GUICtrlSetFont(-1, 16, 400, 2, $font_StartUp_arial)
 		GUICtrlSetColor(-1, "0xFF0000")
 	EndIf
@@ -473,12 +494,12 @@ Func _StartUp_Radio_4() ; VR Toolbox
 EndFunc
 
 Func _StartUp_Radio_5() ; Janus VR
-	Global $JanusVR_Path = ""
-	;If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
-	;If FileExists($Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe"
-	;If FileExists($Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe"
-	;If FileExists($Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe"
-	;If FileExists($Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe"
+	Global $JanusVR_Path = "" ; E:\SteamLibrary\steamapps\common\Janus VR\janusvr.exe
+	If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
+	If FileExists($Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe"
+	If FileExists($Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe"
+	If FileExists($Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe"
+	If FileExists($Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe"
 	If $JanusVR_Path = "" Then $JanusVR_Path = "steam://rungameid/602090"
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
@@ -569,6 +590,48 @@ Func _Checkbox_USE_Key_Presses()
 	EndIf
 EndFunc
 
+Func _Checkbox_Add_PlayersOnline_to_Icons()
+	$State_Checkbox = GUICtrlRead($Checkbox_Add_PlayersOnline_to_Icons)
+
+	If $State_Checkbox = 1 Then
+		IniWrite($config_ini, "Settings", "Add_PlayersOnline_to_Icons", "true")
+	EndIf
+
+	If $State_Checkbox = 4 Then
+		IniWrite($config_ini, "Settings", "Add_PlayersOnline_to_Icons", "false")
+	EndIf
+EndFunc
+
+Func _Checkbox_Add_SS_per_game()
+	$State_Checkbox = GUICtrlRead($Checkbox_Add_SS_per_game)
+
+	If $State_Checkbox = 1 Then
+		IniWrite($config_ini, "Settings", "Add_SS_per_game", "true")
+	EndIf
+
+	If $State_Checkbox = 4 Then
+		IniWrite($config_ini, "Settings", "Add_SS_per_game", "false")
+	EndIf
+EndFunc
+
+Func _Checkbox_Start_HomeLoader_with_HomeApp()
+	$State_Checkbox = GUICtrlRead($Checkbox_Start_HomeLoader_with_HomeApp)
+
+	If $State_Checkbox = 1 Then
+		IniWrite($config_ini, "Settings", "Start_HomeLoader_with_HomeApp", "true")
+	EndIf
+
+	If $State_Checkbox = 4 Then
+		IniWrite($config_ini, "Settings", "Start_HomeLoader_with_HomeApp", "false")
+	EndIf
+EndFunc
+
+
+
+
+
+
+
 Func _Checkbox_Minimize_Oculus()
 	$State_Checkbox = GUICtrlRead($Checkbox_Minimize_Oculus)
 
@@ -641,8 +704,6 @@ Func  _Button_Add_Shortcut_2_OH()
 
 	If $Abfrage = 6 Then
 		FileWrite($Install_DIR & 'temp.au3', 'ShellExecute("' & $Install_DIR & 'StartSteamVRHome.exe")')
-		;Sleep(500)
-		;RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe /in "F:\coding\Home_Loader\temp.au3" /out "F:\coding\Home_Loader\Rename.exe"', "", @SW_HIDE)
 		$IN = $Install_DIR & "temp.au3"
 		$OUT = $Install_DIR & "Rename.exe"
 		RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe' & ' /in ' & $IN & ' /out ' & $OUT, "", @SW_HIDE)
