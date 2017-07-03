@@ -5,8 +5,7 @@
 
 ![logo](preview/HomeLoader_pics_1.jpg) 
 
-
-Different messages [Advanced Mode]
+![logo](preview/HomeLoader_messages_1.jpg) 
 
 
 
