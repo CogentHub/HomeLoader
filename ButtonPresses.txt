@@ -1,7 +1,7 @@
 Start=HomeLoader.exe
-A=Vive Home
-B=VR Home
-Y=VR Toolbox
-X=Janus VR
-LB=SteamVR Home
-RB=Other
+A=SteamVR Home
+B=Vive Home
+Y=Janus VR
+X=VR Toolbox
+LB=Other
+RB=[Not in use]

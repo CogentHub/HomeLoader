@@ -1,5 +1,5 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Icon=..\..\coding\Home_Loader\Compile_Icons\InfoWindow.ico
+#AutoIt3Wrapper_Icon=Compile_Icons\InfoWindow.ico
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 #include <GuiToolbar.au3>
@@ -37,6 +37,8 @@
 
 #include <GuiSlider.au3>
 
+#include <Zip.au3>
+
 
 Opt("GUIOnEventMode", 1)
 
@@ -47,8 +49,11 @@ Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_
 Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 #endregion
 
+Global $font = "arial"
+Global $font_arial = "arial"
+
 #Region Declare Variables/Const 1
-Global $Version = "0.43"
+Global $Version = "0.45"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -56,6 +61,21 @@ Global $ApplicationList_INI = $Install_DIR & "ApplicationList.ini"
 Global $GamePage_path = $Install_DIR & "WebPage\StartPage.html"
 Global $Steam_Library = IniRead($Config_INI, "Settings", "Steam_Library", "")
 Global $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+Global $USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
+Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
+
+Global $gfx = @ScriptDir & "\" & "gfx\"
+Global $Icons = $Install_DIR & "Icons\"
+
+Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
+Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
+
+Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath") & "\"
+
+Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
+Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 Global $Install_Folder_Steam_2 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_2", "")
@@ -64,63 +84,47 @@ Global $Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 
 Global $Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
-If $Icon_Folder_1 = "" Then
-	If FileExists("C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\") Then
-		$Icon_Folder_1 = "C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\"
-		IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
-	EndIf
-EndIf
 Global $Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
 Global $Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
 
-Global $Steam_tools_vrmanifest_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
-
 Global $default_vrsettings_File = IniRead($Config_INI, "Folders", "Steam_default_vrsettings", "")
-Global $default_vrsettings_File_Backup = $default_vrsettings_File & ".bak"
+Global $default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
 Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 
-If $default_vrsettings_File = "" Then
-	$default_vrsettings_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
-	$default_vrsettings_File_Backup = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings.bak"
-	$default_vrsettings_File_new = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings.new"
-	IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
-	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
-	If Not FileExists($default_vrsettings_File) Then MsgBox(0, "", "default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
-EndIf
+Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
+Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 
-Global $gfx = @ScriptDir & "\" & "gfx\"
-Global $Icons = $Install_DIR & "Icons\"
-
+Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 Global $ApplicationList_Non_Steam_Appl_INI = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
 Global $ApplicationList_Custom_1_INI = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
 Global $ApplicationList_Custom_2_INI = $ApplicationList_Folder & "ApplicationList_Custom_2.ini"
 Global $ApplicationList_Custom_3_INI = $ApplicationList_Folder & "ApplicationList_Custom_3.ini"
 Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationList_Custom_4.ini"
+
+
+_First_Start_Empty_Check_1()
+
+If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
+If $default_vrsettings_File = "" Then MsgBox(48, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+
+If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK, $FC_OVERWRITE)
+If $Steam_tools_vrmanifest_File = ""  Then MsgBox(48, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+
 #endregion
 
-#region Erster Start Abfrage
-If $Install_Folder_Steam_1 = "" Then
-	Global $Install_Folder_Steam_Search_Folder = "C:\Program Files (x86)\Steam\Steam.exe"
-	Global $Install_Folder_Steam_Folder = StringReplace($Install_Folder_Steam_Search_Folder, 'Steam.exe', '')
+If $First_Start = "true" Then
+	MsgBox(48, "First Start", "This is your first start of the program." & @CRLF & _
+								"Home Loader will create Backups first before you can continue to use it." & @CRLF & @CRLF & _
+								"File Backups:" & @CRLF & _
+								"- default.vrsettings" & @CRLF & _
+								"- tools.manifest" & @CRLF & @CRLF & _
+								"Check the Steam Path in settings menu and/or add additional Steam Library folders to it." & @CRLF & @CRLF & _
+								"The Steam installation folder is detected automatically, it only needs to be changed if SteamVR was not installed in the default folder.")
 
-	If FileExists($Install_Folder_Steam_Search_Folder) Then
-		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Folder)
-	Else
-		MsgBox(0, "Steam folder", "Steam folder was not found." & @CRLF & _
-						"Choose the folder before continue." & @CRLF)
-
-		Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Folder)
-		If FileExists($FileSelectFolder & "\Steam.exe") Then
-			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
-		Else
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
-			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
-			_Restart()
-		EndIf
-	EndIf
-	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
+	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
+	_Settings_GUI()
 EndIf
-#endregion
 
 #region Declare Names
 $TAB1_Label = IniRead($Config_INI, "Settings", "TAB1_Name", "")
@@ -137,277 +141,293 @@ If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #endregion
 
-Global $font = "arial"
-Global $font_arial = "arial"
+If $First_Start <> "true" Then
+	#region GUI Erstellen
+	Local $hGUI, $hGraphic, $hPen
+	Local $GUI, $aSize, $aStrings[5]
+	Local $btn, $chk, $rdo, $Msg
+	Local $GUI_List_Auswahl, $tu_Button0, $to_button1, $to_button2, $to_button3, $to_button4
+	Local $Wow64 = ""
+	If @AutoItX64 Then $Wow64 = "\Wow6432Node"
+	Local $sPath = RegRead("HKEY_LOCAL_MACHINE\SOFTWARE" & $Wow64 & "\AutoIt v3\AutoIt", "InstallDir") & "\Examples\GUI\Advanced\Images"
 
-#region GUI Erstellen
-Local $hGUI, $hGraphic, $hPen
-Local $GUI, $aSize, $aStrings[5]
-Local $btn, $chk, $rdo, $Msg
-Local $GUI_List_Auswahl, $tu_Button0, $to_button1, $to_button2, $to_button3, $to_button4
-Local $Wow64 = ""
-If @AutoItX64 Then $Wow64 = "\Wow6432Node"
-Local $sPath = RegRead("HKEY_LOCAL_MACHINE\SOFTWARE" & $Wow64 & "\AutoIt v3\AutoIt", "InstallDir") & "\Examples\GUI\Advanced\Images"
+	Local $DesktopWidth = "855"
+	Local $DesktopHeight = @DesktopHeight - 75
 
-Local $DesktopWidth = "855"
-Local $DesktopHeight = @DesktopHeight - 75
+	; Erstellen der GUI
+	$GUI = GUICreate("Home Loader Library", 800, $DesktopHeight, 4, 4, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
-; Erstellen der GUI
-$GUI = GUICreate("Home Loader Library", 800, $DesktopHeight, 4, 4, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	; PROGRESS
+	Global $Anzeige_Fortschrittbalken_2 = GUICtrlCreateProgress(0, $DesktopHeight - 25, $DesktopWidth, 5)
+	Global $Anzeige_Fortschrittbalken = GUICtrlCreateProgress(0, $DesktopHeight - 121, $DesktopWidth, 5)
 
-; PROGRESS
-Global $Anzeige_Fortschrittbalken_2 = GUICtrlCreateProgress(0, $DesktopHeight - 25, $DesktopWidth, 5)
-Global $Anzeige_Fortschrittbalken = GUICtrlCreateProgress(0, $DesktopHeight - 121, $DesktopWidth, 5)
+	;Status Bar $Anzeige_Fortschrittbalken
+	Global $Statusbar = _GUICtrlStatusBar_Create($GUI)
+	_GUICtrlStatusBar_SetSimple($Statusbar, True)
 
-;Status Bar $Anzeige_Fortschrittbalken
-Global $Statusbar = _GUICtrlStatusBar_Create($GUI)
-_GUICtrlStatusBar_SetSimple($Statusbar, True)
+	_GUICtrlStatusBar_SetText($Statusbar, "Loading, please wait." & @TAB & "" & @TAB & "'Version " & $Version & "'")
 
-_GUICtrlStatusBar_SetText($Statusbar, "Loading, please wait." & @TAB & "" & @TAB & "'Version " & $Version & "'")
+	GUISetState()
 
-GUISetState()
+	; Darstellung Icon Preview Rahmen
+	Global $Linie_oben = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
+	Global $Linie_unten = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 87, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
+	Global $Linie_rechts = GUICtrlCreatePic($gfx & "Frame.jpg", 786, 4, 3, 84, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
+	Global $Linie_links = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 3, 83, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 
-; Darstellung Icon Preview Rahmen
-Global $Linie_oben = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
-Global $Linie_unten = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 87, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
-Global $Linie_rechts = GUICtrlCreatePic($gfx & "Frame.jpg", 786, 4, 3, 84, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
-Global $Linie_links = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 3, 83, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
-
-; Darstellung Icon Preview
-Global $Icon_Preview_Image = GUICtrlCreatePic($gfx & "Icon_Preview.jpg", 615, 7, 171, 80)
+	; Darstellung Icon Preview
+	Global $Icon_Preview_Image = GUICtrlCreatePic($gfx & "Icon_Preview.jpg", 615, 7, 171, 80)
 
 
-; Toolbar oben
-GUICtrlCreateLabel("Home Loader Library", 5, 0, 350, 38)
-GUICtrlSetFont(-1, 24, 400, 6, "arial")
+	; Toolbar oben
+	GUICtrlCreateLabel("Home Loader Library", 5, 0, 350, 38)
+	GUICtrlSetFont(-1, 24, 400, 6, "arial")
 
-Global $Combo_SteamLibrary = GUICtrlCreateCombo("", 0, 60, 155, 25, $CBS_DROPDOWNLIST)
-GUICtrlSetData(-1, "ALL|Steam Library 1|Steam Library 2|Steam Library 3|Steam Library 4|Steam Library 5", $Steam_Library)
-GUICtrlSetFont(-1, 14, 400, 2, "arial")
+	Global $Combo_SteamLibrary = GUICtrlCreateCombo("", 0, 60, 155, 25, $CBS_DROPDOWNLIST)
+	GUICtrlSetData(-1, "ALL|Steam Library 1|Steam Library 2|Steam Library 3|Steam Library 4|Steam Library 5", $Steam_Library)
+	GUICtrlSetFont(-1, 14, 400, 2, "arial")
+	GuiCtrlSetTip(-1, "Choose Steam Library.")
 
-Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
-GuiCtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF)
+	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
+	GuiCtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF)
 
-Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 80, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_ReScan_Steam_Library, $gfx & "ReScan_SteamLibrary.bmp")
-If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
-GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
+	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 80, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_ReScan_Steam_Library, $gfx & "ReScan_SteamLibrary.bmp")
+	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
+	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-; Toolbar unten
-Global $Button_Restart_HomeLoader = GUICtrlCreateButton("Restart Home Loader", 370, $DesktopHeight - 100, 155, 35, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_Restart_HomeLoader, $gfx & "Restart_HomeLoader.bmp")
-GuiCtrlSetTip(-1, "Starts HOME VR APP." & @CRLF & @CRLF & _
-					"It stops automatically one 'working loop' after SteamVR was closed." & @CRLF)
-
-
-GUICtrlCreateLabel("", 373, $DesktopHeight - 58, 22, 22)
-GUICtrlSetBkColor(-1, 0)
-GUICtrlSetState(-1, $GUI_DISABLE)
-Global $Check_Close_Window = GUICtrlCreateLabel("X", 374, $DesktopHeight - 57, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
-GUICtrlSetFont(-1, 16)
-$Checkbox_Close_Window_Label = GUICtrlCreateLabel("Close Window", 400, $DesktopHeight - 57, 115, 20)
-GUICtrlSetFont(-1, 14, 400, 1, "arial")
+	; Toolbar unten
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 405, $DesktopHeight - 100, 145, 35, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
+	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
 
-Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
-GuiCtrlSetTip(-1, "Settings")
+	Global $Button_Start_SteamVR = GUICtrlCreateButton("Start SteamVR", 405, $DesktopHeight - 65, 145, 29)
+	GUICtrlSetFont(-1, 13, 600, 2, $font_arial)
+	GUICtrlSetColor(-1, "0x006600")
+	GuiCtrlSetTip(-1, "Starts SteamVR." & @CRLF & @CRLF &  "If activated [Normal Mode or Advanced mode] it will automaticly" & @CRLF & "load the 'HomeLoader.exe' when it starts SteamVR.")
 
-Global $Button_Restart = GUICtrlCreateButton("Restart", 660, $DesktopHeight - 100, 65, 65, $BS_BITMAP) ;
-_GUICtrlButton_SetImage($Button_Restart, $gfx & "Restart.bmp")
-GuiCtrlSetTip(-1, "Restart.")
 
-Global $Button_Exit = GUICtrlCreateButton("Exit", 730, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
-GuiCtrlSetTip(-1, "Close.")
+	Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
+	GuiCtrlSetTip(-1, "Settings." & @CRLF & @CRLF &  "Includes:" & @CRLF & "- Steam Library Folders" & @CRLF & "- Icon Folders [Advanced mode]")
 
-; TABS ERSTELLEN
-Global $TAB_NR = GUICtrlCreateTab(2, 150, 1095, 575, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
-GUICtrlSetOnEvent($TAB_NR, "_Tab")
+	Global $Button_Restart = GUICtrlCreateButton("Restart", 660, $DesktopHeight - 100, 65, 65, $BS_BITMAP) ;
+	_GUICtrlButton_SetImage($Button_Restart, $gfx & "Restart.bmp")
+	GuiCtrlSetTip(-1, "Restart.")
 
-Global $TAB_NR_1 = GUICtrlCreateTab(70, 105, 420, 380)
-Global $TAB_NR_1_1 = GUICtrlCreateTabItem("")
+	Global $Button_Exit = GUICtrlCreateButton("Exit", 730, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
+	GuiCtrlSetTip(-1, "Close.")
 
-Global $ButtonTAB_Steam_Library = GUICtrlCreateButton($TAB1_Label, 0, 90, 100)
-Global $ButtonTAB_Non_Steam_Appl = GUICtrlCreateButton($TAB2_Label, 100, 90, 100)
-Global $ButtonTAB_Custom_1 = GUICtrlCreateButton($TAB3_Label, 205, 90, 100)
-Global $ButtonTAB_Custom_2 = GUICtrlCreateButton($TAB4_Label, 305, 90, 100)
-Global $ButtonTAB_Custom_3 = GUICtrlCreateButton($TAB5_Label, 405, 90, 100)
-Global $ButtonTAB_Custom_4 = GUICtrlCreateButton($TAB6_Label, 505, 90, 100)
+	; TABS ERSTELLEN
+	Global $TAB_NR = GUICtrlCreateTab(2, 150, 1095, 575, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
+	GUICtrlSetOnEvent($TAB_NR, "_Tab")
 
-If $ButtonTAB_State = "1" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_DISABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_SHOW)
+	Global $TAB_NR_1 = GUICtrlCreateTab(70, 105, 420, 380)
+	Global $TAB_NR_1_1 = GUICtrlCreateTabItem("")
+
+	Global $ButtonTAB_Steam_Library = GUICtrlCreateButton($TAB1_Label, 0, 90, 100)
+	Global $ButtonTAB_Non_Steam_Appl = GUICtrlCreateButton($TAB2_Label, 100, 90, 100)
+	Global $ButtonTAB_Custom_1 = GUICtrlCreateButton($TAB3_Label, 205, 90, 100)
+	Global $ButtonTAB_Custom_2 = GUICtrlCreateButton($TAB4_Label, 305, 90, 100)
+	Global $ButtonTAB_Custom_3 = GUICtrlCreateButton($TAB5_Label, 405, 90, 100)
+	Global $ButtonTAB_Custom_4 = GUICtrlCreateButton($TAB6_Label, 505, 90, 100)
+
+	If $ButtonTAB_State = "1" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_DISABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_SHOW)
+	EndIf
+
+	If $ButtonTAB_State = "2" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_DISABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
+	EndIf
+
+	If $ButtonTAB_State = "3" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_DISABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
+	EndIf
+
+	If $ButtonTAB_State = "4" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_DISABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
+	EndIf
+
+	If $ButtonTAB_State = "5" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_DISABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
+	EndIf
+
+	If $ButtonTAB_State = "6" Then
+		GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
+		GUICtrlSetState($ButtonTAB_Custom_4, $GUI_DISABLE)
+		GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
+	EndIf
+
+	_Create_ListView_1()
+	_Create_ListView_2()
+	_Create_ListView_3()
+	_Create_ListView_4()
+	_Create_ListView_5()
+	_Create_ListView_6()
+
+	Global $contextmenu = GUICtrlCreateContextMenu($listview)
+	Global $RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	Global $RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	Global $RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	Global $RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	Global $RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+
+
+	If $ButtonTAB_State = "1" Then GUICtrlSetState($listview, $GUI_SHOW)
+	If $ButtonTAB_State = "2" Then GUICtrlSetState($listview_2, $GUI_SHOW)
+	If $ButtonTAB_State = "3" Then GUICtrlSetState($listview_3, $GUI_SHOW)
+	If $ButtonTAB_State = "4" Then GUICtrlSetState($listview_4, $GUI_SHOW)
+	If $ButtonTAB_State = "5" Then GUICtrlSetState($listview_5, $GUI_SHOW)
+	If $ButtonTAB_State = "6" Then GUICtrlSetState($listview_6, $GUI_SHOW)
+
+	$Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
+	GUICtrlSetFont(-1, 22, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
+	GUICtrlSetFont(-1, 19, 400, 1, "arial")
+
+	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 100, 166, 35, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Create_GamePage, $gfx & "Create_GamePage.bmp")
+	GuiCtrlSetTip(-1, "Create Game Page." & @CRLF & _
+						"This can take some time, depending on how many games are installed and selected." & @CRLF & @CRLF)
+
+
+
+	If $Advanced_Settings = "true" Then
+		GUICtrlCreateLabel("", 72, $DesktopHeight - 61, 22, 22)
+		GUICtrlSetBkColor(-1, 0)
+		GUICtrlSetState(-1, $GUI_DISABLE)
+		If $USE_PHP_WebServer = "true" Then $State_Checkbox_USE_PHP_GamePage = "X"
+		If $USE_PHP_WebServer <> "true" Then $State_Checkbox_USE_PHP_GamePage = ""
+		Global $Checkbox_USE_PHP_GamePage = GUICtrlCreateLabel($State_Checkbox_USE_PHP_GamePage, 73, $DesktopHeight - 60, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+		GUICtrlSetFont(-1, 16)
+		$Checkbox_USE_PHP_GamePage_Label = GUICtrlCreateLabel("PHP Game Page", 97, $DesktopHeight - 60, 155, 23) ; ; +26
+		GUICtrlSetFont(-1, 14, 400, 1, "arial")
+	Else
+		Global $POS_X_Label = 10000
+		GUICtrlCreateLabel("", $POS_X_Label - 1, $DesktopHeight - 61, 22, 22)
+		GUICtrlSetBkColor(-1, 0)
+		GUICtrlSetState(-1, $GUI_DISABLE)
+		If $USE_PHP_WebServer = "true" Then $State_Checkbox_USE_PHP_GamePage = "X"
+		If $USE_PHP_WebServer <> "true" Then $State_Checkbox_USE_PHP_GamePage = ""
+		Global $Checkbox_USE_PHP_GamePage = GUICtrlCreateLabel($State_Checkbox_USE_PHP_GamePage, $POS_X_Label, $DesktopHeight - 60, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+		GUICtrlSetFont(-1, 16)
+		$Checkbox_USE_PHP_GamePage_Label = GUICtrlCreateLabel("PHP Game Page", $POS_X_Label + 24, $DesktopHeight - 60, 155, 23) ; ; +26
+		GUICtrlSetFont(-1, 14, 400, 1, "arial")
+	EndIf
+
+
+	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 250, $DesktopHeight - 100, 116, 35, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
+	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
+		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
+	Else
+		GUICtrlSetState($Button_Add_to_Custom, $GUI_HIDE)
+	EndIf
+	GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
+
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 250, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
+	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
+		GUICtrlSetState($Combo_Add_to_Custom, $GUI_SHOW)
+	Else
+		GUICtrlSetState($Combo_Add_to_Custom, $GUI_HIDE)
+	EndIf
+
+	GUICtrlCreateTabItem("")
+	#endregion
+
+	_Loading_GUI()
+
+	#Region Funktionen Verknüpfen
+	GUISetOnEvent($GUI_EVENT_CLOSE, "_Beenden")
+	GUICtrlSetOnEvent($Button_Restart, "_Restart")
+	GUICtrlSetOnEvent($Button_Exit, "_Beenden")
+	GUICtrlSetOnEvent($Button_Settings, "_Settings_GUI")
+	GUICtrlSetOnEvent($Button_Exit_Settings_GUI, "_Button_Exit_Settings_GUI")
+
+	GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
+	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
+	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
+
+	GUICtrlSetOnEvent($ButtonTAB_Steam_Library, "_ButtonTAB_Steam_Library")
+	GUICtrlSetOnEvent($ButtonTAB_Non_Steam_Appl, "_ButtonTAB_Non_Steam_Appl")
+	GUICtrlSetOnEvent($ButtonTAB_Custom_1, "_ButtonTAB_Custom_1")
+	GUICtrlSetOnEvent($ButtonTAB_Custom_2 , "_ButtonTAB_Custom_2")
+	GUICtrlSetOnEvent($ButtonTAB_Custom_3 , "_ButtonTAB_Custom_3")
+	GUICtrlSetOnEvent($ButtonTAB_Custom_4 , "_ButtonTAB_Custom_4")
+
+	GUICtrlSetOnEvent($Button_HomeLoaderSettings, "_Button_HomeLoaderSettings")
+	GUICtrlSetOnEvent($Button_Start_SteamVR, "_Button_Start_SteamVR")
+
+	GUICtrlSetOnEvent($Checkbox_CreatePage, "_Checkbox_all")
+	GUICtrlSetOnEvent($Checkbox_CreatePage_Label, "_Checkbox_all")
+	GUICtrlSetOnEvent($Checkbox_USE_PHP_GamePage, "_Checkbox_USE_PHP_GamePage")
+
+	GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
+	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
+
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+
+	#endregion
+
+	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
+
+	_Read_from_INI_ADD_2_ListView()
+
+	Sleep(500)
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+
+	GUIRegisterMsg($WM_notify, "_ClickOnListView")
+	_Tab()
+	GUIDelete($GUI_Loading)
+
+	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndIf
 
-If $ButtonTAB_State = "2" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_DISABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
-EndIf
-
-If $ButtonTAB_State = "3" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_DISABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
-EndIf
-
-If $ButtonTAB_State = "4" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_DISABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
-EndIf
-
-If $ButtonTAB_State = "5" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_DISABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_ENABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
-EndIf
-
-If $ButtonTAB_State = "6" Then
-	GUICtrlSetState($ButtonTAB_Steam_Library, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Non_Steam_Appl, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_1, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_2, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_3, $GUI_ENABLE)
-	GUICtrlSetState($ButtonTAB_Custom_4, $GUI_DISABLE)
-	GUICtrlSetState($Combo_SteamLibrary, $GUI_HIDE)
-EndIf
-
-_Create_ListView_1()
-_Create_ListView_2()
-_Create_ListView_3()
-_Create_ListView_4()
-_Create_ListView_5()
-_Create_ListView_6()
-
-Global $contextmenu = GUICtrlCreateContextMenu($listview)
-Global $RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-Global $RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
-Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-Global $RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
-Global $RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-Global $RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
-Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
-
-
-If $ButtonTAB_State = "1" Then GUICtrlSetState($listview, $GUI_SHOW)
-If $ButtonTAB_State = "2" Then GUICtrlSetState($listview_2, $GUI_SHOW)
-If $ButtonTAB_State = "3" Then GUICtrlSetState($listview_3, $GUI_SHOW)
-If $ButtonTAB_State = "4" Then GUICtrlSetState($listview_4, $GUI_SHOW)
-If $ButtonTAB_State = "5" Then GUICtrlSetState($listview_5, $GUI_SHOW)
-If $ButtonTAB_State = "6" Then GUICtrlSetState($listview_6, $GUI_SHOW)
-
-$Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
-GUICtrlSetFont(-1, 22, 400, 0, "Marlett")
-GUICtrlSetBkColor(-1, 0xFFFFFF)
-$Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
-GUICtrlSetFont(-1, 19, 400, 1, "arial")
-
-Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 100, 116, 65, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_Create_GamePage, $gfx & "Create_GamePage.bmp")
-GuiCtrlSetTip(-1, "Create Game Page." & @CRLF & _
-					"This can take some time, depending on how many games are installed and selected.." & @CRLF & @CRLF)
-
-Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 190, $DesktopHeight - 100, 116, 35, $BS_BITMAP)
-_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
-If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
-	GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
-Else
-	GUICtrlSetState($Button_Add_to_Custom, $GUI_HIDE)
-EndIf
-GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
-
-Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 190, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
-GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
-GUICtrlSetFont(-1, 12, 400, 2, "arial")
-If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
-	GUICtrlSetState($Combo_Add_to_Custom, $GUI_SHOW)
-Else
-	GUICtrlSetState($Combo_Add_to_Custom, $GUI_HIDE)
-EndIf
-
-GUICtrlCreateTabItem("")
-#endregion
-
-_Loading_GUI()
-
-#Region Funktionen Verknüpfen
-GUISetOnEvent($GUI_EVENT_CLOSE, "_Beenden")
-GUICtrlSetOnEvent($Button_Restart, "_Restart")
-GUICtrlSetOnEvent($Button_Exit, "_Beenden")
-GUICtrlSetOnEvent($Button_Settings, "_Settings_GUI")
-GUICtrlSetOnEvent($Button_Exit_Settings_GUI, "_Button_Exit_Settings_GUI")
-
-GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
-GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
-GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
-
-GUICtrlSetOnEvent($ButtonTAB_Steam_Library, "_ButtonTAB_Steam_Library")
-GUICtrlSetOnEvent($ButtonTAB_Non_Steam_Appl, "_ButtonTAB_Non_Steam_Appl")
-GUICtrlSetOnEvent($ButtonTAB_Custom_1, "_ButtonTAB_Custom_1")
-GUICtrlSetOnEvent($ButtonTAB_Custom_2 , "_ButtonTAB_Custom_2")
-GUICtrlSetOnEvent($ButtonTAB_Custom_3 , "_ButtonTAB_Custom_3")
-GUICtrlSetOnEvent($ButtonTAB_Custom_4 , "_ButtonTAB_Custom_4")
-
-GUICtrlSetOnEvent($Button_Restart_HomeLoader, "_Button_Restart_HomeLoader")
-
-GUICtrlSetOnEvent($Checkbox_CreatePage, "_Checkbox_all")
-GUICtrlSetOnEvent($Checkbox_CreatePage_Label, "_Checkbox_all")
-
-GUICtrlSetOnEvent($Check_Close_Window, "_Checkbox_Close_Window")
-GUICtrlSetOnEvent($Checkbox_Close_Window_Label, "_Checkbox_Close_Window")
-
-GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
-GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
-
-;GUICtrlSetOnEvent($RM_Item0, "_RM_Menu__Item_0")
-GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-;GUICtrlSetOnEvent($RM_Item2, "_RM_Menu__Item_2")
-GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-;GUICtrlSetOnEvent($RM_Item4, "_RM_Menu_Item_4")
-GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
-;GUICtrlSetOnEvent($RM_Item6, "_RM_Menu__Item_6")
-;GUICtrlSetOnEvent($RM_Item7, "_RM_Menu__Item_7")
-;GUICtrlSetOnEvent($RM_Item8, "_RM_Menu__Item_8")
-#endregion
-
-
-If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
-
-_Read_from_INI_ADD_2_ListView()
-
-Sleep(500)
-GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
-
-GUIRegisterMsg($WM_notify, "_ClickOnListView")
-_Tab()
-GUIDelete($GUI_Loading)
-
-$NR_Applications = IniRead($ApplicationList_INI, "ApplicationList", "NR_Applications", "")
-_GUICtrlStatusBar_SetText($Statusbar, "Program loaded. Use 'Rescan Steam Library' Button if a game was added or removed." & " - " & "Apps: " & $NR_Applications & @TAB & @TAB & "'Version " & $Version & "'")
 
 #Region While 1
 While 1
@@ -426,6 +446,179 @@ WEnd
 
 
 #Region Start Funktionen
+
+#Region First Start And Empty Check
+Func _First_Start_Empty_Check_1()
+	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
+
+	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	If $Install_Folder_Steam_1 = "" Then
+		$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+		$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\')
+
+		If $Install_Folder_Steam_Search_Folder <> "" Then
+			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Search_Folder & "\")
+		Else
+			MsgBox(0, "Steam folder", "Steam folder was not found." & @CRLF & _
+							"Choose the folder before continue." & @CRLF)
+
+			Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Search_Folder & "\")
+			If $FileSelectFolder <> "" Then
+				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
+			Else
+				MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+				_Restart()
+			EndIf
+		EndIf
+		$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	EndIf
+
+	If $default_vrsettings_File = "" Then
+		$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+		$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\') & "\"
+		$default_vrsettings_File = $Install_Folder_Steam_Search_Folder & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+		If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+		$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+
+		If Not FileExists($default_vrsettings_File) Then
+			If Not FileExists($default_vrsettings_File) Then
+				$default_vrsettings_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+				$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+				$default_vrsettings_File_new = $default_vrsettings_File & ".new"
+				If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File & "\")
+				If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK)
+			EndIf
+
+			If Not FileExists($default_vrsettings_File) Then
+				$default_vrsettings_File = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+				$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+				$default_vrsettings_File_new = $default_vrsettings_File & ".new"
+				If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+				If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK)
+			EndIf
+
+			If Not FileExists($default_vrsettings_File) Then
+				$default_vrsettings_File = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+				$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+				$default_vrsettings_File_new = $default_vrsettings_File & ".new"
+				If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+				If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK)
+			EndIf
+
+			If Not FileExists($default_vrsettings_File) Then
+				$default_vrsettings_File = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+				$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+				$default_vrsettings_File_new = $default_vrsettings_File & ".new"
+				If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+				If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK)
+			EndIf
+
+			If Not FileExists($default_vrsettings_File) Then
+				$default_vrsettings_File = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\resources\settings\default.vrsettings"
+				$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+				$default_vrsettings_File_new = $default_vrsettings_File & ".new"
+				If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+				If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK)
+			EndIf
+
+			If Not FileExists($default_vrsettings_File) Then
+				MsgBox(0, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
+					"Choose the File before continue." & @CRLF)
+
+				Local $FileSelect = FileOpenDialog("Default.vrsettings File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
+				If $FileSelect <> "" Then
+					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $FileSelect)
+				Else
+					MsgBox(48, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
+					_Restart()
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+
+	If $Advanced_Settings = "true" Then
+		$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
+		If $Icon_Folder_1 = "" Then
+			If FileExists($Install_DIR & "WebPage\images\") Then
+				$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
+				IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
+			EndIf
+		EndIf
+
+		$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
+		If $Icon_Folder_2 = "" Then
+			If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
+				$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
+				IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
+			EndIf
+		EndIf
+	EndIf
+
+
+	If $Steam_tools_vrmanifest_File = "" Then
+		$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+		$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\') & "\"
+		$Steam_tools_vrmanifest_File = $Install_Folder_Steam_Search_Folder & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+		If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+		$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+
+		If Not FileExists($Steam_tools_vrmanifest_File) Then
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				$Steam_tools_vrmanifest_File = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+				$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+				If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+				If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
+			EndIf
+
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				$Steam_tools_vrmanifest_File = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+				$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+				If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+				If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
+			EndIf
+
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				$Steam_tools_vrmanifest_File = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+				$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+				If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+				If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
+			EndIf
+
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				$Steam_tools_vrmanifest_File = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+				$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+				If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+				If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
+			EndIf
+
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				$Steam_tools_vrmanifest_File = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\tools\" & "tools.vrmanifest"
+				$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+				If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+				If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
+			EndIf
+
+			If Not FileExists($Steam_tools_vrmanifest_File) Then
+				MsgBox(0, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
+					"Choose the File before continue." & @CRLF)
+
+				Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
+				If $FileSelect <> "" Then
+					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
+				Else
+					MsgBox(48, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
+					_Restart()
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+EndFunc
+#endregion
+
+
 
 #Region Func MAIN
 Func _Loading_GUI()
@@ -449,7 +642,23 @@ Func _Loading_GUI()
 EndFunc
 
 Func _Settings_GUI()
-	$Settings_GUI = GUICreate("Settings", 540, 600, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	If $Advanced_Settings = "true" Then
+		Global $HEIGHT_GUI = 600
+		Global $POS_Y_Button_Exit_Settings_GUI = 560
+		Global $POS_X_Input_Icon_Folder_1 = 10
+		Global $POS_X_IconFolders_Group = 5
+	Else
+		Global $HEIGHT_GUI = 375
+		Global $POS_Y_Button_Exit_Settings_GUI = 335
+		Global $POS_X_Input_Icon_Folder_1 = 10000
+		Global $POS_X_IconFolders_Group = 10000
+	EndIf
+
+	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
+	$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
+	$Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
+
+	$Settings_GUI = GUICreate("Settings", 540, $HEIGHT_GUI, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 #Region Folders
 	GUICtrlCreateGroup("Steam Library Folders", 5, 5, 531, 325)
@@ -545,63 +754,67 @@ Func _Settings_GUI()
 
 
 #Region Icon Folders
-	GUICtrlCreateGroup("Icon Folders", 5, 335, 531, 215)
+	GUICtrlCreateGroup("Icon Folders", $POS_X_IconFolders_Group, 335, 531, 215)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
 	Local $Label_Icon_Path_1 = "Custom 1:"
-
-	If $Icon_Folder_1 = "C:\Program Files (x86)\ViveSetup\Updater\App\Dashboard\win32\header_image\" Then
-		$Label_Icon_Path_1 = "Vive Home:"
+	If $Icon_Folder_1 = $Install_DIR & "WebPage\images\" Then
+		$Label_Icon_Path_1 = "HTML Icon folder:"
 	EndIf
 
-	GUICtrlCreateLabel($Label_Icon_Path_1, 10, 372, 270, 25)
+	Local $Label_Icon_Path_2 = "Custom 2:"
+	If $Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\" Then
+		$Label_Icon_Path_2 = "Vive Home:"
+	EndIf
+
+	GUICtrlCreateLabel($Label_Icon_Path_1, $POS_X_Input_Icon_Folder_1, 372, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_1 = GUICtrlCreateInput($Icon_Folder_1, 10, 395, 410, 30)
+	Global $Input_Icon_Folder_1 = GUICtrlCreateInput($Icon_Folder_1, $POS_X_Input_Icon_Folder_1, 395, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", 430, 396, 30, 30, 0)
+	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 396, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", 465, 396, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 396, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", 500, 396, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 396, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_1_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_1_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Custom 2:", 10, 427, 270, 25)
+	GUICtrlCreateLabel($Label_Icon_Path_2, $POS_X_Input_Icon_Folder_1, 427, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_2 = GUICtrlCreateInput($Icon_Folder_2, 10, 450, 410, 30)
+	Global $Input_Icon_Folder_2 = GUICtrlCreateInput($Icon_Folder_2, $POS_X_Input_Icon_Folder_1, 450, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", 430, 451, 30, 30, 0)
+	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 451, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", 465, 451, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 451, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", 500, 451, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 451, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_2_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_2_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Custom 3:", 10, 482, 270, 25)
+	GUICtrlCreateLabel("Custom 3:", $POS_X_Input_Icon_Folder_1, 482, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_3 = GUICtrlCreateInput($Icon_Folder_3, 10, 505, 410, 30)
+	Global $Input_Icon_Folder_3 = GUICtrlCreateInput($Icon_Folder_3, $POS_X_Input_Icon_Folder_1, 505, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", 430, 506, 30, 30, 0)
+	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 506, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", 465, 506, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 506, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", 500, 506, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 506, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_3_open, $gfx & "Folder_small.bmp")
@@ -609,7 +822,7 @@ Func _Settings_GUI()
 #endregion
 
 
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, 560, 35, 35, $BS_BITMAP)
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, $POS_Y_Button_Exit_Settings_GUI, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
 	GuiCtrlSetTip(-1, "Closes GUI Window.")
@@ -1381,7 +1594,7 @@ EndFunc
 
 
 Func _RM_Menu_Item_4() ; Create new default.vrsettings" File
-	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
+	If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
 
 	$FileLines = _FileCountLines($default_vrsettings_File)
 
@@ -1472,7 +1685,7 @@ Func _Create_SS_Shortcut()
 	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
 
 
-	FileWrite($Install_DIR & 'temp.au3', 'If Not FileExists("' & $default_vrsettings_File_Backup & '") Then FileCopy("' & $default_vrsettings_File & '", "' & $default_vrsettings_File_Backup & '",' & $FC_OVERWRITE & ')' & @CRLF)
+	FileWrite($Install_DIR & 'temp.au3', 'If Not FileExists("' & $default_vrsettings_File_BAK & '") Then FileCopy("' & $default_vrsettings_File & '", "' & $default_vrsettings_File_BAK & '",' & $FC_OVERWRITE & ')' & @CRLF)
 
 	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '"' & ", '{')" & @CRLF)
 	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'	" & '"steamvr" : {' & "')" & @CRLF)
@@ -1536,18 +1749,6 @@ Func _DB_Click_Listview()
 	Sleep(200)
 	_Create_HTMLView_GUI()
 	Sleep(200)
-EndFunc
-
-Func _Checkbox_CheckUncheck_selected()
-	Local  $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
-	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
-	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index
-
-	If _GUICtrlListView_GetItemChecked($listview, $ListView_Selected_Row_Nr) Then
-		_GUICtrlListView_SetItemChecked($ListView, $ListView_Selected_Row_Nr, false)
-	Else
-		_GUICtrlListView_SetItemChecked($ListView, $ListView_Selected_Row_Nr, true)
-	EndIf
 EndFunc
 
 Func _Change_Preview_Icon_ListView()
@@ -1699,6 +1900,51 @@ Func _Checkbox_CheckUncheck()
 	EndIf
 EndFunc
 
+Func _Checkbox_USE_PHP_GamePage()
+	Local $State_Checkbox = GUICtrlRead($Checkbox_USE_PHP_GamePage)
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+
+	If $State_Checkbox = "" Then
+		If $Advanced_Settings = "true" Then
+			GUICtrlSetData($Checkbox_USE_PHP_GamePage, "X")
+			IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
+
+			If Not FileExists(@ScriptDir & "\php\") Then
+				$DOWNLOAD_URL = "http://windows.php.net/downloads/releases/php-7.1.6-nts-Win32-VC14-x86.zip"
+
+				Local $Abfrage = MsgBox (4, "Needed Files not found", "Needed Files for the 'PHP Function' not found." & @CRLF & @CRLF & _
+														"Do you want to Download the needed Files from the following Page?" & @CRLF & _
+														$DOWNLOAD_URL & @CRLF & @CRLF & _
+														"Warning:" & @CRLF & _
+														"This web server was designed to aid application development. It may also be" & @CRLF & _
+														"useful for testing purposes or for application demonstrations that are run" & @CRLF & _
+														"in controlled environments. It is not intended to be a full-featured web server." & @CRLF & _
+														"It should not be used on a public network." & @CRLF)
+
+				If $Abfrage = 6 Then
+					_Loading_GUI()
+					DirCreate(@ScriptDir & "\php\")
+					InetGet($DOWNLOAD_URL, @ScriptDir & "\temp.zip", 16, 0)
+					Sleep(1000)
+					_Zip_UnzipAll(@ScriptDir & "\temp.zip", @ScriptDir & "\php\")
+					FileDelete(@ScriptDir & "\temp.zip")
+					Sleep(2000)
+					GUIDelete($GUI_Loading)
+				EndIf
+
+			Else
+				GUICtrlSetData($Checkbox_USE_PHP_GamePage, "X")
+				IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
+			EndIf
+		Else
+			MsgBox(0, "Advanced Settings", "Advanced Settings needs to be enabled [settings] to be able to use this function.")
+		EndIf
+	Else
+		GUICtrlSetData($Checkbox_USE_PHP_GamePage, "")
+		IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "false")
+	EndIf
+EndFunc
+
 Func _Button_Create_GamePage_all()
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
@@ -1783,6 +2029,7 @@ Func _Button_Create_GamePage_all()
 EndFunc
 
 Func _Button_Create_GamePage_selected()
+	$USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
@@ -1827,30 +2074,35 @@ Func _Button_Create_GamePage_selected()
 	If $ButtonTAB_State = "5" Then $listview_Temp = $ListView_5
 	If $ButtonTAB_State = "6" Then $listview_Temp = $ListView_6
 
-	If FileExists($GamePage_path) Then FileDelete($GamePage_path)
 
-	FileWrite($GamePage_path, '<html>' & @CRLF & _
-								'<head>' & @CRLF & _
-								'  <title>VR Game Launcher Page</title>' & @CRLF & _
-								'  <link href="css/lightvr.css" rel="stylesheet" type="text/css">' & @CRLF & _
-								"  <link href='http://fonts.googleapis.com/css?family=Josefin+Sans&subset=latin,latin-ext' rel='stylesheet' type='text/css'>" & @CRLF & _
-								'  <style type="text/css">' & @CRLF & _
-								'.auto-style1 {' & @CRLF & _
-								'	text-decoration: none;' & @CRLF & _
-								'}' & @CRLF & _
-								'</style>' & @CRLF & _
-								'</head>' & @CRLF & _
-								'<body>' & @CRLF & _
-								'  <div class="navigation-bar w-container">' & @CRLF & _
-								'	  <a href="https://github.com/CogentHub/HomeLoader/"><img src="images/logo.png" width="300" /></a>' & @CRLF & _
-								'  	<a href="https://github.com/CogentHub/HomeLoader/">' & @CRLF & _
-								'	  <span class="auto-style3">Created by Home Loader ' & $Version & '</span></a></div>' & @CRLF & _
-								'  <div class="content w-container" style="height: 45px; margin-top: 8px">' & @CRLF & _
-								'  </div>' & @CRLF & _
-								'  <div class="icons">')
-
+	Local $TEMP_NR_selected = "false"
 	For $NR = 1 To $NR_Applications
-		If _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1) Then
+		Local $TEMP_selected = _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1)
+		If $TEMP_selected = "true" Then $TEMP_NR_selected = "true"
+	Next
+	;If $TEMP_NR_selected = "false" Then MsgBox(0, "false","false")
+	;If $TEMP_NR_selected = "true" Then MsgBox(0, "true","true")
+
+	If $TEMP_NR_selected = "true" Then
+		If FileExists($GamePage_path) Then FileDelete($GamePage_path)
+
+		FileWrite($GamePage_path, '<html>' & @CRLF & _
+									'<head>' & @CRLF & _
+									'    <title>GamesPage 1</title>' & @CRLF & _
+									'    <link href="css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
+									'</head>' & @CRLF & _
+									'<body>' & @CRLF & _
+									'<script>' & @CRLF & _
+									'    function VRTStartCommand(cmd) {' & @CRLF & _
+									"      var s = '{ " & '"LightVRCallback": { "ShellExec": "' & "' + cmd + '" & '" } }' & "';" & @CRLF & _
+									'      console.log(s);' & @CRLF & _
+									'    }' & @CRLF & _
+									'</script>' & @CRLF & _
+									'<div class="icons">' & @CRLF)
+
+
+		For $NR = 1 To $NR_Applications
+			If _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1) Then
 				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
 				Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR, "appid", "")
 				Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $NR, "name", "")
@@ -1870,49 +2122,62 @@ Func _Button_Create_GamePage_selected()
 					FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
 
-				FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="http://localhost:8000/WebPage/' & $Application_appid & '.php"' & ' class="auto-style1">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $WinName = "VR Toolbox" And $USE_PHP_WebServer <> "true" Then
+					FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				EndIf
 
-				FileWrite($Install_DIR & "/WebPage/" & $Application_appid & ".php", '<head>' & @CRLF & _
-							'<style type="text/css">' & @CRLF & _
-							'{' & @CRLF & _
-							"  font-family: 'Josefin Sans', sans-serif;" & @CRLF & _
-							'  -webkit-box-sizing: border-box;' & @CRLF & _
-							'  -moz-box-sizing: border-box;' & @CRLF & _
-							'  box-sizing: border-box;' & @CRLF & _
-							'}' & @CRLF & _
-							'.auto-style1 {' & @CRLF & _
-							'	font-family: "WRC Clean Bold";' & @CRLF & _
-							'	font-size: medium;' & @CRLF & _
-							'}' & @CRLF & _
-							'.auto-style2 {' & @CRLF & _
-							'	color: #0000FF;' & @CRLF & _
-							'}' & @CRLF & _
-							'</style>' & @CRLF & _
-							'</head>' & @CRLF & _
-							'<?php' & @CRLF & _
-							"	if (file_exists('temp.txt'))" & @CRLF & _
-							"	{" & @CRLF & _
-							"		$dat = " & $Application_appid & ";" & @CRLF & _
-							"		$fil = fopen('temp.txt', w);" & @CRLF & _
-							"		fwrite($fil, $dat);" & @CRLF & _
-							"	}" & @CRLF & _
-							"	else" & @CRLF & _
-							"	{" & @CRLF & _
-							"		$dat = " & $Application_appid & ";" & @CRLF & _
-							"		$fil = fopen('temp.txt', w);" & @CRLF & _
-							"		fwrite($fil, $dat);" & @CRLF & _
-							"		fclose($fil);" & @CRLF & _
-							"	}" & @CRLF & _
-							"?>" & @CRLF & _
-							'<img src="' & $WebPage_IconPath & '" width="300">' & @CRLF & _
-							'<p class="auto-style1">Loading... ' & '<span class="auto-style2"> ' & $Application_name & '</span></p>')
-		Else
+				If $WinName <> "VR Toolbox" And $USE_PHP_WebServer <> "true" Then
+					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				EndIf
 
-		EndIf
-	Next
-	FileWriteLine($GamePage_path, '  </div>')
-	FileWriteLine($GamePage_path, '</body>')
-	FileWriteLine($GamePage_path, '</html>')
+				If $USE_PHP_WebServer = "true" Then
+					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="http://localhost:8000/WebPage/' & $Application_appid & '.php"' & ' class="auto-style1">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+
+					FileWrite($Install_DIR & "/WebPage/" & $Application_appid & ".php", '<head>' & @CRLF & _
+								'<style type="text/css">' & @CRLF & _
+								'{' & @CRLF & _
+								"  font-family: 'Josefin Sans', sans-serif;" & @CRLF & _
+								'  -webkit-box-sizing: border-box;' & @CRLF & _
+								'  -moz-box-sizing: border-box;' & @CRLF & _
+								'  box-sizing: border-box;' & @CRLF & _
+								'}' & @CRLF & _
+								'.auto-style1 {' & @CRLF & _
+								'	font-family: "WRC Clean Bold";' & @CRLF & _
+								'	font-size: medium;' & @CRLF & _
+								'}' & @CRLF & _
+								'.auto-style2 {' & @CRLF & _
+								'	color: #0000FF;' & @CRLF & _
+								'}' & @CRLF & _
+								'</style>' & @CRLF & _
+								'</head>' & @CRLF & _
+								'<?php' & @CRLF & _
+								"	if (file_exists('temp.txt'))" & @CRLF & _
+								"	{" & @CRLF & _
+								"		$dat = " & $Application_appid & ";" & @CRLF & _
+								"		$fil = fopen('temp.txt', w);" & @CRLF & _
+								"		fwrite($fil, $dat);" & @CRLF & _
+								"	}" & @CRLF & _
+								"	else" & @CRLF & _
+								"	{" & @CRLF & _
+								"		$dat = " & $Application_appid & ";" & @CRLF & _
+								"		$fil = fopen('temp.txt', w);" & @CRLF & _
+								"		fwrite($fil, $dat);" & @CRLF & _
+								"		fclose($fil);" & @CRLF & _
+								"	}" & @CRLF & _
+								"?>" & @CRLF & _
+								'<img src="' & $WebPage_IconPath & '" width="300">' & @CRLF & _
+								'<p class="auto-style1">Loading... ' & '<span class="auto-style2"> ' & $Application_name & '</span></p>')
+				EndIf
+			Else
+
+			EndIf
+		Next
+		FileWriteLine($GamePage_path, ' </div>')
+		FileWriteLine($GamePage_path, '</body>')
+		FileWriteLine($GamePage_path, '</html>')
+	Else
+		MsgBox(48, "No Application selected", "You need to select at least one Application to be able to create the HTML page.")
+	EndIf
 EndFunc
 
 Func _Button_Add_to_Custom()
@@ -1980,12 +2245,22 @@ Func _Button_Add_to_Custom()
 	EndIf
 EndFunc
 
-Func _Checkbox_Close_Window()
-	Local $State_Checkbox = GUICtrlRead($Check_Close_Window)
-	If $State_Checkbox = "" Then
-		GUICtrlSetData($Check_Close_Window, "X")
+
+Func _Button_HomeLoaderSettings()
+	If FileExists($Install_DIR & "Settings.exe") Then
+		ShellExecute($Install_DIR & "Settings.exe")
 	Else
-		GUICtrlSetData($Check_Close_Window, "")
+		ShellExecute($Install_DIR & "Settings.au3")
+	EndIf
+	Exit
+EndFunc
+
+Func _Button_Start_SteamVR()
+	If WinExists("Home Loader") Then WinClose("Home Loader")
+	If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
+		ShellExecute($Install_DIR & "StartSteamVRHome.exe")
+	Else
+		ShellExecute($Install_DIR & "StartSteamVRHome.au3")
 	EndIf
 EndFunc
 
@@ -2241,16 +2516,7 @@ Func _Button_ReScan_Steam_Library()
 	_GUICtrlStatusBar_SetText($Statusbar, "Rescan of Steam Library finished." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
 
-Func _Button_Restart_HomeLoader()
-	Local $State_Checkbox = GUICtrlRead($Check_Close_Window)
-	If WinExists("Home Loader") Then WinClose("Home Loader")
-	If FileExists($Install_DIR & "HomeLoader.exe") Then
-		ShellExecute($Install_DIR & "HomeLoader.exe")
-	Else
-		ShellExecute($Install_DIR & "HomeLoader.au3")
-	EndIf
-	If $State_Checkbox = "X" Then Exit
-EndFunc
+
 #endregion
 
 #Region Func Add to Library GUI
@@ -2384,6 +2650,15 @@ Func _Button_Exit_Settings_GUI()
 	$Install_Folder_Steam_3 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_3", "")
 	$Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 	$Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
+	If $First_Start = "true" Then
+		If FileExists($Install_DIR & "Settings.exe") Then
+			ShellExecute($Install_DIR & "Settings.exe")
+		Else
+			ShellExecute($Install_DIR & "Settings.au3")
+		EndIf
+		IniWrite($Config_INI, "Settings", "First_Start", "Settings")
+		Exit
+	EndIf
 EndFunc
 
 Func _Button_Install_Folder_Steam_1()
@@ -2746,7 +3021,7 @@ EndFunc
 Func _Button_Add2Steam_Settings_GUI()
 	_Button_Save_Settings_GUI()
 
-	If Not FileExists($default_vrsettings_File_Backup) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_Backup, $FC_OVERWRITE)
+	If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
 
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -2794,7 +3069,7 @@ Func _Button_Add2Steam_Settings_GUI()
 	Next
 	FileCopy($default_vrsettings_File_new, $default_vrsettings_File, $FC_OVERWRITE)
 	FileDelete($default_vrsettings_File_new)
-	If Not FileExists($default_vrsettings_File) Then FileCopy($default_vrsettings_File_Backup, $default_vrsettings_File, $FC_OVERWRITE)
+	If Not FileExists($default_vrsettings_File) Then FileCopy($default_vrsettings_File_BAK, $default_vrsettings_File, $FC_OVERWRITE)
 EndFunc
 
 Func _Button_StartGame_Settings_GUI()
@@ -2817,6 +3092,15 @@ EndFunc
 #endregion
 
 #Region Func Home Loader
+Func _FirstStart_Restart()
+	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($Install_DIR & "HomeLoaderLibrary.exe", "", $Install_DIR)
+	Else
+		ShellExecute($Install_DIR & "HomeLoaderLibrary.au3", "", $Install_DIR)
+	EndIf
+	Exit
+EndFunc
+
 Func _Restart()
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
 	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
