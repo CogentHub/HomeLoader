@@ -9,7 +9,7 @@ Opt("GUIOnEventMode", 1)
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
-Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "false")
+Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $State_USE_Key_Presses = IniRead($Config_INI, "Settings", "USE_Key_Presses", "")
@@ -55,8 +55,8 @@ If $State_USE_Key_Presses = "true" Then
 	_Key_Presses_Detection()
 EndIf
 
-If $Advanced_Settings = "true" Then
-	If $Start_HomeLoader_with_HomeApp = "true" Then _Start_Home_Loader()
+If $Advanced_Settings = "true" And $Start_HomeLoader_with_HomeApp = "true" Then
+	_Start_Home_Loader()
 EndIf
 
 _Start_Home_APP()
