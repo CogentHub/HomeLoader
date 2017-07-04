@@ -15,8 +15,6 @@
 #include "_GDIPlus_WTOB.au3"
 #include <GDIPlus.au3>
 
-#include <Zip.au3>
-
 
 Opt("GUIOnEventMode", 1)
 
@@ -95,10 +93,10 @@ EndIf
 _First_Start_Empty_Check_1()
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
-If $default_vrsettings_File = "" Then MsgBox(48, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $default_vrsettings_File = "" Then MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK, $FC_OVERWRITE)
-If $Steam_tools_vrmanifest_File = ""  Then MsgBox(48, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $Steam_tools_vrmanifest_File = ""  Then MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 
 If $First_Start = "true" Then
@@ -128,7 +126,7 @@ If $Advanced_Settings = "true" Then
 		_Start_PHP_WebServer()
 	EndIf
 Else
-	_Exit()
+	;_Exit()
 EndIf
 
 
@@ -154,14 +152,14 @@ Func _First_Start_Empty_Check_1()
 		If $Install_Folder_Steam_Search_Folder <> "" Then
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Search_Folder & "\")
 		Else
-			MsgBox(0, "Steam folder", "Steam folder was not found." & @CRLF & _
+			MsgBox($MB_ICONINFORMATION, "Steam folder", "Steam folder was not found." & @CRLF & _
 							"Choose the folder before continue." & @CRLF)
 
 			Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Search_Folder & "\")
 			If $FileSelectFolder <> "" Then
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
 			Else
-				MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+				MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 				_Restart_HomeLoader()
 			EndIf
@@ -218,14 +216,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($default_vrsettings_File) Then
-				MsgBox(0, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Default.vrsettings File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
 					_Restart_HomeLoader()
 				EndIf
@@ -296,14 +294,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($Steam_tools_vrmanifest_File) Then
-				MsgBox(0, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 					_Restart_HomeLoader()
 				EndIf
@@ -966,7 +964,7 @@ Func _Copy_Icon_2_Icon_Folder()
 	EndIf
 
 	If $Icon_Folder_1 = "" And $Icon_Folder_2 = "" And $Icon_Folder_3 = "" Then
-		MsgBox(4, "", "You need at least one Icon Folder path." & @CRLF & "Go to settings menu and enter an Icon path." & @CRLF & "Or disable the 'Add PlayersOnline to Icons function'.")
+		MsgBox($MB_ICONWARNING, "", "You need at least one Icon Folder path." & @CRLF & "Go to settings menu and enter an Icon path." & @CRLF & "Or disable the 'Add PlayersOnline to Icons function'.")
 	EndIf
 EndFunc
 
@@ -1002,7 +1000,7 @@ Func _Ident_GameID()
 			If $Check_GameName <> "" And $Check_appid <> "" Then
 				TrayTip("Home Loader", "Loaded SS Values for: " & @CRLF & $Check_GameName & " [" & $Check_appid & "]" & @CRLF & $Check_renderTargetMultiplier & " / " & $Check_supersampleScale & @CRLF & "SS Filtering = " & $Check_allowSupersampleFiltering, 5, $TIP_ICONASTERISK)
 
-				;MsgBox(0, $Check_appid, $Check_GameName & @CRLF & $Check_appid & @CRLF & $Check_renderTargetMultiplier & " / " & $Check_supersampleScale & @CRLF & "SS Filtering = " & $Check_allowSupersampleFiltering)
+				;MsgBox($MB_ICONINFORMATION, $Check_appid, $Check_GameName & @CRLF & $Check_appid & @CRLF & $Check_renderTargetMultiplier & " / " & $Check_supersampleScale & @CRLF & "SS Filtering = " & $Check_allowSupersampleFiltering)
 
 				$Application_name = $Check_GameName
 				$SteamGameID = $Check_appid
@@ -1105,7 +1103,7 @@ Func _Write_SS_Image_2_Image()
 	$hImage1_Path = $Icons & "460x215\" & "steam.app." & $Check_AppId & ".jpg"
 	$hImage2_Path = @ScriptDir & "\" & "SS_Values.jpg"
 
-	;MsgBox(0, $Check_AppId, $hImage1_Path & @CRLF & @CRLF & $hImage2_Path)
+	;MsgBox($MB_ICONINFORMATION, $Check_AppId, $hImage1_Path & @CRLF & @CRLF & $hImage2_Path)
 
 	$Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
 	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
@@ -1190,7 +1188,7 @@ Func _Copy_SS_Icon_2_Icon_Folder()
 	EndIf
 
 	If $Icon_Folder_1 = "" And $Icon_Folder_2 = "" And $Icon_Folder_3 = "" Then
-		MsgBox(4, "", "You need at least one Icon Folder path." & @CRLF & "Go to settings menu and enter an Icon path." & @CRLF & "Or disable the 'Add PlayersOnline to Icons function'.")
+		MsgBox($MB_ICONWARNING, "", "You need at least one Icon Folder path." & @CRLF & "Go to settings menu and enter an Icon path." & @CRLF & "Or disable the 'Add PlayersOnline to Icons function'.")
 	EndIf
 EndFunc
 

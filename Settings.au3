@@ -71,10 +71,10 @@ _First_Start_Empty_Check_1()
 
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
-If $default_vrsettings_File = "" Then MsgBox(48, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $default_vrsettings_File = "" Then MsgBox($MB_ICONERROR, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK, $FC_OVERWRITE)
-If $Steam_tools_vrmanifest_File = ""  Then MsgBox(48, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $Steam_tools_vrmanifest_File = ""  Then MsgBox($MB_ICONERROR, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
@@ -83,9 +83,9 @@ If $First_Start = "true" Then
 EndIf
 
 If $First_Start = "Settings" Then
-	MsgBox(48, "First Start", "This is your first start of the program. " & @CRLF & @CRLF & _
-							"Choose your Home APP, continiue using by the HomeLoaderLibrary or Start SteamVR." & @CRLF & @CRLF & _
-							"Optional it is possible to switch to the 'Advanced mode' and use the other functions.")
+	MsgBox($MB_ICONWARNING, "Welcome to Home Loader, by CogentRifter", "Choose your Home app, and then choose HomeLoaderLibrary to set up your games" & @CRLF & @CRLF & _
+							"or Start SteamVR to just jump in." & @CRLF & @CRLF & _
+							'Click "Advanced Settings" to access additional features.')
 	IniWrite($Config_INI, "Settings", "First_Start", "false")
 EndIf
 
@@ -105,14 +105,14 @@ Func _First_Start_Empty_Check_1()
 		If $Install_Folder_Steam_Search_Folder <> "" Then
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Search_Folder & "\")
 		Else
-			MsgBox(0, "Steam folder", "Steam folder was not found." & @CRLF & _
+			MsgBox($MB_ICONINFORMATION, "Steam folder", "Steam folder was not found." & @CRLF & _
 							"Choose the folder before continue." & @CRLF)
 
 			Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Search_Folder & "\")
 			If $FileSelectFolder <> "" Then
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
 			Else
-				MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+				MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 				_Restart()
 			EndIf
@@ -169,14 +169,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($default_vrsettings_File) Then
-				MsgBox(0, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Default.vrsettings File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
 					_Restart()
 				EndIf
@@ -247,14 +247,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($Steam_tools_vrmanifest_File) Then
-				MsgBox(0, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 					_Restart()
 				EndIf
@@ -398,7 +398,7 @@ Func _StartUp_settings()
 	GUICtrlSetOnEvent($Checkbox_Add_SS_to_Icons, "_Checkbox_Add_SS_to_Icons")
 
 	$State_Checkbox_Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
-	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automaticly add SS per game", $POS_X, 210, 220, 20)
+	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automatically add SS per game", $POS_X, 210, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the saved Supersampling settings" & @CRLF & "for the current loaded game and adds these value to SteamVR.")
 		If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
@@ -445,13 +445,6 @@ Func _StartUp_settings()
 		GUICtrlSetColor(-1, "0x006600")
 		GUICtrlSetOnEvent($Button_Start_HomeLoader, "_Button_Start_HomeLoader")
 
-
-	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("Home Loader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
-		If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "HomeLoaderLibrary.bmp")
-		If Not FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "ScanHomeLoaderLibrary_first.bmp")
-		GuiCtrlSetTip(-1, "Starts Home Loader Library.")
-		GUICtrlSetOnEvent($Button_Start_HomeLoaderLibrary, "_Button_Start_HomeLoaderLibrary")
-
 	If $State_StartUp_Radio_1 <> "4" Or $State_StartUp_Radio_2 <> "4" Or $State_StartUp_Radio_3 <> "4" Or $State_StartUp_Radio_4 <> "4" Or $State_StartUp_Radio_5 <> "4" Then
 		GUICtrlSetState($Button_Start_HomeLoader, $GUI_SHOW)
 	Else
@@ -460,6 +453,13 @@ Func _StartUp_settings()
 		GUICtrlSetFont(-1, 16, 400, 2, $font_StartUp_arial)
 		GUICtrlSetColor(-1, "0xFF0000")
 	EndIf
+
+	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("Home Loader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
+		If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "HomeLoaderLibrary.bmp")
+		If Not FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "ScanHomeLoaderLibrary_first.bmp")
+		GuiCtrlSetTip(-1, "Starts Home Loader Library.")
+		GUICtrlSetOnEvent($Button_Start_HomeLoaderLibrary, "_Button_Start_HomeLoaderLibrary")
+
 
     While 1
         Switch GUIGetMsg()
@@ -616,7 +616,7 @@ EndFunc
 Func _StartUp_Radio_1() ; SteamVR Home
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -632,7 +632,8 @@ EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
 	If FileExists($HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe") Then
-		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe")
+		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
+		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe")
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	Else
 		$FileSelect = FileOpenDialog("Select 'VIVEHome.exe' File", "", "")
@@ -640,7 +641,7 @@ Func _StartUp_Radio_2() ; Vive Home
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	EndIf
 
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -664,7 +665,7 @@ Func _StartUp_Radio_3() ; Janus VR
 	If $JanusVR_Path = "" Then $JanusVR_Path = "steam://rungameid/602090"
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -681,7 +682,7 @@ EndFunc
 Func _StartUp_Radio_4() ; VR Toolbox
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -702,7 +703,7 @@ EndFunc
 Func _StartUp_Radio_0() ; VR Home
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/575430")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Home")
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -724,7 +725,7 @@ Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamStartURL)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "")
 
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -805,7 +806,7 @@ Func _BUTTON_GamePath_Folder_Other_GUI() ; Other GUI BUTTON
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $FileSelect)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "")
 
-	Local $Abfrage = MsgBox (4, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
 	If $Abfrage = 6 Then
@@ -857,10 +858,10 @@ Func _Checkbox_Add_SS_per_game()
 EndFunc
 
 Func _Button_Restore_SteamVR_Settings()
-	Local $Abfrage = MsgBox(4, "Attention!", "This function will delete the following Files and create new ones:" & @CRLF & _
-								"- default.vrsettings" &  @CRLF & _
-								"- tools.manifest" & @CRLF & @CRLF & _
-								"Do you want to continue?")
+	Local $Abfrage = MsgBox($MB_ICONWARNING, "Attention!", "This function will delete the following Files and create new ones:" & @CRLF & _
+															"- default.vrsettings" &  @CRLF & _
+															"- tools.manifest" & @CRLF & @CRLF & _
+															"Do you want to continue?")
 
 	If $Abfrage = 6 Then
 		FileDelete($default_vrsettings_File)
@@ -870,9 +871,9 @@ Func _Button_Restore_SteamVR_Settings()
 		FileCopy($Install_DIR & "Backups\tools.vrmanifest", $Steam_tools_vrmanifest_File, $FC_OVERWRITE)
 
 		If FileExists($default_vrsettings_File) And FileExists($Steam_tools_vrmanifest_File) Then
-			MsgBox(0, "Finished", "New Files successfully created/restored.", 4)
+			MsgBox($MB_ICONINFORMATION, "Finished", "New Files successfully created/restored.")
 		Else
-			MsgBox(48, "Error", "Something went wrong, new Files not created.")
+			MsgBox($MB_ICONERROR, "Error", "Something went wrong, new Files not created.")
 		EndIf
 	EndIf
 EndFunc
@@ -940,7 +941,7 @@ Func _Restore_Default_SteamVR_Home()
 EndFunc
 
 Func  _Button_Add_Shortcut_2_OH()
-	Local $Abfrage = MsgBox (4, "Add Shortcut to Oculus Home", "Create an new .exe File to start the SteamVR Home app from inside Oculus Home." & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Add Shortcut to Oculus Home", "Create an new .exe File to start the SteamVR Home app from inside Oculus Home." & @CRLF & _
 																"Use any free Game to replace/add the new File." & @CRLF & @CRLF & _
 																"Using that File as Shortcut gives you the ability to load different apps from inside" & @CRLF & _
 																"Oculus Home by pressing A, B, X, Y, RB, LB or Start on your XBox controller." & @CRLF & @CRLF & _
@@ -952,10 +953,10 @@ Func  _Button_Add_Shortcut_2_OH()
 		$OUT = $Install_DIR & "Rename.exe"
 		RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe' & ' /in ' & $IN & ' /out ' & $OUT, "", @SW_HIDE)
 		FileDelete($IN)
-		MsgBox (0, "Creation completed", "New .exe File was created in Home Loader folder:" & @CRLF & _
-																$OUT & @CRLF & @CRLF & _
-																"Copy the new File to the game folder of your choise. Rename the File so that it matches the executable of the game. Use any free Game to replace the new File." & @CRLF & _
-																"Make a Backup of the origial one or just reinstall it later if you want to use it again.")
+		MsgBox($MB_ICONINFORMATION, "Creation completed", "New .exe File was created in Home Loader folder:" & @CRLF & _
+															$OUT & @CRLF & @CRLF & _
+															"Copy the new File to the game folder of your choise. Rename the File so that it matches the executable of the game. Use any free Game to replace the new File." & @CRLF & _
+															"Make a Backup of the origial one or just reinstall it later if you want to use it again.")
 	Else
 
 	EndIf
@@ -977,13 +978,19 @@ Func _Button_Start_HomeLoader()
 EndFunc
 
 Func _Start_HomeLoader()
-	IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-	If FileExists($Install_DIR & "HomeLoader.exe") Then
-		ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+
+	If $Advanced_Settings = "true" Then
+		IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
+		If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
+			ShellExecute($Install_DIR & "StartSteamVRHome.exe", "", $Install_DIR)
+		Else
+			ShellExecute($Install_DIR & "StartSteamVRHome.au3", "", $Install_DIR)
+		EndIf
+		Exit
 	Else
-		ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+		ShellExecute("steam://rungameid/250820")
 	EndIf
-	Exit
 EndFunc
 
 Func _Button_Start_HomeLoaderLibrary()

@@ -46,7 +46,7 @@ Opt("GUIOnEventMode", 1)
 Global $GUI_Loading, $GUI_Loading_2, $AddGame2Library_GUI, $Settings_GUI, $Button_Exit_Settings_GUI, $HTML_GUI, $NR_Applications
 Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library, $NR_Library_temp
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
-Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
+Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group, $Playlist_GUI, $POS_X_PlaylistButton
 #endregion
 
 Global $font = "arial"
@@ -105,21 +105,20 @@ Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationLis
 _First_Start_Empty_Check_1()
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
-If $default_vrsettings_File = "" Then MsgBox(48, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $default_vrsettings_File = "" Then MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK, $FC_OVERWRITE)
-If $Steam_tools_vrmanifest_File = ""  Then MsgBox(48, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
+If $Steam_tools_vrmanifest_File = ""  Then MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
 
 #endregion
 
 If $First_Start = "true" Then
-	MsgBox(48, "First Start", "This is your first start of the program." & @CRLF & _
-								"Home Loader will create Backups first before you can continue to use it." & @CRLF & @CRLF & _
-								"File Backups:" & @CRLF & _
-								"- default.vrsettings" & @CRLF & _
-								"- tools.manifest" & @CRLF & @CRLF & _
-								"Check the Steam Path in settings menu and/or add additional Steam Library folders to it." & @CRLF & @CRLF & _
-								"The Steam installation folder is detected automatically, it only needs to be changed if SteamVR was not installed in the default folder.")
+	MsgBox($MB_ICONWARNING, "Welcome to Home Loader, by CogentRifter", 'The first time that you use Home Loader, it will create Backups for your' & @CRLF & _
+								'"default.vrsettings" and "tools.manifest" files.' & @CRLF & _
+								"You can find them at '" & $Install_DIR & "Backups\" & "'" & @CRLF & @CRLF & _
+								'When you tell it to, Home Loader will scan your default Steam directory' & @CRLF & _
+								'for games. Click the "Settings" icon in the lower right to add additional Steam Library folders.' & @CRLF & _
+								'If you changed the default installation path for Steam, you can change it in "Settings" as well.')
 
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
@@ -197,13 +196,11 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	; Toolbar unten
-	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 405, $DesktopHeight - 100, 145, 35, $BS_BITMAP)
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 35, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
-
-	Global $Button_Start_SteamVR = GUICtrlCreateButton("Start SteamVR", 405, $DesktopHeight - 65, 145, 29)
+	Global $Button_Start_SteamVR = GUICtrlCreateButton("Start SteamVR", 440, $DesktopHeight - 65, 145, 29)
 	GUICtrlSetFont(-1, 13, 600, 2, $font_arial)
 	GUICtrlSetColor(-1, "0x006600")
 	GuiCtrlSetTip(-1, "Starts SteamVR." & @CRLF & @CRLF &  "If activated [Normal Mode or Advanced mode] it will automaticly" & @CRLF & "load the 'HomeLoader.exe' when it starts SteamVR.")
@@ -356,7 +353,7 @@ If $First_Start <> "true" Then
 	EndIf
 
 
-	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 250, $DesktopHeight - 100, 116, 35, $BS_BITMAP)
+	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 244, $DesktopHeight - 100, 117, 35, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
 		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
@@ -365,7 +362,7 @@ If $First_Start <> "true" Then
 	EndIf
 	GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
 
-	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 250, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 245, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
 	GUICtrlSetFont(-1, 12, 400, 2, "arial")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
@@ -373,6 +370,18 @@ If $First_Start <> "true" Then
 	Else
 		GUICtrlSetState($Combo_Add_to_Custom, $GUI_HIDE)
 	EndIf
+
+
+
+	Local $Check_Playlist_State = IniRead($Config_INI, "TEMP", "Playlist", "")
+	If $Check_Playlist_State = "true" Then $POS_X_PlaylistButton = 369
+	If $Check_Playlist_State = "false" Then $POS_X_PlaylistButton = 10000
+
+	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", $POS_X_PlaylistButton, $DesktopHeight - 90, 56, 46, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "Playlist.bmp")
+	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
+
+
 
 	GUICtrlCreateTabItem("")
 	#endregion
@@ -406,6 +415,8 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
 	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
+	GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
+
 
 	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
@@ -459,14 +470,14 @@ Func _First_Start_Empty_Check_1()
 		If $Install_Folder_Steam_Search_Folder <> "" Then
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Search_Folder & "\")
 		Else
-			MsgBox(0, "Steam folder", "Steam folder was not found." & @CRLF & _
+			MsgBox($MB_ICONINFORMATION, "Steam folder", "Steam folder was not found." & @CRLF & _
 							"Choose the folder before continue." & @CRLF)
 
 			Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Search_Folder & "\")
 			If $FileSelectFolder <> "" Then
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
 			Else
-				MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+				MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 				_Restart()
 			EndIf
@@ -523,14 +534,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($default_vrsettings_File) Then
-				MsgBox(0, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Default.vrsettings File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
 					_Restart()
 				EndIf
@@ -601,14 +612,14 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 
 			If Not FileExists($Steam_tools_vrmanifest_File) Then
-				MsgBox(0, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
+				MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
 					"Choose the File before continue." & @CRLF)
 
 				Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 				If $FileSelect <> "" Then
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
 				Else
-					MsgBox(48, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+					MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 					IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 					_Restart()
 				EndIf
@@ -666,7 +677,7 @@ Func _Settings_GUI()
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
-	GUICtrlCreateLabel("Steamapps 1:", 10, 42, 270, 25)
+	GUICtrlCreateLabel("Library Folder 1:", 10, 42, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_1 = GUICtrlCreateInput($Install_Folder_Steam_1, 10, 65, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -683,7 +694,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 2:", 10, 97, 270, 25)
+	GUICtrlCreateLabel("Library Folder 2:", 10, 97, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_2 = GUICtrlCreateInput($Install_Folder_Steam_2, 10, 120, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -700,7 +711,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 3:", 10, 152, 270, 25)
+	GUICtrlCreateLabel("Library Folder 3:", 10, 152, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_3 = GUICtrlCreateInput($Install_Folder_Steam_3, 10, 175, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -717,7 +728,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 4:", 10, 207, 270, 25)
+	GUICtrlCreateLabel("Library Folder 4:", 10, 207, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_4 = GUICtrlCreateInput($Install_Folder_Steam_4, 10, 230, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -734,7 +745,7 @@ Func _Settings_GUI()
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Steamapps 5:", 10, 262, 270, 25)
+	GUICtrlCreateLabel("Library Folder 5:", 10, 262, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 	Global $Input_Install_Folder_Steam_5 = GUICtrlCreateInput($Install_Folder_Steam_5, 10, 285, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
@@ -1006,6 +1017,39 @@ Func _SS_GUI()
 
 	GUISetState()
 EndFunc
+
+
+Func _Playlist_GUI()
+
+	$Playlist_GUI = GUICreate("Playlist", 540, 600, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+
+	GUICtrlCreateGroup("Create / Add Appl. to Playlist", 5, 5, 531, 325)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
+
+	Global $Combo_Choose_TAB = GUICtrlCreateCombo("Choose TAB", 10, 50, 170, 25, $CBS_DROPDOWNLIST)
+	GUICtrlSetData(-1, $TAB1_Label & "|" & $TAB2_Label & "|" & $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+
+	Global $Combo_Choose_Game = GUICtrlCreateCombo("Choose Application", 10, 85, 170, 25)
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+
+	_Create_ListView_7()
+
+	Global $Button_Add2Playlist = GUICtrlCreateButton("Add to Playlist", 9, 120, 172, 36, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Add2Playlist, $gfx & "Add2Playlist.bmp")
+
+
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, 560, 35, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Exit_Settings_GUI")
+	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
+	GuiCtrlSetTip(-1, "Closes GUI Window.")
+
+	GUISetState()
+EndFunc
+
+
 
 Func _Update_StatusBar()
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
@@ -1446,6 +1490,20 @@ Func _Create_ListView_6()
 	GUICtrlSetState($listview_6, $GUI_HIDE)
 EndFunc
 
+Func _Create_ListView_7() ; Playlist
+	$listview_7 = GUICtrlCreateListView("", 195, 50, 330, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_7, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
+	GUICtrlSetFont($listview_7, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_7, "Name", 118)
+	_GUICtrlListView_AddColumn($listview_7, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_7, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_7, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_7, "aSF", 45, 2)
+	;GUICtrlSetState($listview_7, $GUI_HIDE)
+EndFunc
+
 Func _Read_from_INI_ADD_2_ListView()
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
 	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -1651,7 +1709,7 @@ Func _RM_Menu_Item_5() ; Create Shortcut File
 	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
 	$allowSupersampleFiltering_value = StringLeft($allowSupersampleFiltering_value, 1)
 
-	Local $Abfrage = MsgBox (4, "Create SS Shortcut", "Selected Game:" & @CRLF & @CRLF & _
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Create SS Shortcut", "Selected Game:" & @CRLF & @CRLF & _
 														$Steam_app_Name & " [" & $Game_ID & "]" & @CRLF & @CRLF & _
 														"Do you want to create the Shortcut File?" & @CRLF)
 
@@ -1661,7 +1719,7 @@ Func _RM_Menu_Item_5() ; Create Shortcut File
 		$OUT = $Install_DIR & "SS_" & $renderTargetMultiplier_value & "_" & $supersampleScale_value & "_" & $allowSupersampleFiltering_value & "___" & $Steam_app_Name_Replaced & ".exe"
 		RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe' & ' /in ' & $IN & ' /out ' & $OUT, "", @SW_HIDE)
 		FileDelete($IN)
-		MsgBox (0, "Creation completed", "New Shortcut File was created in Home Loader folder:" & @CRLF & @CRLF & _
+		MsgBox($MB_ICONINFORMATION, "Creation completed", "New Shortcut File was created in Home Loader folder:" & @CRLF & @CRLF & _
 																$OUT & @CRLF & @CRLF & _
 																"Copy the new Shortcut wherever you want and rename the File if wanted.")
 	Else
@@ -1912,7 +1970,7 @@ Func _Checkbox_USE_PHP_GamePage()
 			If Not FileExists(@ScriptDir & "\php\") Then
 				$DOWNLOAD_URL = "http://windows.php.net/downloads/releases/php-7.1.6-nts-Win32-VC14-x86.zip"
 
-				Local $Abfrage = MsgBox (4, "Needed Files not found", "Needed Files for the 'PHP Function' not found." & @CRLF & @CRLF & _
+				Local $Abfrage = MsgBox($MB_YESNO, "Needed Files not found", "Needed Files for the 'PHP Function' not found." & @CRLF & @CRLF & _
 														"Do you want to Download the needed Files from the following Page?" & @CRLF & _
 														$DOWNLOAD_URL & @CRLF & @CRLF & _
 														"Warning:" & @CRLF & _
@@ -1937,7 +1995,7 @@ Func _Checkbox_USE_PHP_GamePage()
 				IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
 			EndIf
 		Else
-			MsgBox(0, "Advanced Settings", "Advanced Settings needs to be enabled [settings] to be able to use this function.")
+			MsgBox($MB_ICONINFORMATION, "Advanced Settings", "Advanced Settings needs to be enabled [settings] to be able to use this function.")
 		EndIf
 	Else
 		GUICtrlSetData($Checkbox_USE_PHP_GamePage, "")
@@ -2080,8 +2138,6 @@ Func _Button_Create_GamePage_selected()
 		Local $TEMP_selected = _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1)
 		If $TEMP_selected = "true" Then $TEMP_NR_selected = "true"
 	Next
-	;If $TEMP_NR_selected = "false" Then MsgBox(0, "false","false")
-	;If $TEMP_NR_selected = "true" Then MsgBox(0, "true","true")
 
 	If $TEMP_NR_selected = "true" Then
 		If FileExists($GamePage_path) Then FileDelete($GamePage_path)
@@ -2176,7 +2232,7 @@ Func _Button_Create_GamePage_selected()
 		FileWriteLine($GamePage_path, '</body>')
 		FileWriteLine($GamePage_path, '</html>')
 	Else
-		MsgBox(48, "No Application selected", "You need to select at least one Application to be able to create the HTML page.")
+		MsgBox($MB_ICONWARNING, "No Application selected", "You need to select at least one Application to be able to create the HTML page.")
 	EndIf
 EndFunc
 
@@ -2256,11 +2312,16 @@ Func _Button_HomeLoaderSettings()
 EndFunc
 
 Func _Button_Start_SteamVR()
-	If WinExists("Home Loader") Then WinClose("Home Loader")
-	If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
-		ShellExecute($Install_DIR & "StartSteamVRHome.exe")
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+
+	If $Advanced_Settings = "true" Then
+		If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
+			ShellExecute($Install_DIR & "StartSteamVRHome.exe")
+		Else
+			ShellExecute($Install_DIR & "StartSteamVRHome.au3")
+		EndIf
 	Else
-		ShellExecute($Install_DIR & "StartSteamVRHome.au3")
+		ShellExecute("steam://rungameid/250820")
 	EndIf
 EndFunc
 
@@ -2274,7 +2335,7 @@ Func _Combo_SteamLibrary()
 		If $Install_Folder_Steam_1 <> "" Then
 			_Read_from_INI_ADD_2_ListView()
 		Else
-			MsgBox(48, "Attention!", "Steam Library Folder 1 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 1")
+			MsgBox($MB_ICONWARNING, "Attention!", "Steam Library Folder 1 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 1")
 			GUICtrlSetData($Combo_SteamLibrary, "Steam Library 1")
 			_Settings_GUI()
 		EndIf
@@ -2285,7 +2346,7 @@ Func _Combo_SteamLibrary()
 		If $Install_Folder_Steam_2 <> "" Then
 			_Read_from_INI_ADD_2_ListView()
 		Else
-			MsgBox(48, "Attention!", "Steam Library Folder 2 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 2")
+			MsgBox($MB_ICONWARNING, "Attention!", "Steam Library Folder 2 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 2")
 			GUICtrlSetData($Combo_SteamLibrary, "Steam Library 1")
 			_Settings_GUI()
 		EndIf
@@ -2296,7 +2357,7 @@ Func _Combo_SteamLibrary()
 		If $Install_Folder_Steam_3 <> "" Then
 			_Read_from_INI_ADD_2_ListView()
 		Else
-			MsgBox(48, "Attention!", "Steam Library Folder 3 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 3.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Steam Library Folder 3 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 3.")
 			GUICtrlSetData($Combo_SteamLibrary, "Steam Library 1")
 			_Settings_GUI()
 		EndIf
@@ -2307,7 +2368,7 @@ Func _Combo_SteamLibrary()
 		If $Install_Folder_Steam_4 <> "" Then
 			_Read_from_INI_ADD_2_ListView()
 		Else
-			MsgBox(48, "Attention!", "Steam Library Folder 4 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 4")
+			MsgBox($MB_ICONWARNING, "Attention!", "Steam Library Folder 4 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 4")
 			GUICtrlSetData($Combo_SteamLibrary, "Steam Library 1")
 			_Settings_GUI()
 		EndIf
@@ -2318,7 +2379,7 @@ Func _Combo_SteamLibrary()
 		If $Install_Folder_Steam_5 <> "" Then
 			_Read_from_INI_ADD_2_ListView()
 		Else
-			MsgBox(48, "Attention!", "Steam Library Folder 5 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 5.ini")
+			MsgBox($MB_ICONWARNING, "Attention!", "Steam Library Folder 5 is empty." & @CRLF & "Go to settings menu and enter the path to Steam Library 5.ini")
 			GUICtrlSetData($Combo_SteamLibrary, "Steam Library 1")
 			_Settings_GUI()
 		EndIf
@@ -2629,7 +2690,7 @@ Func _Button_SAVE_APP()
 	IniWrite($config_ini, "TEMP", "Value_IconPath_Folder", "")
 
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "ApplicationList", "NR_Applications", $NewAppNR)
-	MsgBox(0, "Finished", "New Application added", 3)
+	MsgBox($MB_ICONINFORMATION, "Finished", "New Application added", 3)
 EndFunc
 
 Func _Button_Exit_AddGame2Library_GUI()
@@ -2667,7 +2728,7 @@ Func _Button_Install_Folder_Steam_1()
 		GUICtrlSetData($Input_Install_Folder_Steam_1, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 	EndIf
 EndFunc
@@ -2678,7 +2739,7 @@ Func _Button_Install_Folder_Steam_2()
 		GUICtrlSetData($Input_Install_Folder_Steam_2, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_2", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_2", "")
 	EndIf
 EndFunc
@@ -2689,7 +2750,7 @@ Func _Button_Install_Folder_Steam_3()
 		GUICtrlSetData($Input_Install_Folder_Steam_3, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_3", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_3", "")
 	EndIf
 EndFunc
@@ -2700,7 +2761,7 @@ Func _Button_Install_Folder_Steam_4()
 		GUICtrlSetData($Input_Install_Folder_Steam_4, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_4", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 	EndIf
 EndFunc
@@ -2711,7 +2772,7 @@ Func _Button_Install_Folder_Steam_5()
 		GUICtrlSetData($Input_Install_Folder_Steam_5, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_5", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 	EndIf
 EndFunc
@@ -2761,7 +2822,7 @@ Func _Button_Install_Folder_Steam_1_save()
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_1", $Value_Input)
 	Else
 		If $Check_Value_Input <> "" Then
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 		EndIf
 	EndIf
@@ -2776,7 +2837,7 @@ Func _Button_Install_Folder_Steam_2_save()
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_2", $Value_Input)
 	Else
 		If $Check_Value_Input <> "" Then
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_2", "")
 		EndIf
 	EndIf
@@ -2791,7 +2852,7 @@ Func _Button_Install_Folder_Steam_3_save()
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_3", $Value_Input)
 	Else
 		If $Check_Value_Input <> "" Then
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_3", "")
 		EndIf
 	EndIf
@@ -2806,7 +2867,7 @@ Func _Button_Install_Folder_Steam_4_save()
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_4", $Value_Input)
 	Else
 		If $Check_Value_Input <> "" Then
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 		EndIf
 	EndIf
@@ -2821,7 +2882,7 @@ Func _Button_Install_Folder_Steam_5_save()
 		IniWrite($config_ini, "Folders", "Install_Folder_Steam_5", $Value_Input)
 	Else
 		If $Check_Value_Input <> "" Then
-			MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+			MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 		EndIf
 	EndIf
@@ -2854,7 +2915,7 @@ Func _Button_Icon_Folder_3()
 		GUICtrlSetData($Input_Icon_Folder_3, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Icon_Folder_3", $FileSelectFolder & "\")
 	Else
-		MsgBox(48, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
+		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Icon_Folder_3", "")
 	EndIf
 EndFunc
