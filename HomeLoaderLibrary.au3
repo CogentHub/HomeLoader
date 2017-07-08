@@ -47,13 +47,16 @@ Global $GUI_Loading, $GUI_Loading_2, $AddGame2Library_GUI, $Settings_GUI, $Butto
 Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library, $NR_Library_temp
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
 Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group, $Playlist_GUI, $POS_X_PlaylistButton
+Global $TAB_NR, $listview_7, $listview_8, $listview_9, $listview_10, $listview_11, $listview_TEMP
+Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
+Global $Checkbox_Add_break, $Combo_Add_break
 #endregion
 
 Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.45"
+Global $Version = "0.46"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -101,6 +104,14 @@ Global $ApplicationList_Custom_2_INI = $ApplicationList_Folder & "ApplicationLis
 Global $ApplicationList_Custom_3_INI = $ApplicationList_Folder & "ApplicationList_Custom_3.ini"
 Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationList_Custom_4.ini"
 
+Global $Playlist_1_INI = $Install_DIR & "System\Playlist\Playlist_1.ini"
+Global $Playlist_2_INI = $Install_DIR & "System\Playlist\Playlist_2.ini"
+Global $Playlist_3_INI = $Install_DIR & "System\Playlist\Playlist_3.ini"
+Global $Playlist_4_INI = $Install_DIR & "System\Playlist\Playlist_4.ini"
+Global $Playlist_5_INI = $Install_DIR & "System\Playlist\Playlist_5.ini"
+Global $Add_break = IniRead($Playlist_1_INI, "Playlist", "Add_break", "false")
+
+IniWrite($config_ini, "Settings", "Version", $Version)
 
 _First_Start_Empty_Check_1()
 
@@ -218,12 +229,6 @@ If $First_Start <> "true" Then
 	_GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
 	GuiCtrlSetTip(-1, "Close.")
 
-	; TABS ERSTELLEN
-	Global $TAB_NR = GUICtrlCreateTab(2, 150, 1095, 575, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
-	GUICtrlSetOnEvent($TAB_NR, "_Tab")
-
-	Global $TAB_NR_1 = GUICtrlCreateTab(70, 105, 420, 380)
-	Global $TAB_NR_1_1 = GUICtrlCreateTabItem("")
 
 	Global $ButtonTAB_Steam_Library = GUICtrlCreateButton($TAB1_Label, 0, 90, 100)
 	Global $ButtonTAB_Non_Steam_Appl = GUICtrlCreateButton($TAB2_Label, 100, 90, 100)
@@ -299,16 +304,6 @@ If $First_Start <> "true" Then
 	_Create_ListView_5()
 	_Create_ListView_6()
 
-	Global $contextmenu = GUICtrlCreateContextMenu($listview)
-	Global $RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	Global $RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
-	Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	Global $RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
-	Global $RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	Global $RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
-	Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
-
-
 	If $ButtonTAB_State = "1" Then GUICtrlSetState($listview, $GUI_SHOW)
 	If $ButtonTAB_State = "2" Then GUICtrlSetState($listview_2, $GUI_SHOW)
 	If $ButtonTAB_State = "3" Then GUICtrlSetState($listview_3, $GUI_SHOW)
@@ -353,7 +348,7 @@ If $First_Start <> "true" Then
 	EndIf
 
 
-	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 244, $DesktopHeight - 100, 117, 35, $BS_BITMAP)
+	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 243, $DesktopHeight - 100, 117, 35, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
 		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
@@ -362,7 +357,7 @@ If $First_Start <> "true" Then
 	EndIf
 	GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
 
-	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 245, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 244, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
 	GUICtrlSetFont(-1, 12, 400, 2, "arial")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
@@ -374,16 +369,13 @@ If $First_Start <> "true" Then
 
 
 	Local $Check_Playlist_State = IniRead($Config_INI, "TEMP", "Playlist", "")
-	If $Check_Playlist_State = "true" Then $POS_X_PlaylistButton = 369
+	If $Check_Playlist_State = "true" Then $POS_X_PlaylistButton = 372
 	If $Check_Playlist_State = "false" Then $POS_X_PlaylistButton = 10000
 
 	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", $POS_X_PlaylistButton, $DesktopHeight - 90, 56, 46, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "Playlist.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
-
-
-	GUICtrlCreateTabItem("")
 	#endregion
 
 	_Loading_GUI()
@@ -417,10 +409,13 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
 	GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
 
-
 	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
+
 
 	#endregion
 
@@ -432,13 +427,12 @@ If $First_Start <> "true" Then
 	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 
 	GUIRegisterMsg($WM_notify, "_ClickOnListView")
-	_Tab()
+	;_Tab()
 	GUIDelete($GUI_Loading)
 
 	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndIf
-
 
 #Region While 1
 While 1
@@ -453,7 +447,6 @@ While 1
 	EndSwitch
 WEnd
 #endregion
-
 
 
 #Region Start Funktionen
@@ -628,8 +621,6 @@ Func _First_Start_Empty_Check_1()
 	EndIf
 EndFunc
 #endregion
-
-
 
 #Region Func MAIN
 Func _Loading_GUI()
@@ -1018,38 +1009,132 @@ Func _SS_GUI()
 	GUISetState()
 EndFunc
 
-
 Func _Playlist_GUI()
+	$Playlist_GUI = GUICreate("Playlist", 600, 485, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
-	$Playlist_GUI = GUICreate("Playlist", 540, 600, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	Global $TAB_NR = GUICtrlCreateTab(197, 50, 555, 275, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
+	GUICtrlSetOnEvent($TAB_NR, "_Tab")
 
-	GUICtrlCreateGroup("Create / Add Appl. to Playlist", 5, 5, 531, 325)
+	Global $TAB_NR_1 = GUICtrlCreateTabItem("Playlist 1")
+	_Create_ListView_7()
+	GUICtrlCreateTabItem("")
+
+	Global $TAB_NR_2 = GUICtrlCreateTabItem("Playlist 2")
+	_Create_ListView_8()
+	GUICtrlCreateTabItem("")
+
+	Global $TAB_NR_3 = GUICtrlCreateTabItem("Playlist 3")
+	_Create_ListView_9()
+	GUICtrlCreateTabItem("")
+
+	Global $TAB_NR_4 = GUICtrlCreateTabItem("Playlist 4")
+	_Create_ListView_10()
+	GUICtrlCreateTabItem("")
+
+	Global $TAB_NR_5 = GUICtrlCreateTabItem("Playlist 5")
+	_Create_ListView_11()
+	GUICtrlCreateTabItem("")
+
+
+	GUICtrlCreateGroup("Create / Add Appl. to Playlist", 5, 5, 591, 325)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
-	Global $Combo_Choose_TAB = GUICtrlCreateCombo("Choose TAB", 10, 50, 170, 25, $CBS_DROPDOWNLIST)
-	GUICtrlSetData(-1, $TAB1_Label & "|" & $TAB2_Label & "|" & $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
+	Global $Combo_Playlist_LIBRARY = GUICtrlCreateCombo("Choose LIBRARY", 10, 70, 175, 25, $CBS_DROPDOWNLIST)
+	GUICtrlSetData(-1, $TAB1_Label & "|" & $TAB2_Label & "|" & $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, $TAB1_Label)
 	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetOnEvent(- 1, "_Combo_Playlist_LIBRARY")
 
-	Global $Combo_Choose_Game = GUICtrlCreateCombo("Choose Application", 10, 85, 170, 25)
+	Global $Combo_Choose_Application = GUICtrlCreateCombo("Choose Application", 10, 105, 175, 25)
 	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetOnEvent(- 1, "_Combo_Choose_Application")
 
-	_Create_ListView_7()
 
-	Global $Button_Add2Playlist = GUICtrlCreateButton("Add to Playlist", 9, 120, 172, 36, $BS_BITMAP)
+	GUICtrlCreateLabel("Playtime", 10, 147, 120, 30)
+	GUICtrlSetFont(-1, 11, 400, 6, "arial")
+	GUICtrlCreateLabel("[Minutes]", 67, 148, 120, 30)
+	GUICtrlSetFont(-1, 9, 400, 1, "arial")
+
+	GUICtrlCreateLabel("renderTargetM.", 10, 182, 140, 30)
+	GUICtrlSetFont(-1, 11, 400, 6, "arial")
+
+	GUICtrlCreateLabel("supersampleS.", 10, 217, 140, 30)
+	GUICtrlSetFont(-1, 11, 400, 6, "arial")
+
+	GUICtrlCreateLabel("SupersampleF.", 10, 252, 140, 20)
+	GUICtrlSetFont(-1, 11, 400, 6, "arial")
+
+
+	Global $Combo_Playtime = GUICtrlCreateCombo("", 120, 142, 65, 20)
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetData(-1, "05" & "|" & "10" & "|" & "15" & "|" & "20" & "|" & "30" & "|" & "45" & "|" & "60" & "|" & "90" & "|" & "120", "15")
+
+	Global $Combo_renderTargetMultiplie = GUICtrlCreateCombo("", 120, 177, 65, 20)
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetData(-1, "0.5" & "|" & "0.6" & "|" & "0.7" & "|" & "0.8" & "|" & "0.9" & "|" & "1.0" & "|" & "1.1" & "|" & "1.2" & "|" & "1.3" & "|" & "1.4" & "|" & _
+						"1.5" & "|" & "1.6" & "|" & "1.7" & "|" & "1.8" & "|" & "1.9" & "|" & "2.0" & "|" & "2.1" & "|" & "2.2" & "|" & "2.3" & "|" & "2.4" & "|" & "2.5", "1.0")
+
+	Global $Combo_supersampleScale = GUICtrlCreateCombo("1.0", 120, 212, 65, 20)
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetData(-1, "0.5" & "|" & "0.6" & "|" & "0.7" & "|" & "0.8" & "|" & "0.9" & "|" & "1.0" & "|" & "1.1" & "|" & "1.2" & "|" & "1.3" & "|" & "1.4" & "|" & _
+						"1.5" & "|" & "1.6" & "|" & "1.7" & "|" & "1.8" & "|" & "1.9" & "|" & "2.0" & "|" & "2.1" & "|" & "2.2" & "|" & "2.3" & "|" & "2.4" & "|" & "2.5", "1.0")
+
+	Global $Combo_allowSupersampleFiltering = GUICtrlCreateCombo("", 120, 247, 65, 20)
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetData(-1, "true" & "|" & "false", "true")
+
+
+	Global $Button_Add2Playlist = GUICtrlCreateButton("Add to Playlist", 9, 282, 177, 36, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Add2Playlist, $gfx & "Add2Playlist.bmp")
+	GUICtrlSetOnEvent(- 1, "_Button_Add2Playlist")
 
 
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, 560, 35, 35, $BS_BITMAP)
+	GUICtrlCreateGroup("Control Playlist", 5, 340, 591, 100)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
+
+	Global $Button_StartPlaylist = GUICtrlCreateButton("Add to Playlist", 9, 380, 136, 53, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_StartPlaylist, $gfx & "StartPlaylist.bmp")
+	GUICtrlSetOnEvent(- 1, "_Button_StartPlaylist")
+
+	Global $Button_StopPlaylist = GUICtrlCreateButton("Add to Playlist", 148, 380, 136, 53, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_StopPlaylist, $gfx & "StopPlaylist.bmp")
+	GUICtrlSetOnEvent(- 1, "_Button_StopPlaylist")
+
+	$Add_break = IniRead($Playlist_1_INI, "Playlist", "Add_break", "false")
+	GUICtrlCreateLabel("", 287, 383, 22, 22)
+	GUICtrlSetBkColor(-1, 0)
+	GUICtrlSetState(-1, $GUI_DISABLE)
+	If $Add_break = "true" Then $State_Checkbox_Add_break = "X"
+	If $Add_break <> "true" Then $State_Checkbox_Add_break = ""
+	Global $Checkbox_Add_break = GUICtrlCreateLabel($State_Checkbox_Add_break, 288, 384, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+	GUICtrlSetFont(-1, 16)
+	$Checkbox_Add_break_Label = GUICtrlCreateLabel("Break between applications", 312, 385, 199, 23) ; ; +26
+	GUICtrlSetFont(-1, 13, 400, 1, "arial")
+	GUICtrlSetOnEvent($Checkbox_Add_break, "_Checkbox_Add_break")
+	GUICtrlSetOnEvent($Checkbox_Add_break_Label, "_Checkbox_Add_break")
+
+	Global $Combo_Add_break = GUICtrlCreateCombo("", 513, 382, 77, 20)
+	GUICtrlSetFont(-1, 11, 400, 2, "arial")
+	GUICtrlSetData(-1, "00 Min." & "|" & "01 Min." & "|" & "02 Min." & "|" & "04 Min." & "|" & "06 Min." & "|" & "08 Min." & "|" & "10 Min." & "|" & "15 Min.")
+	GUICtrlSetOnEvent(- 1, "_Combo_Add_break")
+
+
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 560, 445, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
 	GuiCtrlSetTip(-1, "Closes GUI Window.")
 
+
+	$State_Combobox = GUICtrlRead($Combo_Playlist_LIBRARY)
+	If $State_Combobox <> "" And $State_Combobox <> "Choose Application" Then _Combo_Playlist_LIBRARY()
+
+	_Read_from_INI_ADD_2_Playlist_ListView_7()
+
 	GUISetState()
 EndFunc
-
-
 
 Func _Update_StatusBar()
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
@@ -1065,16 +1150,6 @@ Func _Update_StatusBar()
 	Local $aSF_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
 
 	_GUICtrlStatusBar_SetText($Statusbar, $Steam_app_Name & " [" & $Game_ID & "] " & @TAB & "RTM: " & $rTM_value & " / " & "SSS: " & $ssS_value &  " / " & "ASF: " & $aSF_value & @TAB & "'Version " & $Version & "'")
-EndFunc
-
-
-Func _Tab()
-	Global $TAB_Name = GUICtrlRead($TAB_NR)
-
-	If $TAB_Name = "0" Then
-		GUIRegisterMsg($WM_notify, "_ClickOnListView")
-		_GUICtrlStatusBar_SetText($Statusbar, "Libary loaded" & @TAB & "" & @TAB & "'Version " & $Version & "'")
-	EndIf
 EndFunc
 
 Func _Search_Files()
@@ -1288,7 +1363,10 @@ Func _Get_ADD_PlayersOnline_DATA()
 		$PlayersOnline_right_now = $PlayersOnline_right_now[1]
 		Global $PlayersOnline_24h_peak = StringSplit($aArray[3], '<')
 		$PlayersOnline_24h_peak = $PlayersOnline_24h_peak[1]
-		Global $PlayersOnline_all_time_peak = $aArray[4]
+		Global $PlayersOnline_all_time_peak = StringSplit($aArray[4], '<')
+		$PlayersOnline_all_time_peak = $PlayersOnline_all_time_peak[1]
+
+		;MsgBox(0, "", $PlayersOnline_all_time_peak & @CRLF & @CRLF & $aArray[4])
 
 		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "right_now", $PlayersOnline_right_now)
 		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "24h_peak", $PlayersOnline_24h_peak)
@@ -1383,7 +1461,7 @@ EndFunc
 
 #Region Func MAIN GUI
 Func _Create_ListView_1()
-	$listview = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview, 16, 500, 1, "arial")
 
@@ -1397,11 +1475,31 @@ Func _Create_ListView_1()
 	_GUICtrlListView_AddColumn($listview, "Name", 290)
 	_GUICtrlListView_AddColumn($listview, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview, "Online", 95, 2)
+	$contextmenu = GUICtrlCreateContextMenu($listview)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_2()
-	$listview_2 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview_2 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_2, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_2, 16, 500, 1, "arial")
 
@@ -1415,11 +1513,31 @@ Func _Create_ListView_2()
 	_GUICtrlListView_AddColumn($listview_2, "Name", 290)
 	_GUICtrlListView_AddColumn($listview_2, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview_2, "Online", 95, 2)
+	$contextmenu = GUICtrlCreateContextMenu($listview_2)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 	GUICtrlSetState($listview_2, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_3()
-	$listview_3 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview_3 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_3, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_3, 16, 500, 1, "arial")
 
@@ -1433,11 +1551,31 @@ Func _Create_ListView_3()
 	_GUICtrlListView_AddColumn($listview_3, "Name", 290)
 	_GUICtrlListView_AddColumn($listview_3, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview_3, "Online", 95, 2)
+	$contextmenu = GUICtrlCreateContextMenu($listview_3)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 	GUICtrlSetState($listview_3, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_4()
-	$listview_4 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview_4 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_4, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_4, 16, 500, 1, "arial")
 
@@ -1451,11 +1589,31 @@ Func _Create_ListView_4()
 	_GUICtrlListView_AddColumn($listview_4, "Name", 290)
 	_GUICtrlListView_AddColumn($listview_4, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview_4, "Online", 95, 2)
+	$contextmenu = GUICtrlCreateContextMenu($listview_4)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 	GUICtrlSetState($listview_4, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_5()
-	$listview_5 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview_5 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_5, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_5, 16, 500, 1, "arial")
 
@@ -1470,10 +1628,30 @@ Func _Create_ListView_5()
 	_GUICtrlListView_AddColumn($listview_5, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview_5, "Online", 95, 2)
 	GUICtrlSetState($listview_5, $GUI_HIDE)
+	$contextmenu = GUICtrlCreateContextMenu($listview_5)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 EndFunc
 
 Func _Create_ListView_6()
-	$listview_6 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT), $TAB_NR_1)
+	$listview_6 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_6, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_6, 16, 500, 1, "arial")
 
@@ -1487,28 +1665,32 @@ Func _Create_ListView_6()
 	_GUICtrlListView_AddColumn($listview_6, "Name", 290)
 	_GUICtrlListView_AddColumn($listview_6, "Install dir", 240)
 	_GUICtrlListView_AddColumn($listview_6, "Online", 95, 2)
+	$contextmenu = GUICtrlCreateContextMenu($listview_6)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("Move Down", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
+	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
+	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
+	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
 	GUICtrlSetState($listview_6, $GUI_HIDE)
-EndFunc
-
-Func _Create_ListView_7() ; Playlist
-	$listview_7 = GUICtrlCreateListView("", 195, 50, 330, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
-	_GUICtrlListView_SetExtendedListViewStyle($listview_7, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
-	GUICtrlSetFont($listview_7, 12, 500, 1, "arial")
-
-	; Add columns
-	_GUICtrlListView_AddColumn($listview_7, "Name", 118)
-	_GUICtrlListView_AddColumn($listview_7, "Playtime", 73)
-	_GUICtrlListView_AddColumn($listview_7, "rTM", 45)
-	_GUICtrlListView_AddColumn($listview_7, "ssS", 45, 2)
-	_GUICtrlListView_AddColumn($listview_7, "aSF", 45, 2)
-	;GUICtrlSetState($listview_7, $GUI_HIDE)
 EndFunc
 
 Func _Read_from_INI_ADD_2_ListView()
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
 	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
-	_GUICtrlListView_BeginUpdate($ListView)
-	_GUICtrlListView_DeleteAllItems($ListView)
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -1548,6 +1730,7 @@ Func _Read_from_INI_ADD_2_ListView()
 	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
 
 	_GUICtrlListView_BeginUpdate($listview_Temp)
+	_GUICtrlListView_DeleteAllItems($listview_Temp)
 	For $NR = 0 To $NR_Applications + 1
 		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "NR", "")
 		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "appid", "")
@@ -1594,10 +1777,88 @@ Func _Read_from_INI_ADD_2_ListView()
 	_GUICtrlStatusBar_SetText($Statusbar, "Application added to other section" & @TAB & @TAB & "'Version " & $Version & "'")
 EndFunc
 
+Func _Update_ListView_Icons()
+	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	_GUICtrlListView_BeginUpdate($ListView)
+	_GUICtrlListView_DeleteAllItems($ListView)
+
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$ApplicationList_TEMP = $ApplicationList_INI
+
+	If $ButtonTAB_State = "1" Then
+		If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+		If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
+		If $Combo = "Steam Library 3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_3.ini"
+		If $Combo = "Steam Library 4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_4.ini"
+		If $Combo = "Steam Library 5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_5.ini"
+		If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+	EndIf
+
+	If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
+	If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
+	If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
+	If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
+	If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+
+	$listview_Temp = $ListView
+	If $ButtonTAB_State = "1" Then $listview_Temp = $listview
+	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
+	If $ButtonTAB_State = "3" Then $listview_Temp = $listview_3
+	If $ButtonTAB_State = "4" Then $listview_Temp = $listview_4
+	If $ButtonTAB_State = "5" Then $listview_Temp = $listview_5
+	If $ButtonTAB_State = "6" Then $listview_Temp = $listview_6
+
+	$ListView_ImageList_Temp = $ListView_Favorite_Image
+	If $ButtonTAB_State = "1" Then $ListView_ImageList_Temp = $ListView_Favorite_Image
+	If $ButtonTAB_State = "2" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_2
+	If $ButtonTAB_State = "3" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_3
+	If $ButtonTAB_State = "4" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_4
+	If $ButtonTAB_State = "5" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_5
+	If $ButtonTAB_State = "6" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_6
+
+	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+
+	;MsgBox(0, $NR_Applications, $ApplicationList_TEMP & @CRLF & @CRLF & $listview_Temp)
+
+	_GUICtrlListView_BeginUpdate($listview_Temp)
+	_GUICtrlListView_DeleteAllItems($listview_Temp)
+	For $NR = 0 To $NR_Applications - 1
+		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "NR", "")
+		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "appid", "")
+		Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "name", "")
+		Global $Application_installdir = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "installdir", "")
+		Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "IconPath", "")
+		Global $Application_right_now = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "right_now", "")
+		Global $Application_24h_peak = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "24h_peak", "")
+		Global $Application_all_time_peak = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "all_time_peak", "")
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR
+			Local $ImageList_Icon_new = $Icons & "32x32\" & "steam.app." & $Application_appid & ".bmp"
+
+			If Not FileExists($ImageList_Icon_new) Then
+				FileCopy($gfx & "Icon_Preview_32x32.bmp", $ImageList_Icon_new)
+			EndIf
+
+			$ListView_Icon = $ImageList_Icon_new
+			_GUIImageList_AddBitmap($ListView_ImageList_Temp, $ListView_Icon)
+			_GUICtrlListView_SetImageList($listview_Temp, $ListView_ImageList_Temp, 1)
+			_GUICtrlListView_AddItem($listview_Temp, "", $Application_NR)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_appid, 1)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_name, 2)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_installdir, 3)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_right_now, 4)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_Temp)
+EndFunc
+
 Func _ADD_Icons_32x32_to_ListView()
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
 	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
 	_GUICtrlListView_BeginUpdate($ListView)
+	_GUICtrlListView_DeleteAllItems($ListView)
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -1618,7 +1879,7 @@ Func _ADD_Icons_32x32_to_ListView()
 
 	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
 
-	For $NR = 0 To $NR_Applications + 1
+	For $NR = 0 To $NR_Applications - 1
 		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "NR", "")
 		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "appid", "")
 
@@ -1649,7 +1910,6 @@ Func _ADD_Icons_32x32_to_ListView()
 	Next
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
-
 
 Func _RM_Menu_Item_4() ; Create new default.vrsettings" File
 	If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
@@ -1727,6 +1987,272 @@ Func _RM_Menu_Item_5() ; Create Shortcut File
 	EndIf
 EndFunc
 
+Func _RM_Menu_Item_8() ; RM_UP
+	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$ApplicationList_TEMP = $ApplicationList_INI
+
+	If $ButtonTAB_State = "1" Then
+		If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+		If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
+		If $Combo = "Steam Library 3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_3.ini"
+		If $Combo = "Steam Library 4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_4.ini"
+		If $Combo = "Steam Library 5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_5.ini"
+		If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+	EndIf
+
+	If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
+	If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
+	If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
+	If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
+	If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+
+	$listview_Temp = $ListView
+	If $ButtonTAB_State = "1" Then $listview_Temp = $listview
+	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
+	If $ButtonTAB_State = "3" Then $listview_Temp = $listview_3
+	If $ButtonTAB_State = "4" Then $listview_Temp = $listview_4
+	If $ButtonTAB_State = "5" Then $listview_Temp = $listview_5
+	If $ButtonTAB_State = "6" Then $listview_Temp = $listview_6
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview_Temp)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview_Temp, $ListView_Selected_Row_Index)
+	Local $GameName = $ListView_Item_Array[3]
+	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	$GameNR = $ListView_Selected_Row_Nr
+
+	$GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
+	$GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
+	$GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+	$GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
+	$GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+
+	$GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "NR", "")
+	$GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "name", "")
+	$GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "appid", "")
+	$GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "Playtime", "")
+	$GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "allowSupersampleFiltering", "")
+
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "appid", $GetItem_appid_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "Playtime", $GetItem_Playtime_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "NR", $GetItem_NR_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "name", $GetItem_name_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "appid", $GetItem_appid_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "Playtime", $GetItem_Playtime_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "supersampleScale", $GetItem_supersampleScale_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_2)
+
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+Func _RM_Menu_Item_9() ; RM_DOWN
+	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$ApplicationList_TEMP = $ApplicationList_INI
+
+	If $ButtonTAB_State = "1" Then
+		If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+		If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
+		If $Combo = "Steam Library 3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_3.ini"
+		If $Combo = "Steam Library 4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_4.ini"
+		If $Combo = "Steam Library 5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_5.ini"
+		If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+	EndIf
+
+	If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
+	If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
+	If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
+	If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
+	If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+
+	$listview_Temp = $ListView
+	If $ButtonTAB_State = "1" Then $listview_Temp = $listview
+	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
+	If $ButtonTAB_State = "3" Then $listview_Temp = $listview_3
+	If $ButtonTAB_State = "4" Then $listview_Temp = $listview_4
+	If $ButtonTAB_State = "5" Then $listview_Temp = $listview_5
+	If $ButtonTAB_State = "6" Then $listview_Temp = $listview_6
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview_Temp)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview_Temp, $ListView_Selected_Row_Index)
+	Local $GameName = $ListView_Item_Array[3]
+	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	$GameNR = $ListView_Selected_Row_Nr
+
+	$GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
+	$GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
+	$GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+	$GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
+	$GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+
+	$GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "NR", "")
+	$GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "name", "")
+	$GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "appid", "")
+	$GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "Playtime", "")
+	$GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "allowSupersampleFiltering", "")
+
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "appid", $GetItem_appid_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "Playtime", $GetItem_Playtime_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "NR", $GetItem_NR_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "name", $GetItem_name_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "appid", $GetItem_appid_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "Playtime", $GetItem_Playtime_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "supersampleScale", $GetItem_supersampleScale_2)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_2)
+
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+Func _RM_Menu_Item11() ; Delete ListView item
+	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$ApplicationList_TEMP = $ApplicationList_INI
+
+	If $ButtonTAB_State = "1" Then
+		If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+		If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
+		If $Combo = "Steam Library 3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_3.ini"
+		If $Combo = "Steam Library 4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_4.ini"
+		If $Combo = "Steam Library 5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_5.ini"
+		If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+	EndIf
+
+	If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
+	If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
+	If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
+	If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
+	If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+
+	$listview_Temp = $ListView
+	If $ButtonTAB_State = "1" Then $listview_Temp = $listview
+	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
+	If $ButtonTAB_State = "3" Then $listview_Temp = $listview_3
+	If $ButtonTAB_State = "4" Then $listview_Temp = $listview_4
+	If $ButtonTAB_State = "5" Then $listview_Temp = $listview_5
+	If $ButtonTAB_State = "6" Then $listview_Temp = $listview_6
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview_Temp)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+	Local $GameName = $ListView_Item_Array[3]
+	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	$GameNR = $ListView_Selected_Row_Nr
+	$GameNR_next = $ListView_Selected_Row_Nr + 1
+	$GetItem_appid_delete = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+
+	$ApplicationList_NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+
+	$GetItem_NR_1 = ""
+	$GetItem_appid_1 = ""
+	$GetItem_name_1 = ""
+	$GetItem_installdir_1 = ""
+	$GetItem_IconPath_1 = ""
+	$GetItem_right_now_1 = ""
+	$GetItem_24h_peak_1 = ""
+	$GetItem_all_time_peak_1 = ""
+	$GetItem_renderTargetMultiplier_1 = ""
+	$GetItem_supersampleScale_1 = ""
+	$GetItem_allowSupersampleFiltering_1 = ""
+
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "NR", $GetItem_NR_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "appid", $GetItem_appid_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "name", $GetItem_name_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "installdir", $GetItem_installdir_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "IconPath", $GetItem_IconPath_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "right_now", $GetItem_right_now_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "24h_peak", $GetItem_24h_peak_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "all_time_peak", $GetItem_all_time_peak_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($ApplicationList_TEMP, "ApplicationList", "NR_Applications", $ApplicationList_NR_Applications - 1)
+
+	For $Loop_Temp = $GameNR_next To $ApplicationList_NR_Applications
+		$GameName_before = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "name", "")
+		$GameName_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
+		If $GameName_next <> "" Then
+			$GetItem_NR_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "NR", "")
+			$GetItem_appid_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "appid", "")
+			$GetItem_name_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
+			$GetItem_installdir_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "installdir", "")
+			$GetItem_IconPath_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "IconPath", "")
+			$GetItem_right_now_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "right_now", "")
+			$GetItem_24h_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "24h_peak", "")
+			$GetItem_all_time_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "all_time_peak", "")
+			$GetItem_24h_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "24h_peak", "")
+			$GetItem_renderTargetMultiplier_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "renderTargetMultiplier", "")
+			$GetItem_supersampleScale_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "supersampleScale", "")
+			$GetItem_allowSupersampleFiltering_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "allowSupersampleFiltering", "")
+
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "NR", $Loop_Temp - 1)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "appid", $GetItem_appid_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "name", $GetItem_name_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "installdir", $GetItem_installdir_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "IconPath", $GetItem_IconPath_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "right_now", $GetItem_right_now_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "24h_peak", $GetItem_24h_peak_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "all_time_peak", $GetItem_24h_peak_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "supersampleScale", $GetItem_supersampleScale_next)
+			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_next)
+		EndIf
+		If $Loop_Temp = $ApplicationList_NR_Applications Then
+			IniDelete($ApplicationList_TEMP, "Application_" & $GetItem_appid_delete)
+			IniDelete($ApplicationList_TEMP, "Application_" & $Loop_Temp)
+		EndIf
+	Next
+	_Update_ListView_Icons()
+	_Read_from_INI_ADD_2_ListView()
+	;_Restart()
+EndFunc
+
+
 Func _Create_SS_Shortcut()
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -1779,7 +2305,6 @@ Func _Create_SS_Shortcut()
 	FileWrite($Install_DIR & 'temp.au3', 'ShellExecute("steam://rungameid/' & $Game_ID & '")' & @CRLF)
 
 EndFunc
-
 
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     Local $tagNMHDR, $event, $hwndFrom, $code
@@ -1968,7 +2493,7 @@ Func _Checkbox_USE_PHP_GamePage()
 			IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
 
 			If Not FileExists(@ScriptDir & "\php\") Then
-				$DOWNLOAD_URL = "http://windows.php.net/downloads/releases/php-7.1.6-nts-Win32-VC14-x86.zip"
+				$DOWNLOAD_URL = "http://windows.php.net/downloads/releases/php-7.1.7-nts-Win32-VC14-x86.zip"
 
 				Local $Abfrage = MsgBox($MB_YESNO, "Needed Files not found", "Needed Files for the 'PHP Function' not found." & @CRLF & @CRLF & _
 														"Do you want to Download the needed Files from the following Page?" & @CRLF & _
@@ -3152,6 +3677,750 @@ Func _Button_Exit_SS_Settings_GUI()
 EndFunc
 #endregion
 
+#Region Func Playlist GUI
+Func _Create_ListView_7()
+	Global $listview_7 = GUICtrlCreateListView("", 200, 70, 390, 248, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_7, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx))
+	GUICtrlSetFont($listview_7, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_7, "Nr.", 32)
+	_GUICtrlListView_AddColumn($listview_7, "Name", 145)
+	_GUICtrlListView_AddColumn($listview_7, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_7, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_7, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_7, "aSF", 45, 2)
+
+	Global $contextmenu_Playlist = GUICtrlCreateContextMenu($listview_7)
+	Global $RM_Playlist_1_Item0 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item1 = GUICtrlCreateMenuItem("Move Up", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item2 = GUICtrlCreateMenuItem("Move Down", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item3 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item4 = GUICtrlCreateMenuItem("Delete", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item5 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	GUICtrlSetOnEvent($RM_Playlist_1_Item1, "_RM_UP")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item2, "_RM_DOWN")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item4, "_RM_DELETE_Item")
+EndFunc
+
+Func _Create_ListView_8()
+	Global $listview_8 = GUICtrlCreateListView("", 200, 70, 390, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_8, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx))
+	GUICtrlSetFont($listview_8, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_8, "Nr.", 32)
+	_GUICtrlListView_AddColumn($listview_8, "Name", 145)
+	_GUICtrlListView_AddColumn($listview_8, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_8, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_8, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_8, "aSF", 45, 2)
+
+	Global $contextmenu_Playlist = GUICtrlCreateContextMenu($listview_8)
+	Global $RM_Playlist_1_Item0 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item1 = GUICtrlCreateMenuItem("Move Up", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item2 = GUICtrlCreateMenuItem("Move Down", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item3 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item4 = GUICtrlCreateMenuItem("Delete", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item5 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	GUICtrlSetOnEvent($RM_Playlist_1_Item1, "_RM_UP")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item2, "_RM_DOWN")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item4, "_RM_DELETE_Item")
+EndFunc
+
+Func _Create_ListView_9()
+	Global $listview_9 = GUICtrlCreateListView("", 200, 70, 390, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_9, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx))
+	GUICtrlSetFont($listview_9, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_9, "Nr.", 32)
+	_GUICtrlListView_AddColumn($listview_9, "Name", 145)
+	_GUICtrlListView_AddColumn($listview_9, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_9, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_9, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_9, "aSF", 45, 2)
+
+	Global $contextmenu_Playlist = GUICtrlCreateContextMenu($listview_9)
+	Global $RM_Playlist_1_Item0 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item1 = GUICtrlCreateMenuItem("Move Up", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item2 = GUICtrlCreateMenuItem("Move Down", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item3 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item4 = GUICtrlCreateMenuItem("Delete", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item5 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	GUICtrlSetOnEvent($RM_Playlist_1_Item1, "_RM_UP")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item2, "_RM_DOWN")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item4, "_RM_DELETE_Item")
+EndFunc
+
+Func _Create_ListView_10()
+	Global $listview_10 = GUICtrlCreateListView("", 200, 70, 390, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_10, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx))
+	GUICtrlSetFont($listview_10, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_10, "Nr.", 32)
+	_GUICtrlListView_AddColumn($listview_10, "Name", 145)
+	_GUICtrlListView_AddColumn($listview_10, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_10, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_10, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_10, "aSF", 45, 2)
+
+	Global $contextmenu_Playlist = GUICtrlCreateContextMenu($listview_10)
+	Global $RM_Playlist_1_Item0 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item1 = GUICtrlCreateMenuItem("Move Up", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item2 = GUICtrlCreateMenuItem("Move Down", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item3 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item4 = GUICtrlCreateMenuItem("Delete", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item5 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	GUICtrlSetOnEvent($RM_Playlist_1_Item1, "_RM_UP")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item2, "_RM_DOWN")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item4, "_RM_DELETE_Item")
+EndFunc
+
+Func _Create_ListView_11()
+	Global $listview_11 = GUICtrlCreateListView("", 200, 70, 390, 247, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
+	_GUICtrlListView_SetExtendedListViewStyle($listview_11, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx))
+	GUICtrlSetFont($listview_11, 12, 500, 1, "arial")
+
+	; Add columns
+	_GUICtrlListView_AddColumn($listview_11, "Nr.", 32)
+	_GUICtrlListView_AddColumn($listview_11, "Name", 145)
+	_GUICtrlListView_AddColumn($listview_11, "Playtime", 73)
+	_GUICtrlListView_AddColumn($listview_11, "rTM", 45)
+	_GUICtrlListView_AddColumn($listview_11, "ssS", 45, 2)
+	_GUICtrlListView_AddColumn($listview_11, "aSF", 45, 2)
+
+	Global $contextmenu_Playlist = GUICtrlCreateContextMenu($listview_11)
+	Global $RM_Playlist_1_Item0 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item1 = GUICtrlCreateMenuItem("Move Up", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item2 = GUICtrlCreateMenuItem("Move Down", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item3 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item4 = GUICtrlCreateMenuItem("Delete", $contextmenu_Playlist)
+	Global $RM_Playlist_1_Item5 = GUICtrlCreateMenuItem("", $contextmenu_Playlist)
+	GUICtrlSetOnEvent($RM_Playlist_1_Item1, "_RM_UP")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item2, "_RM_DOWN")
+	GUICtrlSetOnEvent($RM_Playlist_1_Item4, "_RM_DELETE_Item")
+EndFunc
+
+Func _Read_from_INI_ADD_2_Playlist_ListView_7()
+
+	$Playlist_TEMP = $Install_DIR & "System\Playlist\Playlist_1.ini"
+
+	Local $NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+	Local $Read_Add_break = IniRead($Playlist_TEMP, "Playlist", "Add_break", "")
+	Local $Read_Break_duration = IniRead($Playlist_TEMP, "Playlist", "Break_duration", "")
+
+	_GUICtrlListView_BeginUpdate($listview_7)
+	_GUICtrlListView_DeleteAllItems($listview_7)
+
+	For $NR_2 = 0 To $NR_Applications - 1
+		Local $Application_NR = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "NR", "")
+		Local $Application_name = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "name", "")
+		Local $Application_appid = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "appid", "")
+		Local $Application_Playtime = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "Playtime", "")
+		Local $Application_renderTargetMultiplier = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "renderTargetMultiplier", "")
+		Local $Application_supersampleScale = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "supersampleScale", "")
+		Local $Application_allowSupersampleFiltering = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "allowSupersampleFiltering", "")
+
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR_2; - 1
+			_GUICtrlListView_AddItem($listview_7, "")
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_NR, 0)
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_name, 1)
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_Playtime & " Min.", 2)
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_renderTargetMultiplier, 3)
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_supersampleScale, 4)
+			_GUICtrlListView_AddSubItem($listview_7, $ListView_RowNR, $Application_allowSupersampleFiltering, 5)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_7)
+	If $Read_Add_break = "true" Then GUICtrlSetData($Checkbox_Add_break, "X")
+	If $Read_Add_break <> "true" Then GUICtrlSetData($Checkbox_Add_break, "")
+	If $Read_Break_duration <> "" Then GUICtrlSetData($Combo_Add_break, $Read_Break_duration & " Min.")
+	If $Read_Break_duration = "" Then GUICtrlSetData($Combo_Add_break, "00 Min.")
+EndFunc
+
+Func _Read_from_INI_ADD_2_Playlist_ListView_8()
+	$Playlist_TEMP = $Install_DIR & "System\Playlist\Playlist_2.ini"
+
+	Local $NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+	Local $Read_Add_break = IniRead($Playlist_TEMP, "Playlist", "Add_break", "")
+	Local $Read_Break_duration = IniRead($Playlist_TEMP, "Playlist", "Break_duration", "")
+
+	_GUICtrlListView_BeginUpdate($listview_8)
+	_GUICtrlListView_DeleteAllItems($listview_8)
+
+	For $NR_2 = 0 To $NR_Applications - 1
+		Local $Application_NR = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "NR", "")
+		Local $Application_name = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "name", "")
+		Local $Application_appid = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "appid", "")
+		Local $Application_Playtime = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "Playtime", "")
+		Local $Application_renderTargetMultiplier = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "renderTargetMultiplier", "")
+		Local $Application_supersampleScale = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "supersampleScale", "")
+		Local $Application_allowSupersampleFiltering = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "allowSupersampleFiltering", "")
+
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR_2; - 1
+			_GUICtrlListView_AddItem($listview_8, "")
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_NR, 0)
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_name, 1)
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_Playtime, 2)
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_renderTargetMultiplier, 3)
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_supersampleScale, 4)
+			_GUICtrlListView_AddSubItem($listview_8, $ListView_RowNR, $Application_allowSupersampleFiltering, 5)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_8)
+	If $Read_Add_break = "true" Then GUICtrlSetData($Checkbox_Add_break, "X")
+	If $Read_Add_break <> "true" Then GUICtrlSetData($Checkbox_Add_break, "")
+	If $Read_Break_duration <> "" Then GUICtrlSetData($Combo_Add_break, $Read_Break_duration & " Min.")
+	If $Read_Break_duration = "" Then GUICtrlSetData($Combo_Add_break, "00 Min.")
+EndFunc
+
+Func _Read_from_INI_ADD_2_Playlist_ListView_9()
+	$Playlist_TEMP = $Install_DIR & "System\Playlist\Playlist_3.ini"
+
+	Local $NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+	Local $Read_Add_break = IniRead($Playlist_TEMP, "Playlist", "Add_break", "")
+	Local $Read_Break_duration = IniRead($Playlist_TEMP, "Playlist", "Break_duration", "")
+
+	_GUICtrlListView_BeginUpdate($listview_9)
+	_GUICtrlListView_DeleteAllItems($listview_9)
+
+	For $NR_2 = 0 To $NR_Applications - 1
+		Local $Application_NR = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "NR", "")
+		Local $Application_name = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "name", "")
+		Local $Application_appid = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "appid", "")
+		Local $Application_Playtime = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "Playtime", "")
+		Local $Application_renderTargetMultiplier = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "renderTargetMultiplier", "")
+		Local $Application_supersampleScale = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "supersampleScale", "")
+		Local $Application_allowSupersampleFiltering = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "allowSupersampleFiltering", "")
+
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR_2; - 1
+			_GUICtrlListView_AddItem($listview_9, "")
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_NR, 0)
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_name, 1)
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_Playtime, 2)
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_renderTargetMultiplier, 3)
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_supersampleScale, 4)
+			_GUICtrlListView_AddSubItem($listview_9, $ListView_RowNR, $Application_allowSupersampleFiltering, 5)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_9)
+	If $Read_Add_break = "true" Then GUICtrlSetData($Checkbox_Add_break, "X")
+	If $Read_Add_break <> "true" Then GUICtrlSetData($Checkbox_Add_break, "")
+	If $Read_Break_duration <> "" Then GUICtrlSetData($Combo_Add_break, $Read_Break_duration & " Min.")
+	If $Read_Break_duration = "" Then GUICtrlSetData($Combo_Add_break, "00 Min.")
+EndFunc
+
+Func _Read_from_INI_ADD_2_Playlist_ListView_10()
+	$Playlist_TEMP = $Install_DIR & "System\Playlist\Playlist_4.ini"
+
+	Local $NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+	Local $Read_Add_break = IniRead($Playlist_TEMP, "Playlist", "Add_break", "")
+	Local $Read_Break_duration = IniRead($Playlist_TEMP, "Playlist", "Break_duration", "")
+
+	_GUICtrlListView_BeginUpdate($listview_10)
+	_GUICtrlListView_DeleteAllItems($listview_10)
+
+	For $NR_2 = 0 To $NR_Applications - 1
+		Local $Application_NR = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "NR", "")
+		Local $Application_name = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "name", "")
+		Local $Application_appid = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "appid", "")
+		Local $Application_Playtime = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "Playtime", "")
+		Local $Application_renderTargetMultiplier = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "renderTargetMultiplier", "")
+		Local $Application_supersampleScale = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "supersampleScale", "")
+		Local $Application_allowSupersampleFiltering = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "allowSupersampleFiltering", "")
+
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR_2; - 1
+			_GUICtrlListView_AddItem($listview_10, "")
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_NR, 0)
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_name, 1)
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_Playtime, 2)
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_renderTargetMultiplier, 3)
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_supersampleScale, 4)
+			_GUICtrlListView_AddSubItem($listview_10, $ListView_RowNR, $Application_allowSupersampleFiltering, 5)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_10)
+	If $Read_Add_break = "true" Then GUICtrlSetData($Checkbox_Add_break, "X")
+	If $Read_Add_break <> "true" Then GUICtrlSetData($Checkbox_Add_break, "")
+	If $Read_Break_duration <> "" Then GUICtrlSetData($Combo_Add_break, $Read_Break_duration & " Min.")
+	If $Read_Break_duration = "" Then GUICtrlSetData($Combo_Add_break, "00 Min.")
+EndFunc
+
+Func _Read_from_INI_ADD_2_Playlist_ListView_11()
+	$Playlist_TEMP = $Install_DIR & "System\Playlist\Playlist_5.ini"
+
+	Local $NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+	Local $Read_Add_break = IniRead($Playlist_TEMP, "Playlist", "Add_break", "")
+	Local $Read_Break_duration = IniRead($Playlist_TEMP, "Playlist", "Break_duration", "")
+
+	_GUICtrlListView_BeginUpdate($listview_11)
+	_GUICtrlListView_DeleteAllItems($listview_11)
+
+	For $NR_2 = 0 To $NR_Applications - 1
+		Local $Application_NR = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "NR", "")
+		Local $Application_name = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "name", "")
+		Local $Application_appid = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "appid", "")
+		Local $Application_Playtime = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "Playtime", "")
+		Local $Application_renderTargetMultiplier = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "renderTargetMultiplier", "")
+		Local $Application_supersampleScale = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "supersampleScale", "")
+		Local $Application_allowSupersampleFiltering = IniRead($Playlist_TEMP, "Application_" & $NR_2 + 1, "allowSupersampleFiltering", "")
+
+		If $Application_appid <> "" Then
+			Local $ListView_RowNR = $NR_2; - 1
+			_GUICtrlListView_AddItem($listview_11, "")
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_NR, 0)
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_name, 1)
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_Playtime, 2)
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_renderTargetMultiplier, 3)
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_supersampleScale, 4)
+			_GUICtrlListView_AddSubItem($listview_11, $ListView_RowNR, $Application_allowSupersampleFiltering, 5)
+		EndIf
+	Next
+	_GUICtrlListView_EndUpdate($listview_11)
+	If $Read_Add_break = "true" Then GUICtrlSetData($Checkbox_Add_break, "X")
+	If $Read_Add_break <> "true" Then GUICtrlSetData($Checkbox_Add_break, "")
+	If $Read_Break_duration <> "" Then GUICtrlSetData($Combo_Add_break, $Read_Break_duration & " Minutes")
+	If $Read_Break_duration = "" Then GUICtrlSetData($Combo_Add_break, "00 Min.")
+EndFunc
+
+Func _Tab()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then
+		_Read_from_INI_ADD_2_Playlist_ListView_7()
+		_GUICtrlListView_SetColumnWidth($listview_7, 0, 32)
+		_GUICtrlListView_SetColumnWidth($listview_7, 1, 145)
+		_GUICtrlListView_SetColumnWidth($listview_7, 2, 73)
+		_GUICtrlListView_SetColumnWidth($listview_7, 3, 45)
+		_GUICtrlListView_SetColumnWidth($listview_7, 4, 45)
+		_GUICtrlListView_SetColumnWidth($listview_7, 5, 45)
+	EndIf
+
+	If $TAB_Name = 1 Then
+		_Read_from_INI_ADD_2_Playlist_ListView_8()
+		_GUICtrlListView_SetColumnWidth($listview_8, 0, 32)
+		_GUICtrlListView_SetColumnWidth($listview_8, 1, 145)
+		_GUICtrlListView_SetColumnWidth($listview_8, 2, 73)
+		_GUICtrlListView_SetColumnWidth($listview_8, 3, 45)
+		_GUICtrlListView_SetColumnWidth($listview_8, 4, 45)
+		_GUICtrlListView_SetColumnWidth($listview_8, 5, 45)
+	EndIf
+
+	If $TAB_Name = 2 Then
+		_Read_from_INI_ADD_2_Playlist_ListView_9()
+		_GUICtrlListView_SetColumnWidth($listview_9, 0, 32)
+		_GUICtrlListView_SetColumnWidth($listview_9, 1, 145)
+		_GUICtrlListView_SetColumnWidth($listview_9, 2, 73)
+		_GUICtrlListView_SetColumnWidth($listview_9, 3, 45)
+		_GUICtrlListView_SetColumnWidth($listview_9, 4, 45)
+		_GUICtrlListView_SetColumnWidth($listview_9, 5, 45)
+	EndIf
+
+	If $TAB_Name = 3 Then
+		_Read_from_INI_ADD_2_Playlist_ListView_10()
+		_GUICtrlListView_SetColumnWidth($listview_10, 0, 32)
+		_GUICtrlListView_SetColumnWidth($listview_10, 1, 145)
+		_GUICtrlListView_SetColumnWidth($listview_10, 2, 73)
+		_GUICtrlListView_SetColumnWidth($listview_10, 3, 45)
+		_GUICtrlListView_SetColumnWidth($listview_10, 4, 45)
+		_GUICtrlListView_SetColumnWidth($listview_10, 5, 45)
+	EndIf
+
+	If $TAB_Name = 4 Then
+		_Read_from_INI_ADD_2_Playlist_ListView_11()
+		_GUICtrlListView_SetColumnWidth($listview_10, 0, 32)
+		_GUICtrlListView_SetColumnWidth($listview_10, 1, 145)
+		_GUICtrlListView_SetColumnWidth($listview_10, 2, 73)
+		_GUICtrlListView_SetColumnWidth($listview_10, 3, 45)
+		_GUICtrlListView_SetColumnWidth($listview_10, 4, 45)
+		_GUICtrlListView_SetColumnWidth($listview_10, 5, 45)
+	EndIf
+
+EndFunc
+
+Func _RM_UP()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+	If $TAB_Name = 0 Then $ListView_TEMP = $listview_7
+	If $TAB_Name = 1 Then $ListView_TEMP = $listview_8
+	If $TAB_Name = 2 Then $ListView_TEMP = $listview_9
+	If $TAB_Name = 3 Then $ListView_TEMP = $listview_10
+	If $TAB_Name = 4 Then $ListView_TEMP = $listview_11
+
+	$ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView_TEMP)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	$ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	$GameNR = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 0)
+	$GameName = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 1)
+
+	$GetItem_NR_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "NR", "")
+	$GetItem_name_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "name", "")
+	$GetItem_appid_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "appid", "")
+	$GetItem_Playtime_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "Playtime", "")
+	$GetItem_renderTargetMultiplier_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+
+	$GetItem_NR_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "NR", "")
+	$GetItem_name_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "name", "")
+	$GetItem_appid_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "appid", "")
+	$GetItem_Playtime_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "Playtime", "")
+	$GetItem_renderTargetMultiplier_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR - 1, "allowSupersampleFiltering", "")
+
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "appid", $GetItem_appid_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "Playtime", $GetItem_Playtime_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "NR", $GetItem_NR_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "name", $GetItem_name_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "appid", $GetItem_appid_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "Playtime", $GetItem_Playtime_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "supersampleScale", $GetItem_supersampleScale_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_2)
+
+	_Tab()
+EndFunc
+
+Func _RM_DOWN()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+	If $TAB_Name = 0 Then $ListView_TEMP = $listview_7
+	If $TAB_Name = 1 Then $ListView_TEMP = $listview_8
+	If $TAB_Name = 2 Then $ListView_TEMP = $listview_9
+	If $TAB_Name = 3 Then $ListView_TEMP = $listview_10
+	If $TAB_Name = 4 Then $ListView_TEMP = $listview_11
+
+	$ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView_TEMP)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	$ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	$GameNR = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 0)
+	$GameName = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 1)
+
+	$GetItem_NR_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "NR", "")
+	$GetItem_name_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "name", "")
+	$GetItem_appid_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "appid", "")
+	$GetItem_Playtime_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "Playtime", "")
+	$GetItem_renderTargetMultiplier_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_1 = IniRead($Playlist_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+
+	$GetItem_NR_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "NR", "")
+	$GetItem_name_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "name", "")
+	$GetItem_appid_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "appid", "")
+	$GetItem_Playtime_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "Playtime", "")
+	$GetItem_renderTargetMultiplier_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "renderTargetMultiplier", "")
+	$GetItem_supersampleScale_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "supersampleScale", "")
+	$GetItem_allowSupersampleFiltering_2 = IniRead($Playlist_TEMP, "Application_" & $GameNR + 1, "allowSupersampleFiltering", "")
+
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "appid", $GetItem_appid_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "Playtime", $GetItem_Playtime_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_2, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "NR", $GetItem_NR_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "name", $GetItem_name_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "appid", $GetItem_appid_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "Playtime", $GetItem_Playtime_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "supersampleScale", $GetItem_supersampleScale_2)
+	IniWrite($Playlist_TEMP, "Application_" & $GetItem_NR_1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_2)
+
+	_Tab()
+EndFunc
+
+Func _RM_DELETE_Item()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+	If $TAB_Name = 0 Then $ListView_TEMP = $listview_7
+	If $TAB_Name = 1 Then $ListView_TEMP = $listview_8
+	If $TAB_Name = 2 Then $ListView_TEMP = $listview_9
+	If $TAB_Name = 3 Then $ListView_TEMP = $listview_10
+	If $TAB_Name = 4 Then $ListView_TEMP = $listview_11
+
+	$ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView_TEMP)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	$ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	$GameNR = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 0)
+	$GameName = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr - 1, 1)
+	$GameNR_next = _GUICtrlListView_GetItemText($ListView_TEMP, $ListView_Selected_Row_Nr, 0)
+
+	$Playlist_NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+
+	$GetItem_NR_1 = ""
+	$GetItem_name_1 = ""
+	$GetItem_appid_1 = ""
+	$GetItem_Playtime_1 = ""
+	$GetItem_renderTargetMultiplier_1 = ""
+	$GetItem_supersampleScale_1 = ""
+	$GetItem_allowSupersampleFiltering_1 = ""
+
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "NR", $GetItem_NR_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "name", $GetItem_name_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "appid", $GetItem_appid_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "Playtime", $GetItem_Playtime_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "supersampleScale", $GetItem_supersampleScale_1)
+	IniWrite($Playlist_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_1)
+
+	IniWrite($Playlist_TEMP, "Playlist", "NR_Applications", $Playlist_NR_Applications - 1)
+
+	For $Loop_Temp = $GameNR_next To 10
+		$GameName_before = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "name", "")
+		$GameName_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "name", "")
+		If $GameName_next <> "" Then
+			$GetItem_NR_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "NR", "")
+			$GetItem_name_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "name", "")
+			$GetItem_appid_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "appid", "")
+			$GetItem_Playtime_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "Playtime", "")
+			$GetItem_renderTargetMultiplier_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "renderTargetMultiplier", "")
+			$GetItem_supersampleScale_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "supersampleScale", "")
+			$GetItem_allowSupersampleFiltering_next = IniRead($Playlist_TEMP, "Application_" & $Loop_Temp, "allowSupersampleFiltering", "")
+
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "NR", $Loop_Temp - 1)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "name", $GetItem_name_next)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "appid", $GetItem_appid_next)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "Playtime", $GetItem_Playtime_next)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "renderTargetMultiplier", $GetItem_renderTargetMultiplier_next)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "supersampleScale", $GetItem_supersampleScale_next)
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "allowSupersampleFiltering", $GetItem_allowSupersampleFiltering_next)
+		EndIf
+		If $GameName_next = "" And $GameName_before <>"" Then
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "NR", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "name", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "appid", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "Playtime", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "renderTargetMultiplier", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "supersampleScale", "")
+			IniWrite($Playlist_TEMP, "Application_" & $Loop_Temp - 1, "allowSupersampleFiltering", "")
+		EndIf
+	Next
+	_Tab()
+EndFunc
+
+Func _Checkbox_Add_break()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+
+	Local $State_Checkbox = GUICtrlRead($Checkbox_Add_break)
+
+	If $State_Checkbox = "" Then
+		GUICtrlSetData($Checkbox_Add_break, "X")
+		IniWrite($Playlist_TEMP, "Playlist", "Add_break", "true")
+	Else
+		GUICtrlSetData($Checkbox_Add_break, "")
+		IniWrite($Playlist_TEMP, "Playlist", "Add_break", "false")
+	EndIf
+EndFunc
+
+Func _Combo_Add_break()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+
+	Local $State_Combobox = GUICtrlRead($Combo_Add_break)
+
+	If $State_Combobox <> "" Then
+		$Value_Add_break = StringLeft($State_Combobox, 2)
+		IniWrite($Playlist_TEMP, "Playlist", "Break_duration", $Value_Add_break)
+	EndIf
+EndFunc
+
+Func _Combo_Playlist_LIBRARY()
+	GUICtrlSetData($Combo_Choose_Application, "", "")
+	$State_Combobox = GUICtrlRead($Combo_Playlist_LIBRARY)
+
+	If $State_Combobox = $TAB1_Label Then $ApplicationList_TEMP_2 = $ApplicationList_SteamLibrary_ALL_INI
+	If $State_Combobox = $TAB2_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Non_Steam_Appl_INI
+	If $State_Combobox = $TAB3_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_1_INI
+	If $State_Combobox = $TAB4_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_2_INI
+	If $State_Combobox = $TAB5_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_3_INI
+	If $State_Combobox = $TAB6_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_4_INI
+
+	If $State_Combobox <> "" And $State_Combobox <> "Choose LIBRARY" Then
+		Local $NR_Applications = IniRead($ApplicationList_TEMP_2, "ApplicationList", "NR_Applications", "")
+
+		$DROPDOWN_DATA_TEMP = "Choose Application" & "|"
+
+		For $Loop_NR = 1 To $NR_Applications
+			Local $Check_GameName = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "name", "")
+			Local $Check_SteamGameID = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "appid", "")
+			If $Check_GameName <> "" And $Check_SteamGameID <> "" Then
+				$Check_Playlist_NR = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "NR", "")
+				$APP_GameName = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "name", "")
+				$Check_SteamGameID = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "appid", "")
+				Local $Check_renderTargetMultiplier = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "renderTargetMultiplier", "")
+				Local $Check_supersampleScale = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "supersampleScale", "")
+				Local $Check_allowSupersampleFiltering = IniRead($ApplicationList_TEMP_2, "Application_" & $Loop_NR, "allowSupersampleFiltering", "")
+				$DROPDOWN_DATA_TEMP = $DROPDOWN_DATA_TEMP  & "|" & $APP_GameName & " [" & $Check_SteamGameID & "]"
+			EndIf
+		Next
+		GUICtrlSetData($Combo_Choose_Application, $DROPDOWN_DATA_TEMP, "Choose Application")
+	Else
+		MsgBox($MB_ICONINFORMATION, "", "Choose LIBRARY firt.")
+	EndIf
+EndFunc
+
+Func _Combo_Choose_Application()
+	$State_Combobox = GUICtrlRead($Combo_Playlist_LIBRARY)
+	If $State_Combobox = $TAB1_Label Then $ApplicationList_TEMP_2 = $ApplicationList_SteamLibrary_ALL_INI
+	If $State_Combobox = $TAB2_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Non_Steam_Appl_INI
+	If $State_Combobox = $TAB3_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_1_INI
+	If $State_Combobox = $TAB4_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_2_INI
+	If $State_Combobox = $TAB5_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_3_INI
+	If $State_Combobox = $TAB6_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_4_INI
+
+	$State_Combobox = GUICtrlRead($Combo_Choose_Application)
+	If $State_Combobox <> "" And $State_Combobox <> "Choose Application" Then
+		Local $State_Combobox_Split = StringSplit($State_Combobox, '[')
+		Local $Playlist_SteamGameID = StringReplace($State_Combobox_Split[2], ']', '')
+
+		Local $Check_App_NR = IniRead($Playlist_1_INI, "Application_" & $Playlist_SteamGameID, "NR", "")
+		Local $APP_GameName = IniRead($ApplicationList_TEMP_2, "Application_" & $Check_App_NR, "name", "")
+		Local $Check_SteamGameID = IniRead($ApplicationList_TEMP_2, "Application_" & $Check_App_NR, "appid", "")
+		Local $Check_renderTargetMultiplier = IniRead($ApplicationList_TEMP_2, "Application_" & $Check_App_NR, "renderTargetMultiplier", "1.0")
+		Local $Check_supersampleScale = IniRead($ApplicationList_TEMP_2, "Application_" & $Check_App_NR, "supersampleScale", "1.0")
+		Local $Check_allowSupersampleFiltering = IniRead($ApplicationList_TEMP_2, "Application_" & $Check_App_NR, "allowSupersampleFiltering", "true")
+	EndIf
+	GUICtrlSetData($Combo_renderTargetMultiplie , $Check_renderTargetMultiplier, "1.0")
+	GUICtrlSetData($Combo_supersampleScale , $Check_supersampleScale, "1.0")
+	GUICtrlSetData($Combo_allowSupersampleFiltering , $Check_allowSupersampleFiltering, "true")
+EndFunc
+
+Func _Button_Add2Playlist()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+
+	Local $Check_Playlist_NR_Applications = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+
+	If $Check_Playlist_NR_Applications < 10 Then
+		$State_Combobox = GUICtrlRead($Combo_Playlist_LIBRARY)
+		If $State_Combobox = $TAB1_Label Then $ApplicationList_TEMP_2 = $ApplicationList_SteamLibrary_ALL_INI
+		If $State_Combobox = $TAB2_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Non_Steam_Appl_INI
+		If $State_Combobox = $TAB3_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_1_INI
+		If $State_Combobox = $TAB4_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_2_INI
+		If $State_Combobox = $TAB5_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_3_INI
+		If $State_Combobox = $TAB6_Label Then $ApplicationList_TEMP_2 = $ApplicationList_Custom_4_INI
+
+		$State_Combo_Playtime = GUICtrlRead($Combo_Playtime)
+		$State_Combo_renderTargetMultiplie = GUICtrlRead($Combo_renderTargetMultiplie)
+		$State_Combo_supersampleScale = GUICtrlRead($Combo_supersampleScale)
+		$State_Combo_allowSupersampleFiltering = GUICtrlRead($Combo_allowSupersampleFiltering)
+
+		$State_Combobox = GUICtrlRead($Combo_Choose_Application)
+		If $State_Combobox <> "" And $State_Combobox <> "Choose Application" Then
+			Local $State_Combobox_Split = StringSplit($State_Combobox, '[')
+			Local $Playlist_SteamGameID = StringReplace($State_Combobox_Split[2], ']', '')
+
+			Local $Check_Playlist_NR = IniRead($Playlist_TEMP, "Playlist", "NR_Applications", "")
+			Local $Playlist_NR_Temp = $Check_Playlist_NR + 1
+
+			Local $APP_GameName = IniRead($ApplicationList_TEMP_2, "Application_" & $Playlist_SteamGameID, "name", "")
+			Local $Check_SteamGameID = IniRead($ApplicationList_TEMP_2, "Application_" & $Playlist_SteamGameID, "appid", "")
+			Local $Check_renderTargetMultiplier = IniRead($ApplicationList_TEMP_2, "Application_" & $Playlist_SteamGameID, "renderTargetMultiplier", "")
+			Local $Check_supersampleScale = IniRead($ApplicationList_TEMP_2, "Application_" & $Playlist_SteamGameID, "supersampleScale", "")
+			Local $Check_allowSupersampleFiltering = IniRead($ApplicationList_TEMP_2, "Application_" & $Playlist_SteamGameID, "allowSupersampleFiltering", "")
+
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "NR", $Playlist_NR_Temp)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "name", $APP_GameName)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "appid", $Check_SteamGameID)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "Playtime", $State_Combo_Playtime)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "renderTargetMultiplier", $State_Combo_renderTargetMultiplie)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "supersampleScale", $State_Combo_supersampleScale)
+			IniWrite($Playlist_TEMP, "Application_" & $Playlist_NR_Temp, "allowSupersampleFiltering", $State_Combo_allowSupersampleFiltering)
+			IniWrite($Playlist_TEMP, "Playlist", "NR_Applications", $Playlist_NR_Temp)
+		Else
+			MsgBox($MB_ICONINFORMATION, "", "Choose Application firt.")
+		EndIf
+
+		_Tab()
+	Else
+		MsgBox($MB_ICONINFORMATION, "Playlist Maximum", "Maximum number of Playlist entries [10] already reached.")
+	EndIf
+EndFunc
+
+Func  _Button_StartPlaylist()
+	Global $TAB_Name = GUICtrlRead($TAB_NR)
+
+	If $TAB_Name = 0 Then $Playlist_TEMP = $Playlist_1_INI
+	If $TAB_Name = 1 Then $Playlist_TEMP = $Playlist_2_INI
+	If $TAB_Name = 2 Then $Playlist_TEMP = $Playlist_3_INI
+	If $TAB_Name = 3 Then $Playlist_TEMP = $Playlist_4_INI
+	If $TAB_Name = 4 Then $Playlist_TEMP = $Playlist_5_INI
+
+	$Playlist_NR = StringRight($Playlist_TEMP, 5)
+	$Playlist_NR = StringReplace($Playlist_NR, '.ini', '')
+
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Start Playlist", "Do you realy want to Start Playlist " & $Playlist_NR & "?")
+
+	If $Abfrage = 6 Then
+		IniWrite($Config_INI, "TEMP", "Playlist_Exit_command", "")
+		IniWrite($Config_INI, "TEMP", "Playlist_INI", $Playlist_TEMP)
+		If FileExists($Install_DIR & "System\Playlist.exe") Then
+			ShellExecute($Install_DIR & "System\Playlist.exe", "", $Install_DIR)
+		Else
+			ShellExecute($Install_DIR & "System\Playlist.au3", "", $Install_DIR)
+		EndIf
+	EndIf
+EndFunc
+
+Func  _Button_StopPlaylist()
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Stop Playlist", "Do you realy want to Stop the current running Playlist?")
+
+	If $Abfrage = 6 Then
+		IniWrite($Config_INI, "TEMP", "Playlist_Exit_command", "true")
+	EndIf
+EndFunc
+
+#endregion
+
 #Region Func Home Loader
 Func _FirstStart_Restart()
 	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
@@ -3180,3 +4449,4 @@ EndFunc
 #endregion
 
 #endregion
+

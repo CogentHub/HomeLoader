@@ -7,6 +7,8 @@
 #include <FontConstants.au3>
 #include <File.au3>
 #include <GUIConstants.au3>
+#include <InetConstants.au3>
+#include <Zip.au3>
 
 Opt("GUIOnEventMode", 1)
 
@@ -21,6 +23,7 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
+Global $Version = "0.46"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")
@@ -64,6 +67,8 @@ Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+
+IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
 
 
@@ -264,6 +269,26 @@ Func _First_Start_Empty_Check_1()
 EndFunc
 #endregion
 
+Func _Loading_GUI()
+	Local Const $PG_WS_POPUP = 0x80000000
+	Local Const $PG_WS_DLGFRAME = 0x00400000
+
+	Global $GUI_Loading = GUICreate("Updating Home Loader...", 250, 65, - 1, -1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
+	GUISetIcon(@AutoItExe, -2, $GUI_Loading)
+	GUISetBkColor("0x00BFFF")
+
+	$font = "arial"
+	Global $Updating_Label = GUICtrlCreateLabel("...Searching...", 60, 5, 160, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+	;GUICtrlSetColor(-1, $COLOR_RED)
+	Global $Please_wait_Label = GUICtrlCreateLabel("...Please wait...", 49, 32, 160, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+	;GUICtrlSetColor(-1, $COLOR_RED)
+
+	GUISetState(@SW_SHOW, $GUI_Loading)
+	WinSetOnTop("Updating Home Loader...", "", $WINDOWS_ONTOP)
+EndFunc
+
 Func _Create_JanusVR_Page()
 	$Install_DIR_replaced = StringReplace($Install_DIR, '\', '/')
 	FileWrite($JanusVR_Page, '<!-- Written with Janus VR.  URL: file:///' & $Install_DIR_replaced & ' -->' & @CRLF & _
@@ -303,13 +328,14 @@ EndFunc
 
 Func _StartUp_settings()
 	If $Advanced_Settings = "true" Then
-		Global $HEIGHT_GUI = 469
+		Global $HEIGHT_GUI = 504
 		Global $POS_X = 10
 		Global $POS_Y_Button_Close = 335
 		Global $POS_Y_Button_StartSteamVR = 370
 		Global $POS_Y_Button_Start_HomeLoaderLibrary = 405
 		Global $POS_X_Advanced_Settings_Label = 10
 		Global $POS_Y_Advanced_Settings_Label = 129
+		Global $POS_X_Check_for_Updates = 5
 		Global $Advanced_Settings_img = $gfx & "Advanced_Settings_UP.bmp"
 		Global $ToolTip_Advanced_Settings = "Closes Advanced Settings options."
 	Else
@@ -320,6 +346,7 @@ Func _StartUp_settings()
 		Global $POS_Y_Button_Start_HomeLoaderLibrary = 205
 		Global $POS_X_Advanced_Settings_Label = 82
 		Global $POS_Y_Advanced_Settings_Label = 108
+		Global $POS_X_Check_for_Updates = 10000
 		Global $Advanced_Settings_img = $gfx & "Advanced_Settings_DOWN.bmp"
 		Global $ToolTip_Advanced_Settings = "Opens Advanced Settings options."
 	EndIf
@@ -460,6 +487,11 @@ Func _StartUp_settings()
 		GuiCtrlSetTip(-1, "Starts Home Loader Library.")
 		GUICtrlSetOnEvent($Button_Start_HomeLoaderLibrary, "_Button_Start_HomeLoaderLibrary")
 
+	Global $Check_for_Updates = GUICtrlCreateButton("Check for Updates", $POS_X_Check_for_Updates, $POS_Y_Button_Close + 105, 235, 30)
+		GuiCtrlSetTip(-1, "Closes Settings Window.")
+		GUICtrlSetFont(-1, 12, 600, 2, $font_StartUp_arial)
+		GUICtrlSetColor(-1, "0x6495ED")
+		GUICtrlSetOnEvent($Check_for_Updates, "_Check_for_Updates_1")
 
     While 1
         Switch GUIGetMsg()
@@ -1099,6 +1131,68 @@ Func _StartGame_Check()
 		Sleep(1000)
 		Exit
 	EndIf
+EndFunc
+
+Func _Check_for_Updates_1()
+	If FileExists($Install_DIR & "System\UpdateCheck.exe") Then
+		ShellExecute($Install_DIR & "System\UpdateCheck.exe", "", $Install_DIR)
+	Else
+		ShellExecute($Install_DIR & "System\UpdateCheck.au3", "", $Install_DIR)
+	EndIf
+
+	IniWrite($config_ini, "TEMP", "Update", "true")
+	_Exit()
+EndFunc
+
+Func _Check_for_Updates_2()
+	$Version_NR = StringRight($Version, 2)
+	$New_Version_NR = StringRight($Version_NR, 2) + 1
+	IniWrite($config_ini, "TEMP", "Update_Version", $New_Version_NR)
+
+	Local $Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $New_Version_NR & "/Home_Loader_0." & $New_Version_NR & ".zip"
+
+	_Loading_GUI()
+
+	For $Update_Loop = $New_Version_NR - 2 To $New_Version_NR + 10
+		$Get_Update_State = "true"
+		IniWrite($config_ini, "TEMP", "Update_Version", $Update_Loop)
+		$Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $Update_Loop & "/Home_Loader_0." & $Update_Loop & ".zip"
+		$Get_Update = InetGet($Update_URL, $Install_DIR & "TEMP.zip", $INET_FORCERELOAD)
+
+		If $Get_Update = 0 Then
+			$Get_Update_State = "false"
+		EndIf
+
+		If $Get_Update_State = "true" Then
+			$Get_Update_State = "true"
+			$Get_Update_Version_NR = $Update_Loop
+			ExitLoop
+		EndIf
+	Next
+
+	If $Get_Update_State = "true" Then
+		$Abfrage = MsgBox($MB_YESNOCANCEL + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
+																						"Do you want to install the new Version?")
+
+		If $Abfrage = 6 Then
+			GUICtrlSetData($Updating_Label, "...Updating...")
+			DirCopy ($Install_DIR, $Install_DIR & "Backups\Home_Loader_" & $Version, $FC_OVERWRITE)
+			If FileExists($Install_DIR & "Update\") Then DirRemove($Install_DIR & "Update\", $DIR_REMOVE)
+			_Zip_UnzipAll(@ScriptDir & "\TEMP.zip", $Install_DIR & "Update\", 0)
+			DirCopy($Install_DIR & "Update\", $Install_DIR & "Temp_Update\", $FC_OVERWRITE)
+			Sleep(2000)
+			MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
+																"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
+		EndIf
+	EndIf
+
+	If $Get_Update_State = "false" Then
+		MsgBox($MB_ICONINFORMATION, "Check for Updates", "No Update available.")
+	EndIf
+
+	GUIDelete($GUI_Loading)
+
+	IniWrite($config_ini, "TEMP", "Update_Version", "")
 EndFunc
 
 Func _FirstStart_Restart()
