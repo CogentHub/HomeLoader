@@ -40,6 +40,7 @@ Global $gfx = $Install_DIR & "gfx\"
 Global $JanusVR_Page = $Install_DIR & "WebPage\janusvr\" & "index.html"
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
+Global $Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
 
 Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 Global $ApplicationList_Non_Steam_Appl_INI = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
@@ -72,6 +73,9 @@ IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
 
 
+
+_Update_Performed_Check()
+
 _First_Start_Empty_Check_1()
 
 
@@ -96,6 +100,27 @@ EndIf
 
 
 _StartUp_settings()
+
+#Region Update Performed Check
+Func _Update_Performed_Check()
+	$Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
+	If $Update_Performed_Check = "Updated" Then
+		IniWrite($config_ini, "TEMP", "Update", "")
+		If FileExists($Install_DIR & "System\Update.exe") Then
+			ShellExecute($Install_DIR & "System\Update.exe", "", $Install_DIR)
+		Else
+			ShellExecute($Install_DIR & "System\Update.au3", "", $Install_DIR)
+		EndIf
+		Exit
+	EndIf
+	If $Update_Performed_Check = "Done, delete Update" Then
+		IniWrite($config_ini, "TEMP", "Update", "")
+		If FileExists($Install_DIR & "System\Update.exe") Then FileDelete($Install_DIR & "System\Update.exe")
+		If FileExists($Install_DIR & "System\TEMP.zip") Then FileDelete($Install_DIR & "System\TEMP.zip")
+		If FileExists($Install_DIR & "System\Update\") Then DirRemove($Install_DIR & "System\Update\", $DIR_REMOVE)
+	EndIf
+EndFunc
+#endregion
 
 
 #Region First Start And Empty Check

@@ -1,0 +1,5 @@
+- Added Statusbar for Update function
+- Added Restore Settings after Update
+- Added Changelog
+- Improved Update function
+- Some fixes

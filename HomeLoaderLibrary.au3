@@ -56,7 +56,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.46"
+Global $Version = "0.47"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -367,12 +367,7 @@ If $First_Start <> "true" Then
 	EndIf
 
 
-
-	Local $Check_Playlist_State = IniRead($Config_INI, "TEMP", "Playlist", "")
-	If $Check_Playlist_State = "true" Then $POS_X_PlaylistButton = 372
-	If $Check_Playlist_State = "false" Then $POS_X_PlaylistButton = 10000
-
-	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", $POS_X_PlaylistButton, $DesktopHeight - 90, 56, 46, $BS_BITMAP)
+	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 372, $DesktopHeight - 90, 56, 46, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "Playlist.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
