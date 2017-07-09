@@ -9,7 +9,7 @@ Global $Config_INI = $Install_DIR & "config.ini"
 Global $Version = IniRead($config_ini, "Settings", "Version", "")
 
 Global $UpdateFolder = $Install_DIR & "System\Update\"
-Global $UpdateTargetFolder = $Install_DIR & "Home_Loader_Update\"
+Global $UpdateTargetFolder = $Install_DIR ; & "Home_Loader_Update\"
 Global $Update_ZIP = $Install_DIR & "System\TEMP.zip"
 
 
@@ -48,7 +48,7 @@ Func _Check_for_Updates_2()
 
 	_Loading_GUI()
 
-	For $Update_Loop = $New_Version_NR - 3 To $New_Version_NR + 5
+	For $Update_Loop = $New_Version_NR To $New_Version_NR + 5
 		If $Update_Loop > 35 Then GUICtrlSetData($Anzeige_Fortschrittbalken, 35)
 
 		$Get_Update_State = "true"
@@ -94,6 +94,7 @@ Func _Check_for_Updates_2()
 			Sleep(2000)
 			;GUISetState(@SW_HIDE, $GUI_Loading)
 			WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
+			IniWrite($config_ini, "TEMP", "Update", "Updated")
 			MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
 																"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
 		EndIf
@@ -101,7 +102,9 @@ Func _Check_for_Updates_2()
 
 	If $Get_Update_State = "false" Then
 		;GUISetState(@SW_HIDE, $GUI_Loading)
+		WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
 		MsgBox($MB_ICONINFORMATION, "Check for Updates", "No Update available.")
+		IniWrite($config_ini, "TEMP", "Update", "")
 	EndIf
 
 	GUIDelete($GUI_Loading)
@@ -112,7 +115,6 @@ Func _Check_for_Updates_2()
 EndFunc
 
 Func _Restart_Settings_GUI()
-	IniWrite($config_ini, "TEMP", "Update", "Updated")
 	If FileExists($Install_DIR & "Settings.exe") Then
 		ShellExecute($Install_DIR & "Settings.exe", "", $Install_DIR)
 	Else
