@@ -23,7 +23,7 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.47"
+Global $Version = "0.48"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")

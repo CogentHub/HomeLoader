@@ -56,7 +56,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.47"
+Global $Version = "0.48"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = @ScriptDir & "\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -2607,6 +2607,7 @@ Func _Button_Create_GamePage_all()
 EndFunc
 
 Func _Button_Create_GamePage_selected()
+	_GUICtrlStatusBar_SetText($Statusbar, "Creating Game Page..." & @TAB & @TAB & "'Version " & $Version & "'")
 	$USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
@@ -2652,9 +2653,11 @@ Func _Button_Create_GamePage_selected()
 	If $ButtonTAB_State = "5" Then $listview_Temp = $ListView_5
 	If $ButtonTAB_State = "6" Then $listview_Temp = $ListView_6
 
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
 
 	Local $TEMP_NR_selected = "false"
 	For $NR = 1 To $NR_Applications
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
 		Local $TEMP_selected = _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1)
 		If $TEMP_selected = "true" Then $TEMP_NR_selected = "true"
 	Next
@@ -2678,6 +2681,7 @@ Func _Button_Create_GamePage_selected()
 
 
 		For $NR = 1 To $NR_Applications
+			GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
 			If _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1) Then
 				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
 				Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR, "appid", "")
@@ -2747,13 +2751,22 @@ Func _Button_Create_GamePage_selected()
 			Else
 
 			EndIf
+			;GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
 		Next
+		Sleep(100)
 		FileWriteLine($GamePage_path, ' </div>')
 		FileWriteLine($GamePage_path, '</body>')
 		FileWriteLine($GamePage_path, '</html>')
+		Sleep(100)
 	Else
 		MsgBox($MB_ICONWARNING, "No Application selected", "You need to select at least one Application to be able to create the HTML page.")
 	EndIf
+	_GUICtrlStatusBar_SetText($Statusbar, "Game Page created." & @TAB & @TAB & "'Version " & $Version & "'")
+	Sleep(100)
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+	Sleep(600)
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
 
 Func _Button_Add_to_Custom()
@@ -3210,6 +3223,21 @@ Func _Button_SAVE_APP()
 	IniWrite($config_ini, "TEMP", "Value_IconPath_Folder", "")
 
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "ApplicationList", "NR_Applications", $NewAppNR)
+	_Read_from_INI_ADD_2_ListView()
+
+	GUICtrlSetData($Input_GamePath_Folder, "")
+	GUICtrlSetData($Input_Name, "")
+
+	GUICtrlSetState($Input_GamePath_Folder, $GUI_HIDE)
+	GUICtrlSetState($Input_Name, $GUI_HIDE)
+	GUICtrlSetState($Button_SAVE_APP, $GUI_HIDE)
+	GUICtrlSetState($BUTTON_IconPath_Folder, $GUI_HIDE)
+	GUICtrlSetState($Frame_up, $GUI_HIDE)
+	GUICtrlSetState($Frame_down, $GUI_HIDE)
+	GUICtrlSetState($Frame_right, $GUI_HIDE)
+	GUICtrlSetState($Frame_left, $GUI_HIDE)
+	GUICtrlSetState($Icon_Preview, $GUI_HIDE)
+
 	MsgBox($MB_ICONINFORMATION, "Finished", "New Application added", 3)
 EndFunc
 
