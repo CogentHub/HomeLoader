@@ -3,6 +3,8 @@
 
 # Pictures:
 
+![logo](preview/MainMenu_3.jpg) 
+
 ![logo](preview/HomeLoader_pics_1.jpg) 
 
 ![logo](preview/HomeLoader_messages_1.jpg) 
