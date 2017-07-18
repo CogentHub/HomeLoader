@@ -31,6 +31,7 @@ Global $font = "arial"
 
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")
 Global $TEMP_StartHomeLoader = IniRead($Config_INI, "TEMP", "StartHomeLoader", "")
@@ -47,7 +48,7 @@ Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $Time_Interval = IniRead($Config_INI, "Settings", "Time_Interval", "")
 Global $Status_Checkbox_Minimize_OVRS = IniRead($Config_INI,"Settings", "Minimize_Oculus", "")
-Global $gfx = $Install_DIR & "gfx\"
+Global $gfx = $System_DIR & "gfx\"
 Global $Icons = $Install_DIR & "Icons\"
 Global $JanusVR_Page = $Install_DIR & "WebPage\janusvr\" & "index.html"
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
@@ -1220,29 +1221,29 @@ Func _Close_Process()
 EndFunc
 
 Func _Start_StartSteamVRHome()
-	If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
-		ShellExecute($Install_DIR & "StartSteamVRHome.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "StartSteamVRHome.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc
 
 Func _FirstStart_Restart()
-	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc
 
 Func _Restart_HomeLoader()
 	IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-	If FileExists($Install_DIR & "HomeLoader.exe") Then
-		ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "HomeLoader.exe") Then
+		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc

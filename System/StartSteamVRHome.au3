@@ -11,6 +11,7 @@ Opt("GUIOnEventMode", 1)
 
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+Global $System_DIR = $Install_DIR & "\System\"
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
@@ -270,10 +271,10 @@ EndFunc
 
 Func _Start_Home_Loader()
 	If Not WinExists("Home Loader") Then
-		If FileExists($Install_DIR & "HomeLoader.exe") Then
-			ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+		If FileExists($System_DIR & "HomeLoader.exe") Then
+			ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 		Else
-			ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+			ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 		EndIf
 	EndIf
 EndFunc
@@ -290,10 +291,10 @@ EndFunc
 Func _Start_Button_Pressed()
 	$TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
 	IniWrite($Config_INI, "TEMP", "StartHomeLoaderSettings", "true")
-	If FileExists($Install_DIR & "HomeLoader.exe") Then
-		ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "HomeLoader.exe") Then
+		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 	EndIf
 	_Exit()
 EndFunc
@@ -394,19 +395,19 @@ Func _ADD_2_SteamVR_Home_default()
 EndFunc
 
 Func _FirstStart_Restart()
-	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc
 
 Func _Restart()
-	If FileExists($Install_DIR & "StartSteamVRHome.exe") Then
-		ShellExecute($Install_DIR & "StartSteamVRHome.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "StartSteamVRHome.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc
