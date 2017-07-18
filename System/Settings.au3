@@ -10,6 +10,7 @@
 #include <InetConstants.au3>
 ;#include <Zip.au3>
 
+
 Opt("GUIOnEventMode", 1)
 
 Global $font_arial = "arial"
@@ -18,12 +19,12 @@ Global $font_arial = "arial"
 Global $SteamVR_Status, $Title_1, $Title_2, $Handle_1, $Handle_2, $Title_Array_1, $Title_Array_2, $Handle_Array_1, $Handle_Array_2, $NR_Handle_1, $NR_Handle_2
 Global $GameStarted, $LOOP_VIVEHOMECheck, $OldWindowExists, $Button_Close_Current_Running, $Checkbox_Show_Settings_at_Startup, $Button_Restart, $Button_Exit
 Global $Select_HomeApp_Label, $USE_GUI_Backup, $ApplicationList_Read, $Array_tools_vrmanifest_File, $Line_NR_binary_path_windows, $Line_NR_image_path
-Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI
+Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI, $bookmarksArray, $settingsArray
 #endregion
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.49"
+Global $Version = "0.51"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -723,10 +724,69 @@ Func _StartUp_Radio_3() ; Janus VR
 	If $JanusVR_Path = "" Then $JanusVR_Path = "steam://rungameid/602090"
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+
+	$JanusVR_Settings_Folder = "c:\Users\" & @UserName & "\Documents\janusvr\"
+	$bookmarks_json = "c:\Users\" & @UserName & "\Documents\janusvr\appdata\bookmarks.json"
+	$settings_json = "c:\Users\" & @UserName & "\Documents\janusvr\appdata\settings.json"
+
+	Local $Abfrage_1 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Janus VR bookmarks [1/3]", "Do you also want to add the default Home Loader Room" & @CRLF & _
+																"to the JanusVR bookmark page?" & @CRLF & _
+																$bookmarks_json & @CRLF & @CRLF & _
+																"JanusVR Settings can be found in the following folder:" & @CRLF & _
+																$JanusVR_Settings_Folder & @CRLF)
+
+	If $Abfrage_1 = 6 Then
+		$Source_copy = $gfx & "VRGameLauncher.png"
+		$Target_copy = StringReplace($JanusVR_Path, 'janusvr.exe', 'assets\3dui\thumbs\VRGameLauncher.png')
+		$thumbnail_path = StringReplace($Target_copy, '\', '/')
+		$Install_DIR_StringReplace_path = StringReplace($Install_DIR, '\', '/')
+		FileCopy($Source_copy, $Target_copy, $FC_OVERWRITE)
+
+		_FileReadToArray($bookmarks_json, $bookmarksArray)
+
+		FileCopy($bookmarks_json, $bookmarks_json & ".bak", $FC_OVERWRITE)
+		FileDelete($bookmarks_json)
+
+		For $Loop = 1 To $bookmarksArray[0]
+			If $Loop = 3 Then FileWriteLine($bookmarks_json, '        "thumbnail": "file:///' & $thumbnail_path & '",')
+			If $Loop = 4 Then FileWriteLine($bookmarks_json, '        "title": "VR Game Launcher",')
+			If $Loop = 5 Then FileWriteLine($bookmarks_json, '        "url": "file:///' & $Install_DIR_StringReplace_path & 'WebPage/janusvr/index.html"')
+
+			If $Loop <> 3 And $Loop <> 4 And $Loop <> 5 Then
+				FileWriteLine($bookmarks_json, $bookmarksArray[$Loop])
+			EndIf
+		Next
+	EndIf
+
+
+	Local $Abfrage_2 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Home Loader Room autostart [2/3]", "Do you also want to autostart the default Home Loader Room" & @CRLF & _
+																"after launching JanusVR?" & @CRLF & _
+																$settings_json & @CRLF & @CRLF & _
+																"JanusVR Settings can be found in the following folder:" & @CRLF & _
+																$JanusVR_Settings_Folder & @CRLF)
+
+	If $Abfrage_2 = 6 Then
+		$Install_DIR_StringReplace_path = StringReplace($Install_DIR, '\', '/')
+
+		_FileReadToArray($settings_json, $settingsArray)
+
+		FileCopy($settings_json, $settings_json & ".bak", $FC_OVERWRITE)
+		FileDelete($settings_json)
+
+		For $Loop = 1 To $settingsArray[0]
+			If $Loop = 20 Then FileWriteLine($settings_json, '    "launchurl": "file:///' & $Install_DIR_StringReplace_path & 'WebPage/janusvr/index.html",')
+
+			If $Loop <> 20 Then
+				FileWriteLine($settings_json, $settingsArray[$Loop])
+			EndIf
+		Next
+	EndIf
+
+
+	Local $Abfrage_3 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home [3/3]", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
 
-	If $Abfrage = 6 Then
+	If $Abfrage_3 = 6 Then
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
@@ -1204,7 +1264,7 @@ Func _Check_for_Updates_2()
 			GUICtrlSetData($Updating_Label, "...Updating...")
 			DirCopy ($Install_DIR, $Install_DIR & "Backups\Home_Loader_" & $Version, $FC_OVERWRITE)
 			If FileExists($Install_DIR & "Update\") Then DirRemove($Install_DIR & "Update\", $DIR_REMOVE)
-			_Zip_UnzipAll(@ScriptDir & "\TEMP.zip", $Install_DIR & "Update\", 0)
+			;_Zip_UnzipAll(@ScriptDir & "\TEMP.zip", $Install_DIR & "Update\", 0)
 			DirCopy($Install_DIR & "Update\", $Install_DIR & "Temp_Update\", $FC_OVERWRITE)
 			Sleep(2000)
 			MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
