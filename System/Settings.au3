@@ -24,7 +24,7 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI,
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.51"
+Global $Version = "0.52"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"

@@ -1,5 +1,1 @@
-- Added Statusbar for Update function
-- Added Restore Settings after Update
-- Added Changelog
-- Improved Update function
-- Some fixes
+- Fixed some issues with new File/Folder structure

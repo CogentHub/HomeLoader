@@ -282,8 +282,17 @@ EndFunc
 Func _Start_Home_APP()
 	Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 	Global $WindowName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
+	Global $Vive_Home_Folder = ""
 	If Not ProcessExists("vrmonitor.exe") Then ShellExecute("steam://rungameid/250820")
-	If $WindowName <> "SteamVR Home" Then ShellExecute($Home_Path)
+	If $WindowName <> "SteamVR Home" Then
+		If $WindowName = "Vive Home" Then
+			$Vive_Home_Folder_1 = StringInStr($Home_Path, "\", 1, - 1)
+			$Vive_Home_Folder_2 = StringLeft($Home_Path, $Vive_Home_Folder_1)
+			ShellExecute($Home_Path, "", $Vive_Home_Folder_2)
+		Else
+			ShellExecute($Home_Path)
+		EndIf
+	EndIf
 	Exit
 EndFunc
 

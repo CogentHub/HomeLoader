@@ -43,7 +43,7 @@ Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_Playe
 Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "false")
 Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "false")
-Global $StartSteamVRHome = $Install_DIR & "StartSteamVRHome.exe"
+Global $StartSteamVRHome = $System_DIR & "StartSteamVRHome.exe"
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $Time_Interval = IniRead($Config_INI, "Settings", "Time_Interval", "")
@@ -446,12 +446,12 @@ Func _MAIN()
 				If Not WinExists($GameStarted) Then
 					If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
 					$State_Reload_HOMEonExit = IniRead($Config_INI, "Settings", "Reload_HOMEonExit", "")
-					If $State_Reload_HOMEonExit = "true" Then ShellExecute($Home_Path)
+					If $WinName <> "SteamVR Home" And $State_Reload_HOMEonExit = "true" Then ShellExecute($Home_Path)
 					Sleep(500)
-					If FileExists($Install_DIR & "HomeLoader.exe") Then
-						ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+					If FileExists($System_DIR & "HomeLoader.exe") Then
+						ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 					Else
-						ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+						ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 					EndIf
 					IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
 					Exit
@@ -744,10 +744,10 @@ Func _StartGame_Check()
 			$State_Reload_HOMEonExit = IniRead($Config_INI, "Settings", "Reload_HOMEonExit", "")
 			;If $State_Reload_HOMEonExit = "true" Then
 				IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-				If FileExists($Install_DIR & "HomeLoader.exe") Then
-					ShellExecute($Install_DIR & "HomeLoader.exe", "", $Install_DIR)
+				If FileExists($System_DIR & "HomeLoader.exe") Then
+					ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 				Else
-					ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
+					ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 				EndIf
 			;EndIf
 			If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
