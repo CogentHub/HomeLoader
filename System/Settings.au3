@@ -24,7 +24,8 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI,
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.52"
+Global $Version = "0.53"
+Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
@@ -355,7 +356,7 @@ EndFunc
 
 Func _StartUp_settings()
 	If $Advanced_Settings = "true" Then
-		Global $HEIGHT_GUI = 504
+		Global $HEIGHT_GUI = 532
 		Global $POS_X = 10
 		Global $POS_Y_Button_Close = 335
 		Global $POS_Y_Button_StartSteamVR = 370
@@ -519,6 +520,20 @@ Func _StartUp_settings()
 		GUICtrlSetFont(-1, 12, 600, 2, $font_StartUp_arial)
 		GUICtrlSetColor(-1, "0x6495ED")
 		GUICtrlSetOnEvent($Check_for_Updates, "_Check_for_Updates_1")
+
+
+	GUICtrlCreateLabel("", $POS_X_Check_for_Updates + 5, $POS_Y_Button_Close + 140, 22, 22)
+	GUICtrlSetBkColor(-1, 0)
+	GUICtrlSetState(-1, $GUI_DISABLE)
+	If $Auto_CheckUpdates = "true" Then $State_Checkbox_Auto_CheckUpdates = "X"
+	If $Auto_CheckUpdates <> "true" Then $State_Checkbox_Auto_CheckUpdates = ""
+	Global $Checkbox_Auto_CheckUpdates = GUICtrlCreateLabel($State_Checkbox_Auto_CheckUpdates, $POS_X_Check_for_Updates + 6, $POS_Y_Button_Close + 141, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+	GUICtrlSetFont(-1, 16)
+	$Checkbox_Auto_CheckUpdates_Label = GUICtrlCreateLabel("Auto. Check for Updates", $POS_X_Check_for_Updates + 34, $POS_Y_Button_Close + 140, 200, 23) ; ; +26
+	GUICtrlSetFont(-1, 14, 400, 1, "arial")
+	GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates, "_Checkbox_Auto_CheckUpdates")
+	GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates_Label, "_Checkbox_Auto_CheckUpdates")
+
 
     While 1
         Switch GUIGetMsg()
@@ -1280,6 +1295,18 @@ Func _Check_for_Updates_2()
 
 	IniWrite($config_ini, "TEMP", "Update_Version", "")
 EndFunc
+
+Func _Checkbox_Auto_CheckUpdates()
+	Local $State_Checkbox = GUICtrlRead($Checkbox_Auto_CheckUpdates)
+	If $State_Checkbox = "" Then
+		GUICtrlSetData($Checkbox_Auto_CheckUpdates, "X")
+		IniWrite($Config_INI, "Settings", "Auto_CheckUpdates", "true")
+	Else
+		GUICtrlSetData($Checkbox_Auto_CheckUpdates, "")
+		IniWrite($Config_INI, "Settings", "Auto_CheckUpdates", "false")
+	EndIf
+EndFunc
+
 
 Func _FirstStart_Restart()
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then

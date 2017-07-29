@@ -13,9 +13,12 @@ Global $UpdateFolder = $System_DIR & "Update\"
 Global $UpdateTargetFolder = $Install_DIR ; & "Home_Loader_Update\"
 Global $Update_ZIP = $System_DIR & "TEMP.zip"
 
+Global $Update_Check = IniRead($Config_INI, "TEMP", "Update_Check", "")
 
-_Check_for_Updates_2()
-_Restart_Settings_GUI()
+Global $Anzeige_Fortschrittbalken, $Get_Update_State
+
+_Check_for_Updates()
+If $Update_Check <> "true" Then _Restart_Settings_GUI()
 
 Func _Loading_GUI()
 	Local Const $PG_WS_POPUP = 0x80000000
@@ -30,7 +33,7 @@ Func _Loading_GUI()
 	GUICtrlSetFont(-1, 17, 800, 1, $font)
 	;GUICtrlSetColor(-1, $COLOR_RED)
 
-	Global $Anzeige_Fortschrittbalken = GUICtrlCreateProgress(5, 38, 240, 30)
+	$Anzeige_Fortschrittbalken = GUICtrlCreateProgress(5, 38, 240, 30)
 
 	Global $Please_wait_Label = GUICtrlCreateLabel("...Please wait...", 49, 72, 160, 25)
 	GUICtrlSetFont(-1, 17, 800, 1, $font)
@@ -40,14 +43,16 @@ Func _Loading_GUI()
 	WinSetOnTop("Updating Home Loader...", "", $WINDOWS_ONTOP)
 EndFunc
 
-Func _Check_for_Updates_2()
+Func _Check_for_Updates()
+	$Update_Check = IniRead($Config_INI, "TEMP", "Update_Check", "")
+
 	$Version_NR = StringRight($Version, 2)
 	$New_Version_NR = StringRight($Version_NR, 2) + 1
 	IniWrite($config_ini, "TEMP", "Update_Version", $New_Version_NR)
 
 	Local $Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $New_Version_NR & "/Home_Loader_0." & $New_Version_NR & ".zip"
 
-	_Loading_GUI()
+	If $Update_Check <> "true" Then _Loading_GUI()
 
 	For $Update_Loop = $New_Version_NR To $New_Version_NR + 5
 		If $Update_Loop > 35 Then GUICtrlSetData($Anzeige_Fortschrittbalken, 35)
@@ -56,7 +61,6 @@ Func _Check_for_Updates_2()
 		IniWrite($config_ini, "TEMP", "Update_Version", $Update_Loop)
 		$Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $Update_Loop & "/Home_Loader_0." & $Update_Loop & ".zip"
 		$Get_Update = InetGet($Update_URL, $Update_ZIP, $INET_FORCERELOAD)
-
 
 		If $Get_Update = 0 Then
 			$Get_Update_State = "false"
@@ -69,49 +73,56 @@ Func _Check_for_Updates_2()
 			Sleep(800)
 			ExitLoop
 		EndIf
-
 	Next
 
-	If $Get_Update_State = "true" Then
-		;GUISetState(@SW_HIDE, $GUI_Loading)
-		WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
-		$Abfrage = MsgBox($MB_YESNOCANCEL + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
-																						"Do you want to install the new Version?")
-
-		If $Abfrage = 6 Then
-			WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
-			GUICtrlSetData($Updating_Label, "...Preparing...")
-			If $Version_NR = 48 Then _Delete_old_Files()
-			Sleep(500)
-			WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
-			GUICtrlSetData($Updating_Label, "...Updating...")
-			GUICtrlSetData($Anzeige_Fortschrittbalken, "")
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
-			DirCopy ($Install_DIR, $Install_DIR & "Backups\Home_Loader_" & $Version, $FC_OVERWRITE)
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
-			If FileExists($UpdateFolder) Then DirRemove($UpdateFolder, $DIR_REMOVE)
-			_Zip_UnzipAll($Update_ZIP, $UpdateFolder, 0)
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 70)
-			DirCopy($UpdateFolder, $UpdateTargetFolder, $FC_OVERWRITE)
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
-			Sleep(2000)
+	If $Update_Check = "true" Then
+		If $Get_Update_State = "true" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "New Update available", "There is a new update available." & @CRLF & "--> " & "Home Loader 0." & $New_Version_NR)
+		EndIf
+	Else
+		If $Get_Update_State = "true" Then
 			;GUISetState(@SW_HIDE, $GUI_Loading)
 			WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
-			IniWrite($config_ini, "TEMP", "Update", "Updated")
-			MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
-																"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
+			$Abfrage = MsgBox($MB_YESNOCANCEL + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
+																							"Do you want to install the new Version?")
+
+			If $Abfrage = 6 Then
+				WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
+				GUICtrlSetData($Updating_Label, "...Preparing...")
+				If $Version_NR = 48 Then _Delete_old_Files()
+				Sleep(500)
+				WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
+				GUICtrlSetData($Updating_Label, "...Updating...")
+				GUICtrlSetData($Anzeige_Fortschrittbalken, "")
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
+				DirCopy ($Install_DIR, $Install_DIR & "Backups\Home_Loader_" & $Version, $FC_OVERWRITE)
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
+				If FileExists($UpdateFolder) Then DirRemove($UpdateFolder, $DIR_REMOVE)
+				_Zip_UnzipAll($Update_ZIP, $UpdateFolder, 0)
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 70)
+				DirCopy($UpdateFolder, $UpdateTargetFolder, $FC_OVERWRITE)
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+				Sleep(2000)
+				;GUISetState(@SW_HIDE, $GUI_Loading)
+				WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
+				IniWrite($config_ini, "TEMP", "Update", "Updated")
+				MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
+																	"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
+			EndIf
 		EndIf
+
+		If $Get_Update_State = "false" Then
+			;GUISetState(@SW_HIDE, $GUI_Loading)
+			WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
+			MsgBox($MB_ICONINFORMATION, "Check for Updates", "No Update available.")
+			IniWrite($config_ini, "TEMP", "Update", "")
+			IniWrite($Config_INI, "TEMP", "Update_Check", "")
+		EndIf
+
+		GUIDelete($GUI_Loading)
 	EndIf
 
-	If $Get_Update_State = "false" Then
-		;GUISetState(@SW_HIDE, $GUI_Loading)
-		WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
-		MsgBox($MB_ICONINFORMATION, "Check for Updates", "No Update available.")
-		IniWrite($config_ini, "TEMP", "Update", "")
-	EndIf
-
-	GUIDelete($GUI_Loading)
-
+	IniWrite($Config_INI, "TEMP", "Update_Check", "")
 	IniWrite($config_ini, "TEMP", "Update_Version", "")
 	If FileExists($UpdateFolder) Then DirRemove($UpdateFolder, $DIR_REMOVE)
 	If FileExists($Update_ZIP) Then FileDelete($Update_ZIP)
@@ -123,7 +134,6 @@ Func _Delete_old_Files()
 	FileDelete($Install_DIR & "HomeLoaderLibrary.exe")
 	FileDelete($Install_DIR & "Settings.exe")
 	FileDelete($Install_DIR & "StartSteamVRHome.exe")
-
 	DirRemove($Install_DIR & "gfx\", 1)
 EndFunc
 

@@ -1,1 +1,4 @@
-- Fixed some issues with new File/Folder structure
+- Added 'automatic check for update' at program start as option
+- Added new Game Page Button that opens the created Game Page for the selected section.
+- Fixed some issues that occurred because of the last changes
+

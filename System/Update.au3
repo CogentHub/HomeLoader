@@ -5,15 +5,16 @@
 
 
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
-Global $Config_INI = $Install_DIR & "config.ini"
-Global $Config_NEW_INI = $Install_DIR & "config_NEW.ini"
+Global $System_DIR = $Install_DIR & "\System\"
+Global $Config_INI = $System_DIR & "config.ini"
+Global $Config_NEW_INI = $System_DIR & "config_NEW.ini"
 Global $Version = IniRead($config_ini, "Settings", "Version", "")
 Global $Version_Right = StringRight($Version, 2)
 
-Global $UpdateFolder = $Install_DIR & "System\Update\"
-Global $UpdateTargetFolder = $Install_DIR & "Home_Loader_Update\"
-Global $Update_ZIP = $Install_DIR & "System\TEMP.zip"
-Global $Changelog_TXT = $Install_DIR & "System\Changelog.txt"
+Global $UpdateFolder = $System_DIR & "Update\"
+Global $UpdateTargetFolder = $Install_DIR
+Global $Update_ZIP = $System_DIR & "TEMP.zip"
+Global $Changelog_TXT = $System_DIR & "Changelog.txt"
 
 Global $Read_Version, $Read_Show_Settings_at_Startup, $Read_Advanced_Settings , $Read_USE_GUI, $Read_Minimize_Oculus, $Read_Time_Interval, $Read_First_Start
 Global $Read_Steam_Library, $Read_ButtonTAB_State, $Read_USE_PHP_WebServer, $Read_ChangeDefaultSteamVRHome, $Read_USE_Key_Presses, $Read_Reload_HOMEonExit
@@ -144,10 +145,10 @@ Func _Write_to_Target_INI()
 EndFunc
 
 Func _Restart_Settings_GUI()
-	If FileExists($Install_DIR & "Settings.exe") Then
-		ShellExecute($Install_DIR & "Settings.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "Settings.exe") Then
+		ShellExecute($System_DIR & "Settings.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "Settings.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "Settings.au3", "", $System_DIR)
 	EndIf
 	IniWrite($config_ini, "TEMP", "Update", "Done, delete Update")
 	If FileExists($UpdateFolder) Then DirRemove($UpdateFolder, $DIR_REMOVE)

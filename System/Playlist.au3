@@ -6,7 +6,8 @@
 #include <Zip.au3>
 
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
-Global $Config_INI = $Install_DIR & "config.ini"
+Global $System_DIR = $Install_DIR & "\System\"
+Global $Config_INI = $System_DIR & "config.ini"
 
 Global $Playlist_INI = IniRead($Config_INI, "TEMP", "Playlist_INI", "")
 Global $Add_break = IniRead($Playlist_INI, "Playlist", "Add_break", "false")
@@ -76,10 +77,10 @@ EndFunc
 
 Func _Restart_HomeLoaderLibrary_GUI()
 	IniWrite($Config_INI, "TEMP", "Playlist_INI", "")
-	If FileExists($Install_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.exe", "", $Install_DIR)
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
-		ShellExecute($Install_DIR & "HomeLoaderLibrary.au3", "", $Install_DIR)
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
 	EndIf
 	Exit
 EndFunc

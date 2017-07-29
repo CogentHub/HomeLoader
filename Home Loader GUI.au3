@@ -14,22 +14,24 @@
 #include <WindowsConstants.au3>
 #include <StaticConstants.au3>
 #include <ColorConstants.au3>
-
+#include <InetConstants.au3>
 #endregion
 
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.52"
+Global $Version = "0.53"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $config_ini = $System_DIR & "\config.ini"
+Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Skin = IniRead($Config_INI, "Settings", "Skin", "1")
 Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 
+Global $Update_ZIP = $System_DIR & "TEMP.zip"
 
 Global $Home_Loader_GUI, $contextmenu, $RM_Item0,  $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
 
@@ -47,6 +49,8 @@ Global $font = "arial"
 
 If $Skin = "1" Then _Home_Loader_GUI_1()
 If $Skin = "2" Then _Home_Loader_GUI_2()
+
+If $Auto_CheckUpdates = "true" Then _Check_for_Updates()
 
 #Region While 1
 While 1
@@ -271,6 +275,17 @@ Func _RM_Item5()
 	MsgBox(0, "Home Loader by CogentRifter", "Home Loader by CogentRifter")
 EndFunc
 
+
+Func _Check_for_Updates()
+	IniWrite($Config_INI, "TEMP", "Update_Check", "true")
+	If FileExists($System_DIR & "UpdateCheck.exe") Then
+		ShellExecute($System_DIR & "UpdateCheck.exe")
+	Else
+		ShellExecute($System_DIR & "UpdateCheck.au3")
+	EndIf
+EndFunc
+
+
 Func _Button_Restart_GUI()
 	If FileExists($Install_DIR & "Home Loader GUI.exe") Then
 		ShellExecute($Install_DIR & "Home Loader GUI.exe")
@@ -280,7 +295,6 @@ Func _Button_Restart_GUI()
 	;Sleep(500)
 	Exit
 EndFunc
-
 
 Func _Button_Exit_GUI()
 	GUIDelete($Home_Loader_GUI)

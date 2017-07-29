@@ -54,7 +54,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.52"
+Global $Version = "0.53"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
@@ -204,6 +204,10 @@ If $First_Start <> "true" Then
 	GUICtrlSetData(-1, "ALL|Steam Library 1|Steam Library 2|Steam Library 3|Steam Library 4|Steam Library 5", $Steam_Library)
 	GUICtrlSetFont(-1, 14, 400, 2, "arial")
 	GuiCtrlSetTip(-1, "Choose Steam Library.")
+
+	Global $Button_ShowGamePage = GUICtrlCreateButton("Show Game Page", 160, 45, 118, 46, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_ShowGamePage, $gfx & "GamePage.bmp")
+	GuiCtrlSetTip(-1, "Opens the created Game Page for the current selection." & @CRLF)
 
 	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
@@ -390,6 +394,7 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($Button_Exit_Settings_GUI, "_Button_Exit_Settings_GUI")
 
 	GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
+	GUICtrlSetOnEvent($Button_ShowGamePage, "_Show_HTML_GamePage_GUI")
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
 
@@ -417,8 +422,6 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
-
-
 	#endregion
 
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
@@ -462,8 +465,6 @@ While 1
 	EndSwitch
 WEnd
 #endregion
-
-
 
 
 
@@ -2421,7 +2422,6 @@ Func _Update_VRSettings_GUI_Items()
 	GUICtrlSetData($ComboBox_3, "true|false", $allowSupersampleFiltering_value)
 EndFunc
 
-
 Func _Create_HTMLView_GUI()
 	Local $Button_Exit_HTML_GUI, $TreeView_Steam_app_PO_right_now, $TreeView_Steam_app_PO_24h_peak, $TreeView_Steam_app_PO_all_time_peak, $Text_SplitNR
 	Local $Handle_2, $Text_2
@@ -2453,6 +2453,25 @@ EndFunc
 
 Func _Button_Exit_HTML_GUI()
 	GUIDelete($HTML_GUI)
+EndFunc
+
+Func _Show_HTML_GamePage_GUI()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_ALL.html"
+	If $ButtonTAB_State = "1" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_ALL.html"
+	If $ButtonTAB_State = "2" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+	If $ButtonTAB_State = "3" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+	If $ButtonTAB_State = "4" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+	If $ButtonTAB_State = "5" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+	If $ButtonTAB_State = "6" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+
 EndFunc
 
 Func _Checkbox_all()
