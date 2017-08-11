@@ -39,6 +39,8 @@ Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 
+Global $Array_tools_vrmanifest_File
+
 _First_Start_Empty_Check_1()
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
@@ -59,11 +61,14 @@ If $State_USE_Key_Presses = "true" Then
 	_Key_Presses_Detection()
 EndIf
 
+_Start_Home_APP()
+
+Sleep(1000)
+
 If $Advanced_Settings = "true" And $Start_HomeLoader_with_HomeApp = "true" Then
 	_Start_Home_Loader()
 EndIf
 
-_Start_Home_APP()
 _Exit()
 
 
@@ -293,7 +298,15 @@ Func _Start_Home_APP()
 			ShellExecute($Home_Path)
 		EndIf
 	EndIf
-	Exit
+
+	For $LOOP_HomeDetection_1 = 1 To 45
+		Sleep(1000)
+		If $WindowName <> "SteamVR Home" Then
+			If WinExists($WindowName) Then ExitLoop
+		Else
+			If ProcessExists("vrmonitor.exe") Then ExitLoop
+		EndIf
+	Next
 EndFunc
 
 
