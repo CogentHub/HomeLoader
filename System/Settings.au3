@@ -112,7 +112,9 @@ Func _Update_Performed_Check()
 		If FileExists($System_DIR & "Update.exe") Then
 			ShellExecute($System_DIR & "Update.exe", "", $Install_DIR)
 		Else
-			ShellExecute($System_DIR & "Update.au3", "", $Install_DIR)
+			If FileExists($System_DIR & "Update.au3") Then
+				ShellExecute($System_DIR & "Update.au3", "", $Install_DIR)
+			EndIf
 		EndIf
 		Exit
 	EndIf
