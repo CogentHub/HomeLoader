@@ -16,6 +16,8 @@
 #include <GDIPlus.au3>
 
 
+
+
 Opt("GUIOnEventMode", 1)
 
 #Region Global
@@ -26,7 +28,7 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $GUI_Label, $HO
 Global $DesktopWidth, $DesktopHeight, $Width, $Height, $X, $Y, $font_arial, $GUI, $Install_DIR_replaced,$State_Checkbox, $SteamGameID
 Global $hImage1_Path, $hImage2_Path, $Check_StringSplit_NR, $Check_Filename_1, $Check_Filename_2, $Check_Filename_3, $Check_Filename, $hBMPBuff, $hGraphic, $hPen
 Global $hImage1, $hImage2, $GameNameStarted, $GameStarted_State, $FileLines, $Application_name
-Global $GUI_Loading, $COLOR_RED, $DOWNLOAD_URL
+Global $GUI_Loading, $COLOR_RED, $DOWNLOAD_URL, $Button_HLStatus
 #endregion
 
 #Region Variablen
@@ -86,6 +88,8 @@ Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
 Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
+
+Global $DefaultClickAction = IniRead(@ScriptDir & "\config.ini", "TEMP", "DefaultClickAction", "")
 #endregion
 
 
@@ -338,8 +342,11 @@ Func _Main_GUI()
 
 	$USE_FB_GUI = IniRead($Config_INI, "Settings", "USE_GUI", "")
 	If $USE_FB_GUI = "true" Then
-		_Create_GUI()
+		_Create_GUI_1()
+	Else
+		_Create_GUI_2()
 	EndIf
+
 
 	;If Not ProcessExists("vrmonitor.exe") Then
 	;	Sleep(1000)
@@ -385,6 +392,8 @@ Func _LOOP_1()
 		Local $HOMECheck = "false"
 		Local $HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
 		Do
+			_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_2.bmp")
+			GuiCtrlSetTip($Button_HLStatus, "Home APP loaded:" & @CRLF & $WinName_ACTIVE)
 			If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Then ExitLoop
 			$HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
 			If WinExists($WinName) Then
@@ -406,6 +415,7 @@ Func _LOOP_1()
 			If Not ProcessExists("vrmonitor.exe") Then _Exit()
 			If $USE_PHP_WebServer = "true" Then _StartGame_Check()
 			Sleep(2000)
+			WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 		Until $HOMECheck = "false"
 	EndIf
 	_LOOP_2()
@@ -420,8 +430,10 @@ Func _LOOP_2()
 	Local $WinName_ACTIVE_name, $CurruntRunning
 
 	Do
+		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_3.bmp")
 		;If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
 		If WinExists($WinName_ACTIVE) Then
+			GuiCtrlSetTip($Button_HLStatus, "Application loaded:" & @CRLF & $WinName_ACTIVE)
 			$CurruntRunning = $WinName_ACTIVE
 			$HomeLoaderState_SSDATA = IniRead($config_ini, "TEMP", "HomeLoaderState_SSDATA", "")
 			If $HomeLoaderState_SSDATA = "" Then
@@ -455,6 +467,7 @@ Func _LOOP_2()
 		Sleep(2000)
 		If Not ProcessExists("vrmonitor.exe") Then TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
 		If Not ProcessExists("vrmonitor.exe") Then _Exit()
+		WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 	Until $CurruntRunning = ""
 
 	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
@@ -465,6 +478,9 @@ Func _LOOP_2()
 EndFunc
 
 Func _LOOP_3()
+	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
+	GuiCtrlSetTip($Button_HLStatus, "LOADING...:")
+	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 	Sleep(3000)
 	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
 	If Not ProcessExists("vrmonitor.exe") Then
@@ -478,7 +494,7 @@ Func _LOOP_3()
 EndFunc
 
 
-Func _Create_GUI()
+Func _Create_GUI_1()
 	$DesktopWidth = @DesktopWidth / 2
 	$DesktopHeight = @DesktopHeight
 
@@ -495,8 +511,8 @@ Func _Create_GUI()
 	Local Const $PG_WS_POPUP = 0x80000000
 	Local Const $PG_WS_DLGFRAME = 0x00400000
 
-	$GUI = GUICreate("Home Loader", 320, 65, $X, $Y, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))  ; $WS_EX_TOPMOST
-	GUISetIcon(@AutoItExe, -2, $GUI)
+	Global $GUI_1 = GUICreate("Home Loader", 320, 65, $X, $Y, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))  ; $WS_EX_TOPMOST
+	GUISetIcon(@AutoItExe, -2, $GUI_1)
 	GUISetBkColor($Yellow)
 
 	$GUI_Label = GUICtrlCreateLabel("...Loading...", 80, 26, 127, 20)
@@ -522,7 +538,94 @@ Func _Create_GUI()
 	_GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
 	GUICtrlSetOnEvent($Button_Exit, "_Exit")
 
-	GUISetState(@SW_SHOW, $GUI)
+	GUISetState(@SW_SHOW, $GUI_1)
+	WinActivate($WinName)
+EndFunc
+
+Func _Create_GUI_2()
+	$Width = 30
+	$Height = 30
+	$X = $Width
+	$Y = $Height
+
+	$font_arial = "arial"
+	$SteamVR_Status = "true"
+
+	Local Const $PG_WS_POPUP = 0x80000000
+	Local Const $PG_WS_DLGFRAME = 0x00400000
+
+	Global $GUI_2 = GUICreate("Home Loader", $X, $Y, 2, 2, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))  ; $WS_EX_TOPMOST
+	GUISetIcon(@AutoItExe, -2, $GUI_2)
+	GUISetBkColor("0x483D8B")
+
+	$Button_HLStatus = GUICtrlCreateButton("HLStatus_1", - 5, - 5, 41, 41, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
+	GuiCtrlSetTip($Button_HLStatus, "LOADING...:" & @CRLF)
+	GUICtrlSetOnEvent($Button_HLStatus, "_Button_HLStatus")
+
+	Global $contextmenu = GUICtrlCreateContextMenu($Button_HLStatus)
+	Global $RM_Menu_Item_1 = GUICtrlCreateMenu("Open Game Page", $contextmenu, 1)
+		Global $RM_Item1_1 = GUICtrlCreateMenuItem("Game Page - All Applications", $RM_Menu_Item_1, 1, 0)
+		Global $RM_Item1_2 = GUICtrlCreateMenuItem("Game Page - Non-Steam Applications", $RM_Menu_Item_1, 2, 0)
+		Global $RM_Item1_3 = GUICtrlCreateMenuItem("Game Page - Custom 1", $RM_Menu_Item_1, 3, 0)
+		Global $RM_Item1_4 = GUICtrlCreateMenuItem("Game Page - Custom 2", $RM_Menu_Item_1, 4, 0)
+		Global $RM_Item1_5 = GUICtrlCreateMenuItem("Game Page - Custom 3", $RM_Menu_Item_1, 5, 0)
+		Global $RM_Item1_6 = GUICtrlCreateMenuItem("Game Page - Custom 4", $RM_Menu_Item_1, 6, 0)
+		;GUICtrlSetOnEvent($RM_Menu_Item_1, "_RM_Menu_Item_1")
+		GUICtrlSetOnEvent($RM_Item1_1, "_RM_Item1_1")
+		GUICtrlSetOnEvent($RM_Item1_2, "_RM_Item1_1")
+		GUICtrlSetOnEvent($RM_Item1_3, "_RM_Item1_1")
+		GUICtrlSetOnEvent($RM_Item1_4, "_RM_Item1_1")
+		GUICtrlSetOnEvent($RM_Item1_5, "_RM_Item1_1")
+		GUICtrlSetOnEvent($RM_Item1_6, "_RM_Item1_1")
+	Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu, 2, 0)
+	Global $RM_Item3 = GUICtrlCreateMenuItem("Home Loader Library", $contextmenu, 3, 0)
+		GUICtrlSetOnEvent(- 1, "RM_Item3")
+	Global $RM_Item4 = GUICtrlCreateMenuItem("Playlist", $contextmenu, 4, 0)
+		GUICtrlSetOnEvent(- 1, "RM_Item4")
+	Global $RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu, 5, 0)
+		GUICtrlSetOnEvent(- 1, "RM_Item5")
+	Global $RM_Item6 = GUICtrlCreateMenuItem("Start SteamVR Home APP", $contextmenu, 6, 0)
+		GUICtrlSetOnEvent(- 1, "RM_Item6")
+	Global $RM_Item7 = GUICtrlCreateMenuItem("Settings", $contextmenu, 7, 0)
+		GUICtrlSetOnEvent(- 1, "RM_Item7")
+	Global $RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu, 8, 0)
+	Global $RM_Item9 = GUICtrlCreateMenuItem("", $contextmenu, 9, 0)
+	Global $RM_Menu_Item_10 = GUICtrlCreateMenu("Default click action", $contextmenu, 10)
+		Global $RM_Item10_1 = GUICtrlCreateMenuItem("Game Page - All Applications", $RM_Menu_Item_10, 1, 1)
+		Global $RM_Item10_2 = GUICtrlCreateMenuItem("Game Page - Non-Steam Applications", $RM_Menu_Item_10, 2, 1)
+		Global $RM_Item10_3 = GUICtrlCreateMenuItem("Game Page - Custom 1", $RM_Menu_Item_10, 3, 1)
+		Global $RM_Item10_4 = GUICtrlCreateMenuItem("Game Page - Custom 2", $RM_Menu_Item_10, 4, 1)
+		Global $RM_Item10_5 = GUICtrlCreateMenuItem("Game Page - Custom 3", $RM_Menu_Item_10, 5, 1)
+		Global $RM_Item10_6 = GUICtrlCreateMenuItem("Game Page - Custom 4", $RM_Menu_Item_10, 6, 1)
+		Global $RM_Item10_7 = GUICtrlCreateMenuItem("Home Loader Library", $RM_Menu_Item_10, 7, 1)
+		Global $RM_Item10_8 = GUICtrlCreateMenuItem("Playlist", $RM_Menu_Item_10, 8, 1)
+		Global $RM_Item10_9 = GUICtrlCreateMenuItem("Supersampling Menu", $RM_Menu_Item_10, 9, 1)
+		Global $RM_Item10_10 = GUICtrlCreateMenuItem("Start SteamVR Home APP", $RM_Menu_Item_10, 10, 1)
+		Global $RM_Item10_11 = GUICtrlCreateMenuItem("Settings", $RM_Menu_Item_10, 11, 1)
+		Global $RM_Item10_12 = GUICtrlCreateMenuItem("Restart Home Loader", $RM_Menu_Item_10, 12, 1)
+		Global $RM_Item10_13 = GUICtrlCreateMenuItem("Exit", $RM_Menu_Item_10, 13, 1)
+			GUICtrlSetOnEvent($RM_Item10_1, "_RM_Item10_1")
+			GUICtrlSetOnEvent($RM_Item10_2, "_RM_Item10_2")
+			GUICtrlSetOnEvent($RM_Item10_3, "_RM_Item10_3")
+			GUICtrlSetOnEvent($RM_Item10_4, "_RM_Item10_4")
+			GUICtrlSetOnEvent($RM_Item10_5, "_RM_Item10_5")
+			GUICtrlSetOnEvent($RM_Item10_6, "_RM_Item10_6")
+			GUICtrlSetOnEvent($RM_Item10_7, "_RM_Item10_7")
+			GUICtrlSetOnEvent($RM_Item10_8, "_RM_Item10_8")
+			GUICtrlSetOnEvent($RM_Item10_9, "_RM_Item10_9")
+			GUICtrlSetOnEvent($RM_Item10_10, "_RM_Item10_10")
+			GUICtrlSetOnEvent($RM_Item10_11, "_RM_Item10_11")
+			GUICtrlSetOnEvent($RM_Item10_12, "_RM_Item10_12")
+			GUICtrlSetOnEvent($RM_Item10_13, "_RM_Item10_13")
+	Global $RM_Item11 = GUICtrlCreateMenuItem("", $contextmenu, 11, 0)
+	Global $RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu, 12, 0)
+	Global $RM_Item13 = GUICtrlCreateMenuItem("Restart Home Loader", $contextmenu, 13, 0)
+		GUICtrlSetOnEvent(- 1, "_Restart_HomeLoader")
+	Global $RM_Item14 = GUICtrlCreateMenuItem("Exit", $contextmenu, 14, 0)
+		GUICtrlSetOnEvent(- 1, "_Exit")
+	GUISetState(@SW_SHOW, $GUI_2)
+	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 	WinActivate($WinName)
 EndFunc
 
@@ -1127,3 +1230,252 @@ Func _Exit()
 	EndIf
 	Exit
 EndFunc
+
+
+
+
+#Region RM Functions
+Func _Button_HLStatus()
+	$DefaultClickAction = IniRead(@ScriptDir & "\config.ini", "TEMP", "DefaultClickAction", "")
+
+	If $DefaultClickAction = "RM_Item10_1" Then ; Game Page - All Applications
+		_RM_Item1_1()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_2" Then ; Game Page - Non-Steam Applications
+		_RM_Item1_2()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_3" Then ; Game Page - Custom 1
+		_RM_Item1_3()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_4" Then ; Game Page - Custom 2
+		_RM_Item1_4()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_5" Then ; Game Page - Custom 3
+		_RM_Item1_5()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_6" Then ; Game Page - Custom 4
+		_RM_Item1_6()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_7" Then ; Home Loader Library
+		RM_Item3()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_8" Then ; Playlist
+		RM_Item4()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_9" Then ; Supersampling Menu
+		RM_Item5()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_10" Then ; Start SteamVR Home APP
+		RM_Item6()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_11" Then ; Settings
+		RM_Item7()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_12" Then ; Restart Home Loader
+		_Restart_HomeLoader()
+	EndIf
+
+	If $DefaultClickAction = "RM_Item10_13" Then ; Exit
+		GUIDelete($GUI)
+		Exit
+	EndIf
+
+	If $DefaultClickAction = "" Then ; Empty
+		GUIDelete($GUI)
+		Exit
+	EndIf
+EndFunc
+
+Func _RM_Item1_1()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_ALL.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+Func _RM_Item1_2()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+Func _RM_Item1_3()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+Func _RM_Item1_4()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+Func _RM_Item1_5()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+Func _RM_Item1_6()
+	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+
+	If FileExists($GamePage_URL) Then
+		ShellExecute($GamePage_URL)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
+																		"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
+																		"Create a new Game Page first using the 'Create Game Page' Button.")
+	EndIf
+EndFunc
+
+
+Func RM_Item3()
+	Local $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	IniWrite($Config_INI, "TEMP", "Show_Playlist", "")
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
+	EndIf
+EndFunc
+
+Func RM_Item4()
+	Local $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	IniWrite($Config_INI, "TEMP", "Show_Playlist", "true")
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
+	EndIf
+EndFunc
+
+Func RM_Item5()
+	Local $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	IniWrite($Config_INI, "TEMP", "Show_SS_Menu", "true")
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
+	EndIf
+EndFunc
+
+Func RM_Item6()
+	Local $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
+	EndIf
+EndFunc
+
+Func RM_Item7()
+	Local $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	If FileExists($System_DIR & "Settings.exe") Then
+		ShellExecute($System_DIR & "Settings.exe", "", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "Settings.au3", "", $System_DIR)
+	EndIf
+EndFunc
+
+
+Func _RM_Item10_1()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_1")
+EndFunc
+
+Func _RM_Item10_2()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_2")
+EndFunc
+
+Func _RM_Item10_3()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_3")
+EndFunc
+
+Func _RM_Item10_4()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_4")
+EndFunc
+
+Func _RM_Item10_5()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_5")
+EndFunc
+
+Func _RM_Item10_6()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_6")
+EndFunc
+
+Func _RM_Item10_7()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_7")
+EndFunc
+
+Func _RM_Item10_8()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_8")
+EndFunc
+
+Func _RM_Item10_9()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_9")
+EndFunc
+
+Func _RM_Item10_10()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_10")
+EndFunc
+
+Func _RM_Item10_11()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_11")
+EndFunc
+
+Func _RM_Item10_12()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_12")
+EndFunc
+
+Func _RM_Item10_13()
+	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_13")
+EndFunc
+
+
+
+
+#endregion
+
+
+
+

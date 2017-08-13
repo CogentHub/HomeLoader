@@ -1,4 +1,5 @@
-- Added 'automatic check for update' at program start as option
-- Added new Game Page Button that opens the created Game Page for the selected section.
-- Fixed some issues that occurred because of the last changes
+- Added new Home Loader GUI that runs while Home Loader is running in the Background
+- Added new Menu Items to the new Home Loader GUI
+- Optimued Update Function
+- Fixed some issues
 

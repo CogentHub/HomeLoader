@@ -18,6 +18,7 @@ Global $Update_Check = IniRead($Config_INI, "TEMP", "Update_Check", "")
 Global $Anzeige_Fortschrittbalken, $Get_Update_State
 
 _Check_for_Updates()
+Sleep(1000)
 If $Update_Check <> "true" Then _Restart_Settings_GUI()
 
 Func _Loading_GUI()
@@ -89,7 +90,6 @@ Func _Check_for_Updates()
 			If $Abfrage = 6 Then
 				WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
 				GUICtrlSetData($Updating_Label, "...Preparing...")
-				If $Version_NR = 48 Then _Delete_old_Files()
 				Sleep(500)
 				WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
 				GUICtrlSetData($Updating_Label, "...Updating...")
@@ -100,7 +100,7 @@ Func _Check_for_Updates()
 				If FileExists($UpdateFolder) Then DirRemove($UpdateFolder, $DIR_REMOVE)
 				_Zip_UnzipAll($Update_ZIP, $UpdateFolder, 0)
 				GUICtrlSetData($Anzeige_Fortschrittbalken, 70)
-				DirCopy($UpdateFolder, $UpdateTargetFolder, $FC_OVERWRITE)
+				;DirCopy($UpdateFolder, $UpdateTargetFolder, $FC_OVERWRITE)
 				GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
 				Sleep(2000)
 				;GUISetState(@SW_HIDE, $GUI_Loading)
@@ -108,6 +108,7 @@ Func _Check_for_Updates()
 				IniWrite($config_ini, "TEMP", "Update", "Updated")
 				MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
 																	"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
+				_Update_Finished()
 			EndIf
 		EndIf
 
@@ -128,14 +129,18 @@ Func _Check_for_Updates()
 	If FileExists($Update_ZIP) Then FileDelete($Update_ZIP)
 EndFunc
 
-Func _Delete_old_Files()
-	FileDelete($Install_DIR & "config.ini")
-	FileDelete($Install_DIR & "HomeLoader.exe")
-	FileDelete($Install_DIR & "HomeLoaderLibrary.exe")
-	FileDelete($Install_DIR & "Settings.exe")
-	FileDelete($Install_DIR & "StartSteamVRHome.exe")
-	DirRemove($Install_DIR & "gfx\", 1)
+
+
+Func _Update_Finished()
+		If FileExists($System_DIR & "Update.exe") Then
+			ShellExecute($System_DIR & "Update.exe", "", $Install_DIR)
+		Else
+			If FileExists($System_DIR & "Update.au3") Then
+				ShellExecute($System_DIR & "Update.au3", "", $Install_DIR)
+			EndIf
+		EndIf
 EndFunc
+
 
 Func _Restart_Settings_GUI()
 	If FileExists($System_DIR & "Settings.exe") Then
@@ -147,3 +152,4 @@ Func _Restart_Settings_GUI()
 	If FileExists($Update_ZIP) Then FileDelete($Update_ZIP)
 	Exit
 EndFunc
+

@@ -24,7 +24,7 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI,
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.54"
+Global $Version = "0.55"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
@@ -120,9 +120,9 @@ Func _Update_Performed_Check()
 	EndIf
 	If $Update_Performed_Check = "Done, delete Update" Then
 		IniWrite($config_ini, "TEMP", "Update", "")
-		If FileExists($Install_DIR & "System\Update.exe") Then FileDelete($Install_DIR & "System\Update.exe")
-		If FileExists($Install_DIR & "System\TEMP.zip") Then FileDelete($Install_DIR & "System\TEMP.zip")
-		If FileExists($Install_DIR & "System\Update\") Then DirRemove($Install_DIR & "System\Update\", $DIR_REMOVE)
+		If FileExists($System_DIR & "Update.exe") Then FileDelete($System_DIR & "Update.exe")
+		If FileExists($System_DIR & "TEMP.zip") Then FileDelete($System_DIR & "TEMP.zip")
+		If FileExists($System_DIR & "Update\") Then DirRemove($System_DIR & "Update\", $DIR_REMOVE)
 	EndIf
 EndFunc
 #endregion
