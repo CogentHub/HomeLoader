@@ -36,6 +36,8 @@ Global $font = "arial"
 
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")

@@ -5,6 +5,8 @@
 
 
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $Config_INI = $System_DIR & "config.ini"
 Global $Config_NEW_INI = $System_DIR & "config_NEW.ini"
@@ -25,7 +27,7 @@ Global $Read_Icon_Folder_3, $Read_Home_Path, $Read_WindowName
 
 
 _Changelog()
-_Restart_Settings_GUI()
+;_Restart_Settings_GUI()
 
 
 Func _Changelog()

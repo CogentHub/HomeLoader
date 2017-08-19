@@ -1,4 +1,4 @@
-- Added new Home Loader GUI that runs while Home Loader is running in the Background
+- Added new Home Loader GUI while Home Loader is running in the Background
 - Added new Menu Items to the new Home Loader GUI
 - Optimued Update Function
 - Fixed some issues

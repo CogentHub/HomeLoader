@@ -11,6 +11,8 @@ Opt("GUIOnEventMode", 1)
 
 Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "")

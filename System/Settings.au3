@@ -24,9 +24,11 @@ Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI,
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.55"
+Global $Version = "0.56"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")
@@ -76,9 +78,6 @@ IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
 
 
-
-_Update_Performed_Check()
-
 _First_Start_Empty_Check_1()
 
 
@@ -110,11 +109,15 @@ Func _Update_Performed_Check()
 	If $Update_Performed_Check = "Updated" Then
 		IniWrite($config_ini, "TEMP", "Update", "")
 		If FileExists($System_DIR & "Update.exe") Then
-			ShellExecute($System_DIR & "Update.exe", "", $Install_DIR)
+			ShellExecuteWait($System_DIR & "Update.exe", "", $Install_DIR)
+			IniWrite($config_ini, "TEMP", "Update", "")
+			IniWrite($Config_INI, "TEMP", "Update_Check", "")
 		Else
-			If FileExists($System_DIR & "Update.au3") Then
-				ShellExecute($System_DIR & "Update.au3", "", $Install_DIR)
-			EndIf
+			;If FileExists($System_DIR & "Update.au3") Then
+				ShellExecuteWait($System_DIR & "Update.au3", "", $Install_DIR)
+				IniWrite($config_ini, "TEMP", "Update", "")
+				IniWrite($Config_INI, "TEMP", "Update_Check", "")
+			;EndIf
 		EndIf
 		Exit
 	EndIf
@@ -130,6 +133,7 @@ EndFunc
 
 #Region First Start And Empty Check
 Func _First_Start_Empty_Check_1()
+	_Update_Performed_Check()
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
 
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -1242,7 +1246,6 @@ Func _Check_for_Updates_1()
 	Else
 		ShellExecute($System_DIR & "UpdateCheck.au3", "", $System_DIR)
 	EndIf
-
 	IniWrite($config_ini, "TEMP", "Update", "true")
 	_Exit()
 EndFunc

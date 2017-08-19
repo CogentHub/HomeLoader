@@ -7,6 +7,8 @@
 
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "\System\"
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $Config_INI = $System_DIR & "config.ini"
 
 Global $Playlist_INI = IniRead($Config_INI, "TEMP", "Playlist_INI", "")

@@ -20,9 +20,9 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.55"
+Global $Version = "0.56"
 Global $Install_DIR = @ScriptDir & "\"
-Global $System_DIR = $Install_DIR & "\System\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")

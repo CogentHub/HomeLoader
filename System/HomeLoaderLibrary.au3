@@ -54,9 +54,11 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.55"
+Global $Version = "0.56"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
+	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
+Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $ApplicationList_INI = $Install_DIR & "ApplicationList.ini"
@@ -115,7 +117,7 @@ Global $Add_break = IniRead($Playlist_1_INI, "Playlist", "Add_break", "false")
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
 
-#region First Start Check
+#region First Start and Update performed Check
 _First_Start_Empty_Check_1()
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
@@ -470,8 +472,9 @@ WEnd
 
 #Region Start Funktionen
 
-#Region First Start And Empty Check
+#Region First Start And Update / Empty Check
 Func _First_Start_Empty_Check_1()
+	_Update_Performed_Check()
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
 
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -637,6 +640,27 @@ Func _First_Start_Empty_Check_1()
 				EndIf
 			EndIf
 		EndIf
+	EndIf
+EndFunc
+
+Func _Update_Performed_Check()
+	$Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
+	If $Update_Performed_Check = "Updated" Then
+		IniWrite($config_ini, "TEMP", "Update", "")
+		If FileExists($System_DIR & "Update.exe") Then
+			ShellExecuteWait($System_DIR & "Update.exe", "", $Install_DIR)
+		Else
+			;If FileExists($System_DIR & "Update.au3") Then
+				ShellExecuteWait($System_DIR & "Update.au3", "", $Install_DIR)
+			;EndIf
+		EndIf
+		Exit
+	EndIf
+	If $Update_Performed_Check = "Done, delete Update" Then
+		IniWrite($config_ini, "TEMP", "Update", "")
+		If FileExists($System_DIR & "Update.exe") Then FileDelete($System_DIR & "Update.exe")
+		If FileExists($System_DIR & "TEMP.zip") Then FileDelete($System_DIR & "TEMP.zip")
+		If FileExists($System_DIR & "Update\") Then DirRemove($System_DIR & "Update\", $DIR_REMOVE)
 	EndIf
 EndFunc
 #endregion
