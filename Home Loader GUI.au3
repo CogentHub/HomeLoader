@@ -20,7 +20,7 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.56"
+Global $Version = "0.57"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"

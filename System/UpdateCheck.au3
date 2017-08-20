@@ -3,7 +3,6 @@
 #include <File.au3>
 #include <Zip.au3>
 
-
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
@@ -79,7 +78,8 @@ Func _Check_for_Updates()
 			If $iInetGetInfo_1 <> 0 Then
 				$Get_Update_State = "true"
 				WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
-				$Abfrage = MsgBox($MB_YESNOCANCEL + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
+				$Abfrage = MsgBox($MB_YESNO	 + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
+																								"Download Link: " & @CRLF & "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $Update_Loop & "/HomeLoaderSetup.exe" & @CRLF & @CRLF &  _
 																								"Do you want to download and install the new Version?")
 
 
@@ -148,8 +148,6 @@ Func _Check_for_Updates()
 	;If FileExists($Update_File) Then FileDelete($Update_File)
 	;Exit
 EndFunc
-
-
 
 Func _Update_Finished()
 		If FileExists($System_DIR & "Update.exe") Then

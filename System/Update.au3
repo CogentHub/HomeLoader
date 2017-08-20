@@ -3,7 +3,6 @@
 #include <File.au3>
 #include <Zip.au3>
 
-
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"

@@ -1,6 +1,4 @@
-#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Icon=Compile_Icons\Play_Starten.ico
-#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
+
 #include <File.au3>
 #include <Misc.au3>
 #include <_IsPressed360.au3>
@@ -67,7 +65,7 @@ _Start_Home_APP()
 
 Sleep(1000)
 
-If $Advanced_Settings = "true" And $Start_HomeLoader_with_HomeApp = "true" Then
+If $Advanced_Settings = "true" Then
 	_Start_Home_Loader()
 EndIf
 
@@ -290,7 +288,15 @@ Func _Start_Home_APP()
 	Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 	Global $WindowName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 	Global $Vive_Home_Folder = ""
-	If Not ProcessExists("vrmonitor.exe") Then ShellExecute("steam://rungameid/250820")
+	If Not ProcessExists("vrmonitor.exe") Then
+		ShellExecute("steam://rungameid/250820")
+		Exit
+	EndIf
+
+	Do
+		Sleep(1000)
+	Until ProcessExists("vrmonitor.exe")
+
 	If $WindowName <> "SteamVR Home" Then
 		If $WindowName = "Vive Home" Then
 			$Vive_Home_Folder_1 = StringInStr($Home_Path, "\", 1, - 1)
@@ -300,15 +306,6 @@ Func _Start_Home_APP()
 			ShellExecute($Home_Path)
 		EndIf
 	EndIf
-
-	For $LOOP_HomeDetection_1 = 1 To 45
-		Sleep(1000)
-		If $WindowName <> "SteamVR Home" Then
-			If WinExists($WindowName) Then ExitLoop
-		Else
-			If ProcessExists("vrmonitor.exe") Then ExitLoop
-		EndIf
-	Next
 EndFunc
 
 

@@ -1,6 +1,3 @@
-#Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_Icon=Compile_Icons\InfoWindow.ico
-#EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 #Region Inncludes
 #include <GuiToolbar.au3>
@@ -54,7 +51,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.56"
+Global $Version = "0.57"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -220,15 +217,13 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 35, $BS_BITMAP)
+	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 31, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "HomeLoaderPlaylist.bmp")
+	GuiCtrlSetTip(-1, "Shows the Home Loader Playlist.")
+
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 66, 145, 31, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
-
-	Global $Button_Start_SteamVR = GUICtrlCreateButton("Start SteamVR", 440, $DesktopHeight - 65, 145, 29)
-	GUICtrlSetFont(-1, 13, 600, 2, $font_arial)
-	GUICtrlSetColor(-1, "0x006600")
-	GuiCtrlSetTip(-1, "Starts SteamVR." & @CRLF & @CRLF &  "If activated [Normal Mode or Advanced mode] it will automaticly" & @CRLF & "load the 'HomeLoader.exe' when it starts SteamVR.")
-
 
 	Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
@@ -379,11 +374,6 @@ If $First_Start <> "true" Then
 		GUICtrlSetState($Combo_Add_to_Custom, $GUI_HIDE)
 	EndIf
 
-
-	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 372, $DesktopHeight - 90, 56, 46, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "Playlist.bmp")
-	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
-
 	#endregion
 
 	_Loading_GUI()
@@ -408,7 +398,6 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($ButtonTAB_Custom_4 , "_ButtonTAB_Custom_4")
 
 	GUICtrlSetOnEvent($Button_HomeLoaderSettings, "_Button_HomeLoaderSettings")
-	GUICtrlSetOnEvent($Button_Start_SteamVR, "_Button_Start_SteamVR")
 
 	GUICtrlSetOnEvent($Checkbox_CreatePage, "_Checkbox_all")
 	GUICtrlSetOnEvent($Checkbox_CreatePage_Label, "_Checkbox_all")

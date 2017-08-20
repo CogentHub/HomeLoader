@@ -8,8 +8,6 @@
 #include <File.au3>
 #include <GUIConstants.au3>
 #include <TrayConstants.au3>
-;#include <ComboConstants.au3>
-;#include <GDIPlus.au3>
 #include <Inet.au3>
 
 #include "_GDIPlus_WTOB.au3"
@@ -396,7 +394,7 @@ Func _LOOP_1()
 		Do
 			_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_2.bmp")
 			GuiCtrlSetTip($Button_HLStatus, "Home APP loaded:" & @CRLF & $WinName_ACTIVE)
-			If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Then ExitLoop
+			If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Then ExitLoop
 			$HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
 			If WinExists($WinName) Then
 				$HOMECheck = "true"
@@ -701,92 +699,6 @@ Func _Checkbox_Show_Settings_at_Startup()
 	EndIf
 EndFunc
 
-Func _StartGame_Check()
-	If FileExists($Install_DIR & "WebPage\temp.txt") Then
-		$SteamGameID = FileRead($Install_DIR & "WebPage\temp.txt")
-		$ApplicationList_Read = $ApplicationList_SteamLibrary_ALL_INI
-		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Non_Steam_Appl_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_1_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_2_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_3_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_4_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		Global $Application_name = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "name", "")
-		Local $Application_installdir = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "installdir", "")
-		Local $Application_IconPath = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "IconPath", "")
-
-
-		If ProcessExists("vrmonitor.exe") Then
-			TrayTip("Home Loader", "App started: " & @CRLF & $Application_name, 5, $TIP_ICONASTERISK)
-
-			GUICtrlSetData($GUI_Label, $Application_name)
-			GUISetBkColor($Blue)
-
-
-			If StringLeft($Application_appid, 2) <> "HL" Then
-				If WinExists("Janus VR") Then WinClose("Janus VR")
-				If WinExists($WinName) Then WinClose($WinName)
-				If $Add_SS_per_game = "true" Then _Add_SS_to_SteamVR()
-				ShellExecuteWait("steam://rungameid/" & $SteamGameID)
-			Else
-				If WinExists("Janus VR") Then WinClose("Janus VR")
-				If WinExists($WinName) Then WinClose($WinName)
-				If $Add_SS_per_game = "true" Then _Add_SS_to_SteamVR()
-				ShellExecuteWait($Application_installdir)
-			EndIf
-
-			Sleep(4000)
-			_Ident_GameID()
-			$GameStarted_State = "true"
-			$GameNameStarted = WinGetTitle("[ACTIVE]")
-			If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
-			Do
-				GUICtrlSetData($GUI_Label, $GameNameStarted)
-				GUISetBkColor($Blue)
-				Sleep(2000)
-				If Not WinExists($GameNameStarted) Then $GameStarted_State = "false"
-			Until $GameStarted_State = "false"
-
-			_Start_StartSteamVRHome()
-
-			$State_Reload_HOMEonExit = IniRead($Config_INI, "Settings", "Reload_HOMEonExit", "")
-			;If $State_Reload_HOMEonExit = "true" Then
-				IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-				If FileExists($System_DIR & "HomeLoader.exe") Then
-					ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
-				Else
-					ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
-				EndIf
-			;EndIf
-			If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
-			Sleep(3000)
-			;_Check_Windows_Title()
-		EndIf
-		Exit
-	EndIf
-EndFunc
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Local $FileList = _FileListToArray($Icons , "*.jpg" , 1)
@@ -1125,6 +1037,7 @@ EndFunc
 
 Func _Quit_SS_Image_2_Image()
 	FileDelete(@ScriptDir & "\SS_Values." & ".jpg")
+	FileDelete(@ScriptDir & "\System\SS_Values." & ".jpg")
     _GDIPlus_PenDispose($hPen)
     _GDIPlus_ImageDispose($hImage1)
     _GDIPlus_ImageDispose($hImage2)
@@ -1222,6 +1135,8 @@ Func _Restart_HomeLoader()
 EndFunc
 
 Func _Exit()
+	FileDelete(@ScriptDir & "\SS_Values." & ".jpg")
+	FileDelete(@ScriptDir & "\System\SS_Values." & ".jpg")
 	IniWrite($Config_INI, "TEMP", "HomeLoaderState_PODATA", "")
 	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
 	If $USE_PHP_WebServer = "true" Then
@@ -1235,6 +1150,96 @@ EndFunc
 
 
 
+
+#Region Home Loader Functions
+Func _StartGame_Check()
+	If FileExists($Install_DIR & "WebPage\temp.txt") Then
+		$SteamGameID = FileRead($Install_DIR & "WebPage\temp.txt")
+		$ApplicationList_Read = $ApplicationList_SteamLibrary_ALL_INI
+		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+
+		If $Application_appid = "" Then
+			$ApplicationList_Read = $ApplicationList_Non_Steam_Appl_INI
+			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		EndIf
+
+		If $Application_appid = "" Then
+			$ApplicationList_Read = $ApplicationList_Custom_1_INI
+			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		EndIf
+
+		If $Application_appid = "" Then
+			$ApplicationList_Read = $ApplicationList_Custom_2_INI
+			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		EndIf
+
+		If $Application_appid = "" Then
+			$ApplicationList_Read = $ApplicationList_Custom_3_INI
+			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		EndIf
+
+		If $Application_appid = "" Then
+			$ApplicationList_Read = $ApplicationList_Custom_4_INI
+			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		EndIf
+
+		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
+		Global $Application_name = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "name", "")
+		Local $Application_installdir = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "installdir", "")
+		Local $Application_IconPath = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "IconPath", "")
+
+
+		If ProcessExists("vrmonitor.exe") Then
+			TrayTip("Home Loader", "App started: " & @CRLF & $Application_name, 5, $TIP_ICONASTERISK)
+
+			GUICtrlSetData($GUI_Label, $Application_name)
+			GUISetBkColor($Blue)
+
+
+			If StringLeft($Application_appid, 2) <> "HL" Then
+				If WinExists("Janus VR") Then WinClose("Janus VR")
+				If WinExists($WinName) Then WinClose($WinName)
+				If $Add_SS_per_game = "true" Then _Add_SS_to_SteamVR()
+				ShellExecuteWait("steam://rungameid/" & $SteamGameID)
+			Else
+				If WinExists("Janus VR") Then WinClose("Janus VR")
+				If WinExists($WinName) Then WinClose($WinName)
+				If $Add_SS_per_game = "true" Then _Add_SS_to_SteamVR()
+				ShellExecuteWait($Application_installdir)
+			EndIf
+
+			Sleep(4000)
+			_Ident_GameID()
+			$GameStarted_State = "true"
+			$GameNameStarted = WinGetTitle("[ACTIVE]")
+			If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
+			Do
+				GUICtrlSetData($GUI_Label, $GameNameStarted)
+				GUISetBkColor($Blue)
+				Sleep(2000)
+				If Not WinExists($GameNameStarted) Then $GameStarted_State = "false"
+			Until $GameStarted_State = "false"
+
+			;_Start_StartSteamVRHome()
+
+			$State_Reload_HOMEonExit = IniRead($Config_INI, "Settings", "Reload_HOMEonExit", "")
+			;If $State_Reload_HOMEonExit = "true" Then
+			;	IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
+			;	If FileExists($System_DIR & "HomeLoader.exe") Then
+			;		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
+			;	Else
+			;		ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
+			;	EndIf
+			;EndIf
+			If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
+			Sleep(3000)
+			;_Check_Windows_Title()
+		EndIf
+		Exit
+	EndIf
+EndFunc
+
+#endregion
 
 #Region RM Functions
 Func _Button_HLStatus()
@@ -1472,9 +1477,6 @@ EndFunc
 Func _RM_Item10_13()
 	IniWrite($Config_INI, "TEMP", "DefaultClickAction", "RM_Item10_13")
 EndFunc
-
-
-
 
 #endregion
 
