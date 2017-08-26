@@ -13,9 +13,6 @@
 #include "_GDIPlus_WTOB.au3"
 #include <GDIPlus.au3>
 
-
-
-
 Opt("GUIOnEventMode", 1)
 
 #Region Global
@@ -97,7 +94,6 @@ Global $DefaultClickAction = IniRead(@ScriptDir & "\config.ini", "TEMP", "Defaul
 #endregion
 
 
-
 If Not ProcessExists("vrmonitor.exe") Then
 	Sleep(5000)
 	If Not ProcessExists("vrmonitor.exe") Then
@@ -107,17 +103,11 @@ If Not ProcessExists("vrmonitor.exe") Then
 EndIf
 
 
-
 If $Start_HomeLoader_with_HomeApp = "true" Then
 	If WinExists("Home Loader") Then
 		;Exit
 	EndIf
 EndIf
-
-
-;_First_Start_Empty_Check_1()
-
-
 
 If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
@@ -145,8 +135,6 @@ If $Advanced_Settings = "true" Then
 		Sleep(500)
 		_Start_PHP_WebServer()
 	EndIf
-Else
-	;_Exit()
 EndIf
 
 
@@ -162,108 +150,7 @@ Sleep(100)
 _LOOP_1()
 
 
-
-#Region First Start And Empty Check
-Func _First_Start_Empty_Check_1()
-	_Update_Performed_Check()
-	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
-
-	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
-	If $Install_Folder_Steam_1 = "" Then
-		$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
-		$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\')
-
-		If $Install_Folder_Steam_Search_Folder <> "" Then
-			IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $Install_Folder_Steam_Search_Folder & "\")
-		Else
-			MsgBox($MB_ICONINFORMATION, "Steam folder", "Steam folder was not found." & @CRLF & _
-							"Choose the folder before continue." & @CRLF)
-
-			Local $FileSelectFolder = FileSelectFolder("Choose Steam folder", $Install_Folder_Steam_Search_Folder & "\")
-			If $FileSelectFolder <> "" Then
-				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", $FileSelectFolder & "\")
-			Else
-				MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
-				IniWrite($Config_INI, "Folders", "Install_Folder_Steam_1", "")
-				_Restart()
-			EndIf
-		EndIf
-		$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
-	EndIf
-
-	If $default_vrsettings_File = "" Then
-		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_4 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_5 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\"
-
-		$default_vrsettings_File = $SteamVR_Path & "resources\settings\default.vrsettings"
-		If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
-		$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
-
-		If Not FileExists($default_vrsettings_File) Then
-			MsgBox($MB_ICONINFORMATION, "Default.vrsettings File", "Default.vrsettings File not found." & @CRLF & _
-				"Choose the File before continue." & @CRLF)
-
-			Local $FileSelect = FileOpenDialog("Default.vrsettings File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
-			If $FileSelect <> "" Then
-				IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $FileSelect)
-			Else
-				MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
-				IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
-				_Restart()
-			EndIf
-		EndIf
-	EndIf
-
-	If $Advanced_Settings = "true" Then
-		$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
-		If $Icon_Folder_1 = "" Then
-			If FileExists($Install_DIR & "WebPage\images\") Then
-				$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
-			EndIf
-		EndIf
-
-		$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
-		If $Icon_Folder_2 = "" Then
-			If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
-				$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
-			EndIf
-		EndIf
-	EndIf
-
-
-	If $Steam_tools_vrmanifest_File = "" Then
-		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_4 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_5 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\"
-
-		$Steam_tools_vrmanifest_File = $SteamVR_Path & "tools\tools.vrmanifest"
-		If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
-		$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
-
-		If Not FileExists($Steam_tools_vrmanifest_File) Then
-			MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
-				"Choose the File before continue." & @CRLF)
-
-			Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
-			If $FileSelect <> "" Then
-				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
-			Else
-				MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
-				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
-				_Restart()
-			EndIf
-		EndIf
-	EndIf
-EndFunc
-#endregion
-
+#Region GUI
 Func _Main_GUI()
 	Global $LimeGreen = "0x32CD32"
 	Global $Blue = "0x00BFFF"
@@ -276,14 +163,6 @@ Func _Main_GUI()
 		_Create_GUI_2()
 	EndIf
 
-
-	;If Not ProcessExists("vrmonitor.exe") Then
-	;	Sleep(1000)
-	;	;If Not ProcessExists("vrmonitor.exe") Then ShellExecute("steam://rungameid/250820")
-	;	Do
-	;		Sleep(1000)
-	;	Until ProcessExists("vrmonitor.exe")
-	;EndIf
 	If Not ProcessExists("vrmonitor.exe") Then
 		Sleep(5000)
 		If Not ProcessExists("vrmonitor.exe") Then Sleep(10000)
@@ -291,7 +170,6 @@ Func _Main_GUI()
 		If Not ProcessExists("vrmonitor.exe") Then Exit
 	EndIf
 EndFunc
-
 
 Func _Loading_GUI()
 	Local Const $PG_WS_POPUP = 0x80000000
@@ -311,119 +189,6 @@ Func _Loading_GUI()
 	GUISetState(@SW_SHOW, $GUI_Loading)
 	WinSetOnTop("Loading...please wait...", "", $WINDOWS_ONTOP)
 EndFunc
-
-
-Func _LOOP_1()
-	Local $WinName_ACTIVE = WinGetTitle("[ACTIVE]")
-
-	If $WinName_ACTIVE = $WinName Then
-		Sleep(2000)
-		Local $HOMECheck = "false"
-		Local $HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
-		Do
-			_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_2.bmp")
-			GuiCtrlSetTip($Button_HLStatus, "Home APP loaded:" & @CRLF & $WinName_ACTIVE)
-			If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Then ExitLoop
-			$HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
-			;MsgBox(0, $WinName, @MIN & ">" & $HomeLoaderState_PODATA + 5 & @CRLF & @CRLF & @MIN & "<" & $HomeLoaderState_PODATA - 5)
-			If WinExists($WinName) Then
-				$HOMECheck = "true"
-				GUICtrlSetData($GUI_Label, "SteamVR Home loaded.")
-				GUISetBkColor($Blue)
-				;MsgBox(0, "", @MIN & ">" & $HomeLoaderState_PODATA + 5 & @CRLF & @CRLF & @MIN & "<" & $HomeLoaderState_PODATA - 5)
-				If @MIN > $HomeLoaderState_PODATA + 5 Or @MIN < $HomeLoaderState_PODATA - 5 Then
-					IniWrite($Config_INI, "TEMP", "HomeLoaderState_PODATA", @MIN)
-					If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
-					TrayTip("Home Loader", "Home app running." & @CRLF & $WinName, 5, $TIP_ICONASTERISK)
-				EndIf
-			Else
-				$HOMECheck = "false"
-				GUICtrlSetData($GUI_Label, "Home not loaded")
-				GUISetBkColor($Yellow)
-				TrayTip("Home Loader", "Home not loaded." & @CRLF & $WinName, 5, $TIP_ICONASTERISK)
-			EndIf
-			If Not ProcessExists("vrmonitor.exe") Then TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
-			If Not ProcessExists("vrmonitor.exe") Then _Exit()
-			If $USE_PHP_WebServer = "true" Then _StartGame_Check()
-			Sleep(2000)
-			WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
-		Until $HOMECheck = "false"
-	EndIf
-	_LOOP_2()
-EndFunc
-
-Func _LOOP_2()
-	Sleep(2000)
-	Local $WinName_ACTIVE = WinGetTitle("[ACTIVE]")
-	If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
-	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
-	Local $HomeLoaderState_SSDATA = IniRead($config_ini, "TEMP", "HomeLoaderState_SSDATA", "")
-	Local $WinName_ACTIVE_name, $CurruntRunning
-
-	Do
-		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_3.bmp")
-		;If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
-		If WinExists($WinName_ACTIVE) Then
-			GuiCtrlSetTip($Button_HLStatus, "Application loaded:" & @CRLF & $WinName_ACTIVE)
-			$CurruntRunning = $WinName_ACTIVE
-			$HomeLoaderState_SSDATA = IniRead($config_ini, "TEMP", "HomeLoaderState_SSDATA", "")
-			If $HomeLoaderState_SSDATA = "" Then
-				For $Loop_1 = 1 To $NR_Applications
-					If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
-					Local $name = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_1, "name", "")
-					If $WinName_ACTIVE = $name Then
-						$WinName_ACTIVE_name = $name
-						ExitLoop
-					EndIf
-				Next
-				If $WinName_ACTIVE_name <> "" Then
-					TrayTip("Home Loader", $WinName_ACTIVE_name & " running." & @CRLF & $WinName_ACTIVE_name, 5, $TIP_ICONASTERISK)
-					_Ident_GameID()
-					GUICtrlSetData($GUI_Label, $WinName_ACTIVE_name & " loaded")
-					GUISetBkColor($LimeGreen)
-				EndIf
-			EndIf
-		Else
-			Sleep(1000)
-			$WinName_ACTIVE_name = WinGetTitle("[ACTIVE]")
-			TrayTip("Home Loader", $WinName_ACTIVE_name & " running." & @CRLF & $WinName_ACTIVE_name, 5, $TIP_ICONASTERISK)
-			GUICtrlSetData($GUI_Label, $WinName_ACTIVE_name & " loaded")
-			GUISetBkColor($LimeGreen)
-			$CurruntRunning = ""
-		EndIf
-
-		If Not WinExists($WinName_ACTIVE_name) Then	$CurruntRunning = ""
-		;If $WinName_ACTIVE_name = "" Or $WinName_ACTIVE_name = "Oculus" Or $WinName_ACTIVE_name = "Vive Home" Or $WinName_ACTIVE_name = "SteamVR-Status" Or $WinName_ACTIVE_name = "SteamVR Status" Or $WinName_ACTIVE_name = "Home Loader" Or $WinName_ACTIVE_name = $WinName Then _Restart_HomeLoader()
-
-		Sleep(2000)
-		If Not ProcessExists("vrmonitor.exe") Then TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
-		If Not ProcessExists("vrmonitor.exe") Then _Exit()
-		WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
-	Until $CurruntRunning = ""
-
-	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
-	GUICtrlSetData($GUI_Label, "Loading Home...")
-	GUISetBkColor($Yellow)
-	TrayTip("Home Loader", "App not loaded." & @CRLF & "Loading Home...", 5, $TIP_ICONASTERISK)
-	_LOOP_3()
-EndFunc
-
-Func _LOOP_3()
-	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
-	GuiCtrlSetTip($Button_HLStatus, "LOADING...:")
-	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
-	Sleep(3000)
-	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
-	If Not ProcessExists("vrmonitor.exe") Then
-		GUICtrlSetData($GUI_Label, "SteamVR closed.")
-		GUISetBkColor($Yellow)
-		TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
-		_Exit()
-	EndIf
-	;_LOOP_1()
-	_Restart_HomeLoader()
-EndFunc
-
 
 Func _Create_GUI_1()
 	$DesktopWidth = @DesktopWidth / 2
@@ -560,6 +325,123 @@ Func _Create_GUI_2()
 	WinActivate($WinName)
 EndFunc
 
+#endregion
+
+#Region LOOP
+Func _LOOP_1()
+	Local $WinName_ACTIVE = WinGetTitle("[ACTIVE]")
+
+	If $WinName_ACTIVE = $WinName Then
+		Sleep(2000)
+		Local $HOMECheck = "false"
+		Local $HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
+		Do
+			_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_2.bmp")
+			GuiCtrlSetTip($Button_HLStatus, "Home APP loaded:" & @CRLF & $WinName_ACTIVE)
+			If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Then ExitLoop
+			$HomeLoaderState_PODATA = IniRead($config_ini, "TEMP", "HomeLoaderState_PODATA", "")
+			;MsgBox(0, $WinName, @MIN & ">" & $HomeLoaderState_PODATA + 5 & @CRLF & @CRLF & @MIN & "<" & $HomeLoaderState_PODATA - 5)
+			If WinExists($WinName) Then
+				$HOMECheck = "true"
+				GUICtrlSetData($GUI_Label, "SteamVR Home loaded.")
+				GUISetBkColor($Blue)
+				;MsgBox(0, "", @MIN & ">" & $HomeLoaderState_PODATA + 5 & @CRLF & @CRLF & @MIN & "<" & $HomeLoaderState_PODATA - 5)
+				If @MIN > $HomeLoaderState_PODATA + 5 Or @MIN < $HomeLoaderState_PODATA - 5 Then
+					IniWrite($Config_INI, "TEMP", "HomeLoaderState_PODATA", @MIN)
+					If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
+					TrayTip("Home Loader", "Home app running." & @CRLF & $WinName, 5, $TIP_ICONASTERISK)
+				EndIf
+			Else
+				$HOMECheck = "false"
+				GUICtrlSetData($GUI_Label, "Home not loaded")
+				GUISetBkColor($Yellow)
+				TrayTip("Home Loader", "Home not loaded." & @CRLF & $WinName, 5, $TIP_ICONASTERISK)
+			EndIf
+			If Not ProcessExists("vrmonitor.exe") Then TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
+			If Not ProcessExists("vrmonitor.exe") Then _Exit()
+			If $USE_PHP_WebServer = "true" Then _StartGame_Check()
+			Sleep(2000)
+			WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
+		Until $HOMECheck = "false"
+	EndIf
+	_LOOP_2()
+EndFunc
+
+Func _LOOP_2()
+	Sleep(2000)
+	Local $WinName_ACTIVE = WinGetTitle("[ACTIVE]")
+	If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
+	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+	Local $HomeLoaderState_SSDATA = IniRead($config_ini, "TEMP", "HomeLoaderState_SSDATA", "")
+	Local $WinName_ACTIVE_name, $CurruntRunning
+
+	Do
+		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_3.bmp")
+		;If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
+		If WinExists($WinName_ACTIVE) Then
+			GuiCtrlSetTip($Button_HLStatus, "Application loaded:" & @CRLF & $WinName_ACTIVE)
+			$CurruntRunning = $WinName_ACTIVE
+			$HomeLoaderState_SSDATA = IniRead($config_ini, "TEMP", "HomeLoaderState_SSDATA", "")
+			If $HomeLoaderState_SSDATA = "" Then
+				For $Loop_1 = 1 To $NR_Applications
+					If $WinName_ACTIVE = "" Or $WinName_ACTIVE = "Oculus" Or $WinName_ACTIVE = "Vive Home" Or $WinName_ACTIVE = "SteamVR-Status" Or $WinName_ACTIVE = "SteamVR Status" Or $WinName_ACTIVE = "Home Loader" Or $WinName_ACTIVE = $WinName Then _Restart_HomeLoader()
+					Local $name = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_1, "name", "")
+					If $WinName_ACTIVE = $name Then
+						$WinName_ACTIVE_name = $name
+						ExitLoop
+					EndIf
+				Next
+				If $WinName_ACTIVE_name <> "" Then
+					TrayTip("Home Loader", $WinName_ACTIVE_name & " running." & @CRLF & $WinName_ACTIVE_name, 5, $TIP_ICONASTERISK)
+					_Ident_GameID()
+					GUICtrlSetData($GUI_Label, $WinName_ACTIVE_name & " loaded")
+					GUISetBkColor($LimeGreen)
+				EndIf
+			EndIf
+		Else
+			Sleep(1000)
+			$WinName_ACTIVE_name = WinGetTitle("[ACTIVE]")
+			TrayTip("Home Loader", $WinName_ACTIVE_name & " running." & @CRLF & $WinName_ACTIVE_name, 5, $TIP_ICONASTERISK)
+			GUICtrlSetData($GUI_Label, $WinName_ACTIVE_name & " loaded")
+			GUISetBkColor($LimeGreen)
+			$CurruntRunning = ""
+		EndIf
+
+		If Not WinExists($WinName_ACTIVE_name) Then	$CurruntRunning = ""
+		;If $WinName_ACTIVE_name = "" Or $WinName_ACTIVE_name = "Oculus" Or $WinName_ACTIVE_name = "Vive Home" Or $WinName_ACTIVE_name = "SteamVR-Status" Or $WinName_ACTIVE_name = "SteamVR Status" Or $WinName_ACTIVE_name = "Home Loader" Or $WinName_ACTIVE_name = $WinName Then _Restart_HomeLoader()
+
+		Sleep(2000)
+		If Not ProcessExists("vrmonitor.exe") Then TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
+		If Not ProcessExists("vrmonitor.exe") Then _Exit()
+		WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
+	Until $CurruntRunning = ""
+
+	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
+	GUICtrlSetData($GUI_Label, "Loading Home...")
+	GUISetBkColor($Yellow)
+	TrayTip("Home Loader", "App not loaded." & @CRLF & "Loading Home...", 5, $TIP_ICONASTERISK)
+	_LOOP_3()
+EndFunc
+
+Func _LOOP_3()
+	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
+	GuiCtrlSetTip($Button_HLStatus, "LOADING...:")
+	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
+	Sleep(3000)
+	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "")
+	If Not ProcessExists("vrmonitor.exe") Then
+		GUICtrlSetData($GUI_Label, "SteamVR closed.")
+		GUISetBkColor($Yellow)
+		TrayTip("Home Loader", "SteamVR closed.", 5, $TIP_ICONASTERISK)
+		_Exit()
+	EndIf
+	;_LOOP_1()
+	_Restart_HomeLoader()
+EndFunc
+
+#endregion
+
+#Region Main
 Func _Create_JanusVR_Page()
 	$Install_DIR_replaced = StringReplace($Install_DIR, '\', '/')
 	FileWrite($JanusVR_Page, '<!-- Written with Janus VR.  URL: file:///' & $Install_DIR_replaced & ' -->' & @CRLF & _
@@ -629,7 +511,6 @@ Func _Checkbox_Show_Settings_at_Startup()
 		IniWrite($config_ini, "Settings", "Show_Settings_at_Startup", "false")
 	EndIf
 EndFunc
-
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Local $FileList = _FileListToArray($Icons , "*.jpg" , 1)
@@ -1079,8 +960,7 @@ Func _Exit()
 	Exit
 EndFunc
 
-
-
+#endregion
 
 #Region Home Loader Functions
 Func _StartGame_Check()
@@ -1169,7 +1049,6 @@ Func _StartGame_Check()
 		Exit
 	EndIf
 EndFunc
-
 #endregion
 
 #Region RM Functions
@@ -1410,7 +1289,4 @@ Func _RM_Item10_13()
 EndFunc
 
 #endregion
-
-
-
 

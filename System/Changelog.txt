@@ -1,5 +1,4 @@
-- Changed Update Function, it uses now the installer
-- Changed the way SteamVR and Home Loader is loaded
+- Added Certificate to all compiled Files
 - Optimized HomeLoader.exe functions
 - Fixed some issues
 
