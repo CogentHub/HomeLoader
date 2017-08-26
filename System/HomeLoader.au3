@@ -633,7 +633,6 @@ EndFunc
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Local $FileList = _FileListToArray($Icons , "*.jpg" , 1)
-	MsgBox(0, "", $Icons)
 
 	If $FileList <> "" Then
 		For $NR = 1 To $FileList[0]
