@@ -1,7 +1,6 @@
 #include <WindowsConstants.au3>
 #include <InetConstants.au3>
 #include <File.au3>
-#include <Zip.au3>
 
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"

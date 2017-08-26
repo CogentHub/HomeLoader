@@ -20,7 +20,7 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.57"
+Global $Version = "0.58"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"
@@ -30,8 +30,6 @@ Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Skin = IniRead($Config_INI, "Settings", "Skin", "1")
 Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-
-Global $Update_ZIP = $System_DIR & "TEMP.zip"
 
 Global $Home_Loader_GUI, $contextmenu, $RM_Item0,  $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
 
