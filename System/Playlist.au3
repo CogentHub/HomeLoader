@@ -39,9 +39,9 @@ Func _Start_Playlist()
 		$Read_name = IniRead($Playlist_INI, "Application_" & $LOOP, "name", "")
 		$Read_appid = IniRead($Playlist_INI, "Application_" & $LOOP, "appid", "")
 		$Read_Playtime = IniRead($Playlist_INI, "Application_" & $LOOP, "Playtime", "")
-		$Read_renderTargetMultiplier = IniRead($Playlist_INI, "Application_" & $LOOP, "renderTargetMultiplier", "")
-		$Read_supersampleScale = IniRead($Playlist_INI, "Application_" & $LOOP, "supersampleScale", "")
-		$Read_allowSupersampleFiltering = IniRead($Playlist_INI, "Application_" & $LOOP, "allowSupersampleFiltering", "")
+		$Read_renderTargetMultiplier = IniRead($Playlist_INI, "Application_" & $LOOP, "renderTargetMultiplier", "1.0")
+		$Read_supersampleScale = IniRead($Playlist_INI, "Application_" & $LOOP, "supersampleScale", "1.0")
+		$Read_allowSupersampleFiltering = IniRead($Playlist_INI, "Application_" & $LOOP, "allowSupersampleFiltering", "true")
 
 		If $Read_appid <> "" Then
 			ShellExecuteWait("steam://rungameid/" & $Read_appid)

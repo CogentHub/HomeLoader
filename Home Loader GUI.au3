@@ -20,7 +20,7 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.58"
+Global $Version = "0.59"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"
@@ -72,12 +72,12 @@ Func _Home_Loader_GUI_1()
 	GuiCtrlSetTip(-1, "Opens Home Loader Library.")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
 
-	Global $Button_2 = GUICtrlCreateButton("Home Loader Playlist", 165, 15, 136, 136, $BS_BITMAP)
-	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
-	GuiCtrlSetTip(-1, "Opens Home Loader Playlist.")
-	GUICtrlSetOnEvent(- 1, "_Button_2")
+	;Global $Button_2 = GUICtrlCreateButton("Home Loader Playlist", 165, 15, 136, 136, $BS_BITMAP)
+	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
+	;GuiCtrlSetTip(-1, "Opens Home Loader Playlist.")
+	;GUICtrlSetOnEvent(- 1, "_Button_2")
 
-	Global $Button_3 = GUICtrlCreateButton("Supersampling menus", 315, 15, 136, 136, $BS_BITMAP)
+	Global $Button_3 = GUICtrlCreateButton("Supersampling menus", 165, 15, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
 	GuiCtrlSetTip(-1, " Opens the Supersampling menu.")
 	GUICtrlSetOnEvent(- 1, "_Button_3")
@@ -88,7 +88,7 @@ Func _Home_Loader_GUI_1()
 	GuiCtrlSetTip(-1, "Starts SteamVR HomeApp.")
 	GUICtrlSetOnEvent(- 1, "_Button_4")
 
-	Global $Button_5 = GUICtrlCreateButton("Home Loader Settings", 165, 165, 136, 136, $BS_BITMAP)
+	Global $Button_5 = GUICtrlCreateButton("Home Loader Settings", 315, 15, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, " Opens Home Loader Settings.")
 	GUICtrlSetOnEvent(- 1, "_Button_5")
@@ -98,13 +98,13 @@ Func _Home_Loader_GUI_1()
 	GuiCtrlSetTip(-1, "Close/Exit.")
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_GUI")
 
-	For $Loop = 1 To 6
+	For $Loop = 1 To 5
 		If $Loop = 1 Then $contextmenu = GUICtrlCreateContextMenu($Button_1)
-		If $Loop = 2 Then $contextmenu = GUICtrlCreateContextMenu($Button_2)
-		If $Loop = 3 Then $contextmenu = GUICtrlCreateContextMenu($Button_3)
-		If $Loop = 4 Then $contextmenu = GUICtrlCreateContextMenu($Button_4)
-		If $Loop = 5 Then $contextmenu = GUICtrlCreateContextMenu($Button_5)
-		If $Loop = 6 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
+		If $Loop = 2 Then $contextmenu = GUICtrlCreateContextMenu($Button_3)
+		If $Loop = 3 Then $contextmenu = GUICtrlCreateContextMenu($Button_4)
+		If $Loop = 4 Then $contextmenu = GUICtrlCreateContextMenu($Button_5)
+		If $Loop = 5 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
+		;If $Loop = 6 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
 		$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu)
 			GUICtrlSetOnEvent(- 1, "_RM_Item1")
@@ -122,35 +122,35 @@ EndFunc
 
 Func _Home_Loader_GUI_2()
 	Global $aButton[10]
-	Global $Home_Loader_GUI = GUICreate("Test Windows regions", 160, 890, @DesktopWidth-170, -1, $WS_POPUP, $WS_EX_TOPMOST)
+	Global $Home_Loader_GUI = GUICreate("Test Windows regions", 160, 750, @DesktopWidth-170, -1, $WS_POPUP, $WS_EX_TOPMOST)
 
 	$aButton[0] = GUICtrlCreateButton("Button 1", 10, 10, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
-	$aButton[1] = GUICtrlCreateButton("Button 2", 10, 155, 136, 136, $BS_BITMAP)
-	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
-	GUICtrlSetOnEvent(- 1, "_Button_2")
-	$aButton[2] = GUICtrlCreateButton("Button 3", 10, 300, 136, 136, $BS_BITMAP)
+	;$aButton[1] = GUICtrlCreateButton("Button 2", 10, 155, 136, 136, $BS_BITMAP)
+	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
+	;GUICtrlSetOnEvent(- 1, "_Button_2")
+	$aButton[1] = GUICtrlCreateButton("Button 3", 10, 155, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_3")
-	$aButton[3] = GUICtrlCreateButton("Button 4", 10, 445, 136, 136, $BS_BITMAP)
+	$aButton[2] = GUICtrlCreateButton("Button 4", 10, 445, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Start_SteamVR_HomeApp.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_4")
-	$aButton[4] = GUICtrlCreateButton("Button 4", 10, 590, 136, 136, $BS_BITMAP)
+	$aButton[3] = GUICtrlCreateButton("Button 4", 10, 300, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderSettings.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_5")
-	$aButton[5] = GUICtrlCreateButton("Exit", 10, 735, 136, 136, $BS_BITMAP)
+	$aButton[4] = GUICtrlCreateButton("Exit", 10, 590, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Close.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_6")
 
 	; Frame
-	$aButton[6] = GUICtrlCreateButton("", 0, 0, 4, 883, $BS_BITMAP)
+	$aButton[5] = GUICtrlCreateButton("", 0, 0, 4, 735, $BS_BITMAP)
 	GUICtrlSetBkColor(- 1, $COLOR_Blue)
-	$aButton[7] = GUICtrlCreateButton("", 150, 0, 4, 883, $BS_BITMAP)
+	$aButton[6] = GUICtrlCreateButton("", 150, 0, 4, 735, $BS_BITMAP)
 	GUICtrlSetBkColor(- 1, $COLOR_Blue)
-	$aButton[8] = GUICtrlCreateButton("", 0, 0, 151, 4, $BS_BITMAP)
+	$aButton[7] = GUICtrlCreateButton("", 0, 0, 151, 4, $BS_BITMAP)
 	GUICtrlSetBkColor(- 1, $COLOR_Blue)
-	$aButton[9] = GUICtrlCreateButton("", 0, 878, 154, 4, $BS_BITMAP)
+	$aButton[8] = GUICtrlCreateButton("", 0, 733, 154, 4, $BS_BITMAP)
 	GUICtrlSetBkColor(- 1, $COLOR_Blue)
 
 	For $Loop = 0 To 12

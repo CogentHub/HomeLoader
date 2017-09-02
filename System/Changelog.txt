@@ -1,4 +1,4 @@
-- Added Certificate to all compiled Files
 - Optimized HomeLoader.exe functions
-- Fixed some issues
+- Added new states to HomeLoader.exe
+- Fixed some bugs
 

@@ -51,7 +51,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.58"
+Global $Version = "0.59"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -222,9 +222,9 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 31, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Playlist, $gfx & "HomeLoaderPlaylist.bmp")
-	GuiCtrlSetTip(-1, "Shows the Home Loader Playlist.")
+	;Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 31, $BS_BITMAP)
+	;_GUICtrlButton_SetImage($Button_Playlist, $gfx & "HomeLoaderPlaylist.bmp")
+	;GuiCtrlSetTip(-1, "Shows the Home Loader Playlist.")
 
 	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 66, 145, 31, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
@@ -410,7 +410,7 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
 	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
-	GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
+	;GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
 
 	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
