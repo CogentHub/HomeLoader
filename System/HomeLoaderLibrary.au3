@@ -51,7 +51,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.59"
+Global $Version = "0.60"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -226,7 +226,7 @@ If $First_Start <> "true" Then
 	;_GUICtrlButton_SetImage($Button_Playlist, $gfx & "HomeLoaderPlaylist.bmp")
 	;GuiCtrlSetTip(-1, "Shows the Home Loader Playlist.")
 
-	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 66, 145, 31, $BS_BITMAP)
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
@@ -412,9 +412,9 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
 	;GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
 
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1482,11 +1482,11 @@ Func _Create_ListView_1()
 	_GUICtrlListView_AddColumn($listview, "Online", 95, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1494,9 +1494,9 @@ Func _Create_ListView_1()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1520,11 +1520,11 @@ Func _Create_ListView_2()
 	_GUICtrlListView_AddColumn($listview_2, "Online", 95, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_2)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1532,13 +1532,13 @@ Func _Create_ListView_2()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
-	GUICtrlSetState($listview_2, $GUI_HIDE)
+	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_3()
@@ -1558,11 +1558,11 @@ Func _Create_ListView_3()
 	_GUICtrlListView_AddColumn($listview_3, "Online", 95, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_3)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1570,13 +1570,13 @@ Func _Create_ListView_3()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
-	GUICtrlSetState($listview_3, $GUI_HIDE)
+	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_4()
@@ -1596,11 +1596,11 @@ Func _Create_ListView_4()
 	_GUICtrlListView_AddColumn($listview_4, "Online", 95, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_4)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1608,13 +1608,13 @@ Func _Create_ListView_4()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
-	GUICtrlSetState($listview_4, $GUI_HIDE)
+	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_5()
@@ -1635,11 +1635,11 @@ Func _Create_ListView_5()
 	GUICtrlSetState($listview_5, $GUI_HIDE)
 	$contextmenu = GUICtrlCreateContextMenu($listview_5)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1647,12 +1647,13 @@ Func _Create_ListView_5()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
+	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Create_ListView_6()
@@ -1672,11 +1673,11 @@ Func _Create_ListView_6()
 	_GUICtrlListView_AddColumn($listview_6, "Online", 95, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_6)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item1 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item3 = GUICtrlCreateMenuItem("Steam VR Settings Menu", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Create Supersampling Shortcut", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1684,13 +1685,13 @@ Func _Create_ListView_6()
 	$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item11 = GUICtrlCreateMenuItem("Delete", $contextmenu)
 	$RM_Item12 = GUICtrlCreateMenuItem("", $contextmenu)
-	GUICtrlSetOnEvent($RM_Item1, "_Create_HTMLView_GUI")
-	GUICtrlSetOnEvent($RM_Item3, "_SS_GUI")
-	GUICtrlSetOnEvent($RM_Item5, "_RM_Menu_Item_5")
+	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
+	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
+	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
-	GUICtrlSetState($listview_6, $GUI_HIDE)
+	GUICtrlSetState($listview, $GUI_HIDE)
 EndFunc
 
 Func _Read_from_INI_ADD_2_ListView()
@@ -1916,81 +1917,6 @@ Func _ADD_Icons_32x32_to_ListView()
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
 
-Func _RM_Menu_Item_4() ; Create new default.vrsettings" File
-	If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
-
-	$FileLines = _FileCountLines($default_vrsettings_File)
-
-	$renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "renderTargetMultiplier", "1.0")
-	$supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "supersampleScale", "1.0")
-	$allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_1", "allowSupersampleFiltering", "true")
-
-	FileWriteLine($default_vrsettings_File_new, '{')
-	FileWriteLine($default_vrsettings_File_new, '	"steamvr" : {')
-
-	For $LOOP_vrsettings = 3 To $FileLines
-		$ReadLine = FileReadLine($default_vrsettings_File, $LOOP_vrsettings)
-		$ReadLine_Split_value = $ReadLine
-
-		If $ReadLine <> '	},' Then
-			$ReadLine_Split = StringSplit($ReadLine, ':')
-			$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '"', '')
-			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')
-			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')
-		EndIf
-
-		If $ReadLine_Split_value = 'renderTargetMultiplier' Then
-			FileWriteLine($default_vrsettings_File_new, '        "renderTargetMultiplier" : ' & $renderTargetMultiplier_value & ',')
-		EndIf
-
-		If $ReadLine_Split_value = 'supersampleScale' Then
-			FileWriteLine($default_vrsettings_File_new, '        "supersampleScale" : ' & $supersampleScale_value & ',')
-		EndIf
-
-		If $ReadLine_Split_value = 'allowSupersampleFiltering' Then
-			FileWriteLine($default_vrsettings_File_new, '        "allowSupersampleFiltering" : ' & $allowSupersampleFiltering_value & ',')
-		EndIf
-
-		If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then
-			FileWriteLine($default_vrsettings_File_new, $ReadLine)
-		EndIf
-
-	Next
-EndFunc
-
-Func _RM_Menu_Item_5() ; Create Shortcut File
-
-	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
-	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
-	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
-
-    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
-	Local $Steam_app_Name = $ListView_Item_Array[3]
-	Local $Steam_app_Name_Replaced = StringReplace($Steam_app_Name, ' ', '_')
-	Local $Game_ID = $ListView_Item_Array[2]
-
-	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
-	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
-	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
-	$allowSupersampleFiltering_value = StringLeft($allowSupersampleFiltering_value, 1)
-
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Create SS Shortcut", "Selected Game:" & @CRLF & @CRLF & _
-														$Steam_app_Name & " [" & $Game_ID & "]" & @CRLF & @CRLF & _
-														"Do you want to create the Shortcut File?" & @CRLF)
-
-	If $Abfrage = 6 Then
-		_Create_SS_Shortcut()
-		$IN = $Install_DIR & "temp.au3"
-		$OUT = $Install_DIR & "SS_" & $renderTargetMultiplier_value & "_" & $supersampleScale_value & "_" & $allowSupersampleFiltering_value & "___" & $Steam_app_Name_Replaced & ".exe"
-		RunWait(@ComSpec & " /c " & 'System\Aut2exe.exe' & ' /in ' & $IN & ' /out ' & $OUT, "", @SW_HIDE)
-		FileDelete($IN)
-		MsgBox($MB_ICONINFORMATION, "Creation completed", "New Shortcut File was created in Home Loader folder:" & @CRLF & @CRLF & _
-																$OUT & @CRLF & @CRLF & _
-																"Copy the new Shortcut wherever you want and rename the File if wanted.")
-	Else
-
-	EndIf
-EndFunc
 
 Func _RM_Menu_Item_8() ; RM_UP
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
@@ -2258,58 +2184,6 @@ Func _RM_Menu_Item11() ; Delete ListView item
 EndFunc
 
 
-Func _Create_SS_Shortcut()
-	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
-	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
-	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
-
-    Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
-	Local $Steam_app_Name = $ListView_Item_Array[3]
-	Local $Game_ID = $ListView_Item_Array[2]
-
-	Local $FileLines = _FileCountLines($default_vrsettings_File)
-
-	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
-	Local $supersampleScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", "1.0")
-	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
-
-
-	FileWrite($Install_DIR & 'temp.au3', 'If Not FileExists("' & $default_vrsettings_File_BAK & '") Then FileCopy("' & $default_vrsettings_File & '", "' & $default_vrsettings_File_BAK & '",' & $FC_OVERWRITE & ')' & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '"' & ", '{')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', 'FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'	" & '"steamvr" : {' & "')" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "For $LOOP_vrsettings = 3 To " & $FileLines & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', '	$ReadLine = FileReadLine("' & $default_vrsettings_File & '", $LOOP_vrsettings)' & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	$ReadLine_Split_value = $ReadLine" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine <> '	},' Then" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split = StringSplit($ReadLine, ':')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '" & '"' & "', ''" & ")" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "		$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'renderTargetMultiplier' Then" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"renderTargetMultiplier" : ' & $renderTargetMultiplier_value & ",')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'supersampleScale' Then" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"supersampleScale" : ' & $supersampleScale_value & ",')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value = 'allowSupersampleFiltering' Then" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", ' & "'        " & '"allowSupersampleFiltering" : ' & $allowSupersampleFiltering_value & ",')" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', "	If $ReadLine_Split_value <> 'renderTargetMultiplier' And $ReadLine_Split_value <> 'supersampleScale' And $ReadLine_Split_value <> 'allowSupersampleFiltering' Then" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', '		FileWriteLine("' & $default_vrsettings_File_new & '", $ReadLine)' & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "	EndIf" & @CRLF)
-	FileWrite($Install_DIR & 'temp.au3', "Next" & @CRLF)
-
-	FileWrite($Install_DIR & 'temp.au3', 'ShellExecute("steam://rungameid/' & $Game_ID & '")' & @CRLF)
-
-EndFunc
 
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     Local $tagNMHDR, $event, $hwndFrom, $code
@@ -2335,7 +2209,8 @@ EndFunc
 
 Func _DB_Click_Listview()
 	Sleep(200)
-	_Create_HTMLView_GUI()
+	;_Create_HTMLView_GUI()
+	_Start_ListView_Selected()
 	Sleep(200)
 EndFunc
 
@@ -2872,17 +2747,17 @@ Func _Button_HomeLoaderSettings()
 	Exit
 EndFunc
 
-Func _Button_Start_SteamVR()
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+Func _Start_ListView_Selected()
+	Local  $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
 
-	If $Advanced_Settings = "true" Then
-		If FileExists($System_DIR & "StartSteamVRHome.exe") Then
-			ShellExecute($System_DIR & "StartSteamVRHome.exe")
-		Else
-			ShellExecute($System_DIR & "StartSteamVRHome.au3")
-		EndIf
-	Else
-		ShellExecute("steam://rungameid/250820")
+	Local $Check_AppID = _GUICtrlListView_GetItemText($ListView, $ListView_Selected_Row_Nr - 1, 1)
+
+	If $Check_AppID <> "" Then
+		ShellExecute("steam://rungameid/" & $Check_AppID)
+		Sleep(200)
+		_Beenden()
 	EndIf
 EndFunc
 

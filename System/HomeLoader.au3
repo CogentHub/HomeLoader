@@ -334,10 +334,10 @@ Func _LOOP_1()
 	If @MIN > $HomeLoaderState_PODATA + 5 Or @MIN < $HomeLoaderState_PODATA - 5 Then
 		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_4.bmp")
 		IniWrite($Config_INI, "TEMP", "HomeLoaderState_PODATA", @MIN)
-		FileWriteLine($LOG_FILE, "Start '_Get_ADD_PlayersOnline_DATA': " & @MIN)
+		;FileWriteLine($LOG_FILE, "Start '_Get_ADD_PlayersOnline_DATA': " & @MIN)
 		If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
 		If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons_()
-		FileWriteLine($LOG_FILE, "End '_Get_ADD_PlayersOnline_DATA': " & @MIN)
+		;FileWriteLine($LOG_FILE, "End '_Get_ADD_PlayersOnline_DATA': " & @MIN)
 	EndIf
 
 	Local $WinName_ACTIVE = WinGetTitle("[ACTIVE]")
@@ -439,10 +439,10 @@ Func _LOOP_3()
 	If @MIN > $HomeLoaderState_PODATA + 5 Or @MIN < $HomeLoaderState_PODATA - 5 Then
 		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_4.bmp")
 		IniWrite($Config_INI, "TEMP", "HomeLoaderState_PODATA", @MIN)
-		FileWriteLine($LOG_FILE, "Start '_Get_ADD_PlayersOnline_DATA': " & @MIN)
+		;FileWriteLine($LOG_FILE, "Start '_Get_ADD_PlayersOnline_DATA': " & @MIN)
 		If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
 		If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons_()
-		FileWriteLine($LOG_FILE, "End '_Get_ADD_PlayersOnline_DATA': " & @MIN)
+		;FileWriteLine($LOG_FILE, "End '_Get_ADD_PlayersOnline_DATA': " & @MIN)
 	EndIf
 
 	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")

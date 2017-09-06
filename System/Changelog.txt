@@ -1,4 +1,4 @@
-- Optimized HomeLoader.exe functions
-- Added new states to HomeLoader.exe
-- Fixed some bugs
+- Removed Playlist function
+- Removed Oculus and SS Shortcut creation
+- Optimized HomeLoaderLibrary
 
