@@ -32,7 +32,7 @@
 #include <IE.au3>
 #include <MsgBoxConstants.au3>
 #include <GuiSlider.au3>
-#include <Zip.au3>
+#include "_Zip.au3"
 #endregion
 
 Opt("GUIOnEventMode", 1)
@@ -51,7 +51,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.60"
+Global $Version = "0.61"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -139,7 +139,7 @@ If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
 	_Settings_GUI()
-	_Detect_SteamVR_Files()
+	;_Detect_SteamVR_Files()
 EndIf
 #endregion
 
@@ -435,11 +435,7 @@ If $First_Start <> "true" Then
 	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndIf
 
-$Show_Playlist = IniRead($Config_INI, "TEMP", "Show_Playlist", "")
-If $Show_Playlist = "true" Then
-	GUICtrlSetState($GUI, $GUI_HIDE)
-	_Playlist_GUI()
-EndIf
+
 
 
 $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")

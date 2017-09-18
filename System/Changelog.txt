@@ -1,4 +1,3 @@
-- Removed Playlist function
-- Removed Oculus and SS Shortcut creation
-- Optimized HomeLoaderLibrary
-
+- Changed uninstaller [it sets Home app back to SteamVR Home before uninstall starts]
+- Changed/Optimized HomeLoader functions [Advanced settings]
+- Added new 'stats_log.txt' File for Advanced settings functions 

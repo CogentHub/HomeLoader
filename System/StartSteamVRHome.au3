@@ -1,9 +1,6 @@
 
 #include <File.au3>
 #include <Misc.au3>
-#include <_IsPressed360.au3>
-$dll_1 = DllOpen("xinput9_1_0.dll")
-$dll_2 = DllOpen("user32.dll")
 
 Opt("GUIOnEventMode", 1)
 
@@ -16,7 +13,6 @@ Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefau
 Global $Start_HomeLoader_with_HomeApp = IniRead($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
-Global $State_USE_Key_Presses = IniRead($Config_INI, "Settings", "USE_Key_Presses", "")
 Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 
@@ -56,11 +52,6 @@ If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
 	_FirstStart_Restart()
-EndIf
-
-
-If $State_USE_Key_Presses = "true" Then
-	_Key_Presses_Detection()
 EndIf
 
 _Start_Home_APP()
@@ -240,88 +231,6 @@ Func _Start_Home_APP()
 	EndIf
 EndFunc
 
-
-Func _Start_Button_Pressed()
-	$TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
-	IniWrite($Config_INI, "TEMP", "StartHomeLoaderSettings", "true")
-	If FileExists($System_DIR & "HomeLoader.exe") Then
-		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
-	Else
-		ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
-	EndIf
-	_Exit()
-EndFunc
-
-Func _StartUp_Radio_1() ; SteamVR Home
-	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
-
-	If $ChangeDefaultSteamVRHome = "true" Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-	EndIf
-EndFunc
-
-Func _StartUp_Radio_2() ; Vive Home
-	If FileExists($HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe") Then
-		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe")
-		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
-	EndIf
-
-	If $ChangeDefaultSteamVRHome = "true" Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-	EndIf
-EndFunc
-
-Func _StartUp_Radio_3() ; Janus VR
-	Global $JanusVR_Path = ""
-	If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
-	If FileExists($Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe"
-	If FileExists($Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\Janus VR\janusvr.exe"
-	If FileExists($Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\Janus VR\janusvr.exe"
-	If FileExists($Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\Janus VR\janusvr.exe"
-	If $JanusVR_Path = "" Then $JanusVR_Path = "steam://rungameid/602090"
-	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
-
-	If $ChangeDefaultSteamVRHome = "true" Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-	EndIf
-EndFunc
-
-Func _StartUp_Radio_4() ; VR Toolbox
-	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
-
-	If $ChangeDefaultSteamVRHome = "true" Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-	EndIf
-EndFunc
-
-Func _StartUp_Radio_5() ; Other
-	If $ChangeDefaultSteamVRHome = "true" Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-	EndIf
-EndFunc
-
-Func _StartUp_Radio_6() ; Not in use
-	;;;
-EndFunc
-
 Func _ADD_2_SteamVR_Home_default()
 	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
@@ -366,8 +275,6 @@ Func _Restart()
 EndFunc
 
 Func _Exit()
-	DllClose($dll_1)
-	DllClose($dll_2)
 	Exit
 EndFunc
 

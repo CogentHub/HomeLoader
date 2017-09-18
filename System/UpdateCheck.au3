@@ -8,7 +8,7 @@ Global $System_DIR = $Install_DIR & "System\"
 Global $Config_INI = $System_DIR & "config.ini"
 Global $Version = IniRead($config_ini, "Settings", "Version", "")
 
-Global $UpdateTargetFolder = $Install_DIR ; & "Home_Loader_Update\"
+Global $UpdateTargetFolder = $Install_DIR
 Global $Update_ZIP = $System_DIR & "TEMP.zip"
 Global $Update_File = $System_DIR & "HomeLoaderSetup.exe"
 
@@ -26,7 +26,6 @@ Func _Loading_GUI()
 	Local Const $PG_WS_POPUP = 0x80000000
 	Local Const $PG_WS_DLGFRAME = 0x00400000
 	Global $XPOSGUI = - 1
-	;If $Update_Check = "true" Then $XPOSGUI = 10000
 
 	Global $GUI_Loading = GUICreate("Updating Home Loader...", 250, 105, $XPOSGUI, -1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
 	If $Update_Check = "true" Then GUISetState(@SW_HIDE, $GUI_Loading)
@@ -36,20 +35,17 @@ Func _Loading_GUI()
 	$font = "arial"
 	Global $Updating_Label = GUICtrlCreateLabel("...Searching...", 58, 5, 160, 25)
 	GUICtrlSetFont(-1, 17, 800, 1, $font)
-	;GUICtrlSetColor(-1, $COLOR_RED)
 
 	$Anzeige_Fortschrittbalken = GUICtrlCreateProgress(5, 38, 240, 30)
 
 	Global $Please_wait_Label = GUICtrlCreateLabel("...Please wait...", 49, 72, 160, 25)
 	GUICtrlSetFont(-1, 17, 800, 1, $font)
-	;GUICtrlSetColor(-1, $COLOR_RED)
 
 	GUISetState(@SW_SHOW, $GUI_Loading)
 	WinSetOnTop("Updating Home Loader...", "", $WINDOWS_ONTOP)
 EndFunc
 
 Func _Check_for_Updates()
-	;_Loading_GUI()
 	If $Update_Check_2 = "true" Then _Loading_GUI()
 	$Update_Check = IniRead($Config_INI, "TEMP", "Update_Check", "")
 
@@ -68,33 +64,29 @@ Func _Check_for_Updates()
 		Local $Get_Update = InetGet($Update_URL, $Update_File, $INET_FORCERELOAD, $INET_DOWNLOADBACKGROUND)
 
 		Do
-			;MsgBox(0, $INET_DOWNLOADREAD, $Update_File)
 			Sleep(250)
 			$Get_Update_Version_NR = $Update_Loop
 			Local $iInetGetInfo_1 = InetGetInfo($Get_Update, $INET_DOWNLOADREAD)
 			Local $iInetGetInfo_2 = InetGetInfo($Get_Update, $INET_DOWNLOADSIZE)
-			;MsgBox(0, $INET_DOWNLOADREAD, $INET_DOWNLOADSIZE)
 			If $iInetGetInfo_1 <> 0 Then
 				$Get_Update_State = "true"
-				WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
+				WinSetOnTop("Updating Home Loader...", "", $WINDOWS_NOONTOP)
 				$Abfrage = MsgBox($MB_YESNO	 + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
 																								"Download Link: " & @CRLF & "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $Update_Loop & "/HomeLoaderSetup.exe" & @CRLF & @CRLF &  _
 																								"Do you want to download and install the new Version?")
 
 
 				If $Abfrage = 6 Then
-					;_Loading_GUI()
+					If Not WinExists("Updating Home Loader...") Then _Loading_GUI()
 					GUICtrlSetData($Updating_Label, "Downloading")
 					Do
 						$iInetGetInfo_1 = InetGetInfo($Get_Update, $INET_DOWNLOADREAD)
 						$iInetGetInfo_2 = InetGetInfo($Get_Update, $INET_DOWNLOADSIZE)
-						;MsgBox($MB_SYSTEMMODAL, $iInetGetInfo_2, $iInetGetInfo_1, 1)
 						GUICtrlSetData($Anzeige_Fortschrittbalken, $iInetGetInfo_1 * 100 / $iInetGetInfo_2)
 					Until InetGetInfo($Get_Update, $INET_DOWNLOADCOMPLETE)
 				Else
 					$Get_Update_State = "false"
 					InetClose($Get_Update)
-					;FileDelete($Update_File)
 					ExitLoop
 				EndIf
 				Sleep(800)
@@ -108,8 +100,6 @@ Func _Check_for_Updates()
 
 	GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
 	InetClose($Get_Update)
-
-	;MsgBox(0, "Get_Update_State", $Get_Update_State)
 
 	If $Get_Update_State = "true" Then
 		WinSetOnTop("Updating Home Loader", "", $WINDOWS_ONTOP)
@@ -132,9 +122,6 @@ Func _Check_for_Updates()
 		;_Restart_Settings_GUI()
 
 		WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
-		;IniWrite($config_ini, "TEMP", "Update", "")
-		;IniWrite($Config_INI, "TEMP", "Update_Check", "")
-
 		GUIDelete($GUI_Loading)
 	Else
 		WinSetOnTop("Updating Home Loader", "", $WINDOWS_NOONTOP)
@@ -144,8 +131,6 @@ Func _Check_for_Updates()
 	IniWrite($config_ini, "TEMP", "Update", "")
 	IniWrite($Config_INI, "TEMP", "Update_Check", "")
 	IniWrite($config_ini, "TEMP", "Update_Version", "")
-	;If FileExists($Update_File) Then FileDelete($Update_File)
-	;Exit
 EndFunc
 
 Func _Update_Finished()

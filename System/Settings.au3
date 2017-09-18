@@ -8,7 +8,7 @@
 #include <File.au3>
 #include <GUIConstants.au3>
 #include <InetConstants.au3>
-;#include <Zip.au3>
+#include "_Zip.au3"
 
 
 Opt("GUIOnEventMode", 1)
@@ -20,11 +20,12 @@ Global $SteamVR_Status, $Title_1, $Title_2, $Handle_1, $Handle_2, $Title_Array_1
 Global $GameStarted, $LOOP_VIVEHOMECheck, $OldWindowExists, $Button_Close_Current_Running, $Checkbox_Show_Settings_at_Startup, $Button_Restart, $Button_Exit
 Global $Select_HomeApp_Label, $USE_GUI_Backup, $ApplicationList_Read, $Array_tools_vrmanifest_File, $Line_NR_binary_path_windows, $Line_NR_image_path
 Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI, $bookmarksArray, $settingsArray, $StartSteamVRHome_x
+Global $ZipFile, $ZipSplit
 #endregion
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.60"
+Global $Version = "0.61"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -233,7 +234,8 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 		EndIf
 	EndIf
-	_Detect_SteamVR_Files()
+	;_Detect_SteamVR_Files()
+	_Create_Uninstaller()
 EndFunc
 
 Func _Detect_SteamVR_Files()
@@ -292,6 +294,29 @@ Func _Loading_GUI()
 	WinSetOnTop("Updating Home Loader...", "", $WINDOWS_ONTOP)
 EndFunc
 
+Func _Download_GUI()
+	Local Const $PG_WS_POPUP = 0x80000000
+	Local Const $PG_WS_DLGFRAME = 0x00400000
+	Global $XPOSGUI = - 1
+
+	Global $GUI_Loading = GUICreate("Downlading...", 250, 105, $XPOSGUI, -1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
+	;If $Update_Check = "true" Then GUISetState(@SW_HIDE, $GUI_Loading)
+	GUISetIcon(@AutoItExe, -2, $GUI_Loading)
+	GUISetBkColor("0x00BFFF")
+
+	$font = "arial"
+	Global $Updating_Label = GUICtrlCreateLabel("...Searching...", 58, 5, 160, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+
+	Global $Anzeige_Fortschrittbalken = GUICtrlCreateProgress(5, 38, 240, 30)
+
+	Global $Please_wait_Label = GUICtrlCreateLabel("...Please wait...", 49, 72, 160, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+
+	GUISetState(@SW_SHOW, $GUI_Loading)
+	WinSetOnTop("Updating Home Loader...", "", $WINDOWS_ONTOP)
+EndFunc
+
 Func _Create_JanusVR_Page()
 	$Install_DIR_replaced = StringReplace($Install_DIR, '\', '/')
 	FileWrite($JanusVR_Page, '<!-- Written with Janus VR.  URL: file:///' & $Install_DIR_replaced & ' -->' & @CRLF & _
@@ -331,17 +356,17 @@ EndFunc
 
 Func _StartUp_settings()
 	If $Advanced_Settings = "true" Then
-		Global $HEIGHT_GUI = 470
+		Global $HEIGHT_GUI = 490
 		Global $POS_X = 10
-		Global $POS_Y_Button_Close = 407
+		Global $POS_Y_Button_Close = 427
 		Global $POS_Y_Button_StartSteamVR = 370
-		Global $POS_Y_Button_Start_HomeLoaderLibrary = 310
+		Global $POS_Y_Button_Start_HomeLoaderLibrary = 330
 		Global $POS_X_Advanced_Settings_Label = 10
 		Global $POS_Y_Advanced_Settings_Label = 129
 		Global $POS_X_Check_for_Updates = 5
-		Global $POS_Y_Check_for_Updates = 345
+		Global $POS_Y_Check_for_Updates = 365
 		Global $POS_X_Checkbox_Auto_CheckUpdates = 5
-		Global $POS_Y_Checkbox_Auto_CheckUpdates = 380
+		Global $POS_Y_Checkbox_Auto_CheckUpdates = 400
 		Global $Advanced_Settings_img = $gfx & "Advanced_Settings_UP.bmp"
 		Global $ToolTip_Advanced_Settings = "Closes Advanced Settings options."
 	Else
@@ -420,7 +445,7 @@ Func _StartUp_settings()
 
 
 	$State_Checkbox_Add_PlayersOnline_to_Icons = IniRead($config_ini,"Settings", "Add_PlayersOnline_to_Icons", "")
-	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add Players Online to Icons", $POS_X, 170, 220, 20)
+	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add current Players to Icons", $POS_X, 170, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the number of Players that are" & @CRLF & "currently playing the game and write it on top of the Icon.")
 		If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
@@ -445,21 +470,24 @@ Func _StartUp_settings()
 		GUICtrlSetOnEvent($Button_Restore_SteamVR_Settings, "_Button_Restore_SteamVR_Settings")
 
 
-	GUICtrlCreateGroup("Oculus Home:", $POS_X - 5, 258, 235, 43)
+	GUICtrlCreateGroup("Oculus Home:", $POS_X - 5, 258, 235, 63)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
 	$State_Checkbox_Minimize_Oculus = IniRead($config_ini,"Settings", "Minimize_Oculus", "")
 	Global $Checkbox_Minimize_Oculus = GUICtrlCreateCheckbox(" Minimize Oculus Shop Window", $POS_X, 277, 220, 20)
-		GuiCtrlSetTip(-1, "If activated it will automatically minimize Oculus Home Window if it is detected.")
+		GuiCtrlSetTip(-1, "If activated it will automatically minimize the Oculus Home Window if it is detected.")
 		If $State_Checkbox_Minimize_Oculus = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Minimize_Oculus, "_Checkbox_Minimize_Oculus")
 
-
-
-
+	$State_Checkbox_Close_Oculus = IniRead($config_ini,"Settings", "Close_Oculus", "")
+	Global $Checkbox_Close_Oculus = GUICtrlCreateCheckbox(" Close Oculus Shop Window", $POS_X, 297, 220, 20)
+		GuiCtrlSetTip(-1, "If activated it will automatically close the Oculus Home Window if it is detected.")
+		If $State_Checkbox_Close_Oculus = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
+	GUICtrlSetOnEvent($Checkbox_Close_Oculus, "_Checkbox_Close_Oculus")
 
 	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("Home Loader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
 		If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "HomeLoaderLibrary.bmp")
@@ -501,6 +529,18 @@ Func _StartUp_settings()
 	Global $State_StartUp_Radio_4 = GUICtrlRead($StartUp_Radio_4)
 	Global $State_StartUp_Radio_5 = GUICtrlRead($StartUp_Radio_5)
 	;Global $State_StartUp_Radio_6 = GUICtrlRead($StartUp_Radio_6)
+
+
+	$contextmenu = GUICtrlCreateContextMenu($StartUp_Radio_2)
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Download VIVE Home", $contextmenu)
+	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item3 = GUICtrlCreateMenuItem("Install VIVE Home", $contextmenu)
+	$RM_Item4 = GUICtrlCreateMenuItem("Uninstall VIVE Home", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("", $contextmenu)
+	GUICtrlSetOnEvent($RM_Item1, "_RM_Item1")
+	GUICtrlSetOnEvent($RM_Item3, "_RM_Item3")
+	GUICtrlSetOnEvent($RM_Item4, "_RM_Item4")
 
 
     While 1
@@ -673,9 +713,14 @@ Func _StartUp_Radio_1() ; SteamVR Home
 EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
-	If FileExists($HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe") Then
+	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
+	Local $ViveHome_Path = $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe"
+
+	If FileExists($ViveHome_SDK_Path) Then $ViveHome_Path = $ViveHome_SDK_Path
+
+	If FileExists($ViveHome_Path) Then
 		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
-		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe")
+		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $ViveHome_Path)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	Else
 		$FileSelect = FileOpenDialog("Select 'VIVEHome.exe' File", "", "")
@@ -821,10 +866,12 @@ Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
 	$DROPDOWN = GUICtrlRead($DROPDOWN_Other_GUI)
 
 	Local $StringSplit = StringSplit($DROPDOWN, '[')
+	Local $SteamStartGameName = StringTrimRight(StringReplace($StringSplit[1], ']', ''), 1)
 	Local $SteamStartURL = "steam://rungameid/" & StringReplace($StringSplit[2], ']', '')
 
+
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamStartURL)
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "")
+	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", $SteamStartGameName)
 
 	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
 																"This can be changed at any time in this settings menu." & @CRLF)
@@ -991,6 +1038,18 @@ Func _Checkbox_Minimize_Oculus()
 	EndIf
 EndFunc
 
+Func _Checkbox_Close_Oculus()
+	$State_Checkbox = GUICtrlRead($Checkbox_Close_Oculus)
+
+	If $State_Checkbox = 1 Then
+		IniWrite($config_ini, "Settings", "Close_Oculus", "true")
+	EndIf
+
+	If $State_Checkbox = 4 Then
+		IniWrite($config_ini, "Settings", "Close_Oculus", "false")
+	EndIf
+EndFunc
+
 Func _ADD_2_SteamVR_Home_default()
 	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
@@ -1033,7 +1092,15 @@ Func _Create_StartHomeAPP_BAT_File()
 									$StartSteamVRHome_x)
 EndFunc
 
-
+Func _Create_Uninstaller()
+	If FileExists($Install_DIR & "Uninstal.exe") And FileExists($Install_DIR & "Uninstaller.exe") Then
+		FileMove($Install_DIR & "Uninstal.exe", $Install_DIR & "Uninstall Files.exe", $FC_CREATEPATH + $FC_OVERWRITE)
+	EndIf
+	Sleep(500)
+	If FileExists($Install_DIR & "Uninstaller.exe") Then
+		FileMove($Install_DIR & "Uninstaller.exe", $Install_DIR & "Uninstal.exe", $FC_CREATEPATH + $FC_OVERWRITE)
+	EndIf
+EndFunc
 
 Func _Restore_Default_SteamVR_Home()
 	If Not FileExists($Steam_tools_vrmanifest_File) Then FileCopy($Steam_tools_vrmanifest_File_BAK, $Steam_tools_vrmanifest_File)
@@ -1100,105 +1167,6 @@ Func _Button_Start_HomeLoaderLibrary()
 	Exit
 EndFunc
 
-Func _Start_PHP_WebServer()
-	If Not FileExists($Install_DIR & "\php\StartPHP.bat") Then
-		FileWrite($Install_DIR & "\php\StartPHP.bat", "php -S localhost:8000 -t " & $Install_DIR & @CRLF & _
-														"pause")
-	EndIf
-	Run($Install_DIR & "\php\StartPHP.bat", $Install_DIR & "\php\", "", @SW_HIDE)
-EndFunc
-
-Func _StartGame_Check()
-	If FileExists($Install_DIR & "WebPage\temp.txt") Then
-		$SteamGameID = FileRead($Install_DIR & "WebPage\temp.txt")
-		$ApplicationList_Read = $ApplicationList_SteamLibrary_ALL_INI
-		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Non_Steam_Appl_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_1_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_2_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_3_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		If $Application_appid = "" Then
-			$ApplicationList_Read = $ApplicationList_Custom_4_INI
-			$Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		EndIf
-
-		Local $Application_appid = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "appid", "")
-		Local $Application_name = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "name", "")
-		Local $Application_installdir = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "installdir", "")
-		Local $Application_IconPath = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "IconPath", "")
-
-		If StringLeft($Application_appid, 2) <> "HL" Then
-			If WinExists("Janus VR") Then WinClose("Janus VR")
-			If WinExists($WinName) Then WinClose($WinName)
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ShellExecuteWait("steam://rungameid/" & $SteamGameID)
-		Else
-			If WinExists("Janus VR") Then WinClose("Janus VR")
-			If WinExists($WinName) Then WinClose($WinName)
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("cmd.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("php.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ProcessClose("conhost.exe")
-			ShellExecuteWait($Application_installdir)
-		EndIf
-
-		$State_Reload_HOMEonExit = IniRead($Config_INI, "Settings", "Reload_HOMEonExit", "")
-		If $State_Reload_HOMEonExit = "true" Then
-			IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-			If FileExists($System_DIR & "HomeLoader.exe") Then
-				ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
-			Else
-				ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
-			EndIf
-		EndIf
-		If FileExists($Install_DIR & "WebPage\temp.txt") Then FileDelete($Install_DIR & "WebPage\temp.txt")
-		Sleep(1000)
-		Exit
-	EndIf
-EndFunc
-
 Func _Check_for_Updates_1()
 	If FileExists($System_DIR & "UpdateCheck.exe") Then
 		ShellExecute($System_DIR & "UpdateCheck.exe", "", $System_DIR)
@@ -1209,57 +1177,6 @@ Func _Check_for_Updates_1()
 	_Exit()
 EndFunc
 
-Func _Check_for_Updates_2()
-	$Version_NR = StringRight($Version, 2)
-	$New_Version_NR = StringRight($Version_NR, 2) + 1
-	IniWrite($config_ini, "TEMP", "Update_Version", $New_Version_NR)
-
-	Local $Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $New_Version_NR & "/Home_Loader_0." & $New_Version_NR & ".zip"
-
-	_Loading_GUI()
-
-	For $Update_Loop = $New_Version_NR - 2 To $New_Version_NR + 10
-		$Get_Update_State = "true"
-		IniWrite($config_ini, "TEMP", "Update_Version", $Update_Loop)
-		$Update_URL = "https://github.com/CogentHub/HomeLoader/releases/download/v0." & $Update_Loop & "/Home_Loader_0." & $Update_Loop & ".zip"
-		$Get_Update = InetGet($Update_URL, $Install_DIR & "TEMP.zip", $INET_FORCERELOAD)
-
-		If $Get_Update = 0 Then
-			$Get_Update_State = "false"
-		EndIf
-
-		If $Get_Update_State = "true" Then
-			$Get_Update_State = "true"
-			$Get_Update_Version_NR = $Update_Loop
-			ExitLoop
-		EndIf
-	Next
-
-	If $Get_Update_State = "true" Then
-		$Abfrage = MsgBox($MB_YESNOCANCEL + $MB_ICONINFORMATION, "Check for Updates", "New Version found:" & @CRLF & "Home Loader '0." & $Get_Update_Version_NR & "'" & @CRLF & @CRLF &  _
-																						"Do you want to install the new Version?")
-
-		If $Abfrage = 6 Then
-			GUICtrlSetData($Updating_Label, "...Updating...")
-			DirCopy ($Install_DIR, $Install_DIR & "Backups\Home_Loader_" & $Version, $FC_OVERWRITE)
-			If FileExists($Install_DIR & "Update\") Then DirRemove($Install_DIR & "Update\", $DIR_REMOVE)
-			;_Zip_UnzipAll(@ScriptDir & "\TEMP.zip", $Install_DIR & "Update\", 0)
-			DirCopy($Install_DIR & "Update\", $Install_DIR & "Temp_Update\", $FC_OVERWRITE)
-			Sleep(2000)
-			MsgBox($MB_ICONINFORMATION, "Check for Updates", "Home Loader updated to version 0." & $Get_Update_Version_NR & "." & @CRLF & @CRLF & _
-																"Some Files and settings from the old version were saved: " & @CRLF & $Install_DIR & "Backups\Home_Loader_" & $Version)
-		EndIf
-	EndIf
-
-	If $Get_Update_State = "false" Then
-		MsgBox($MB_ICONINFORMATION, "Check for Updates", "No Update available.")
-	EndIf
-
-	GUIDelete($GUI_Loading)
-
-	IniWrite($config_ini, "TEMP", "Update_Version", "")
-EndFunc
-
 Func _Checkbox_Auto_CheckUpdates()
 	Local $State_Checkbox = GUICtrlRead($Checkbox_Auto_CheckUpdates)
 	If $State_Checkbox = "" Then
@@ -1268,6 +1185,104 @@ Func _Checkbox_Auto_CheckUpdates()
 	Else
 		GUICtrlSetData($Checkbox_Auto_CheckUpdates, "")
 		IniWrite($Config_INI, "Settings", "Auto_CheckUpdates", "false")
+	EndIf
+EndFunc
+
+
+Func _RM_Item1()
+	Local $Download_File = $Install_DIR & "ViveHomeSDK.zip"
+	Local $Download_URL = "http://dl4.htc.com/vive/ViveHomeSDK/ViveHomeSDK.zip?_ga=2.165259967.1201289051.1505049124-1214461869.1505049124"
+
+	$Abfrage = MsgBox($MB_YESNO	 + $MB_ICONINFORMATION, "Download VIVE Home SDK", "VIVE Home SDK Download Link:" & @CRLF & _
+																					$Download_URL & @CRLF & @CRLF &  _
+																					"Do you want to download the VIVE Home SDK?")
+
+
+	If $Abfrage = 6 Then
+
+		_Download_GUI()
+
+		Local $Get_Download = InetGet($Download_URL, $Download_File, $INET_FORCERELOAD, $INET_DOWNLOADBACKGROUND)
+
+		Do
+			Sleep(250)
+			Local $iInetGetInfo_1 = InetGetInfo($Get_Download, $INET_DOWNLOADREAD)
+			Local $iInetGetInfo_2 = InetGetInfo($Get_Download, $INET_DOWNLOADSIZE)
+
+			If $iInetGetInfo_1 <> 0 Then
+				WinSetOnTop("Downlading...", "", $WINDOWS_NOONTOP)
+
+				GUICtrlSetData($Updating_Label, "Downloading")
+				Do
+					Sleep(1000)
+					$iInetGetInfo_1 = InetGetInfo($Get_Download, $INET_DOWNLOADREAD)
+					$iInetGetInfo_2 = InetGetInfo($Get_Download, $INET_DOWNLOADSIZE)
+
+					GUICtrlSetData($Anzeige_Fortschrittbalken, $iInetGetInfo_1 * 100 / $iInetGetInfo_2)
+
+					Local $MB_Current = Round($iInetGetInfo_1 / 1000000, 2)
+					Local $MB_complete = Round($iInetGetInfo_2 / 1000000, 2)
+
+					GUICtrlSetData($Please_wait_Label, $MB_Current & "" & " / " & $MB_complete & "")
+				Until InetGetInfo($Get_Download, $INET_DOWNLOADCOMPLETE)
+			Else
+				InetClose($Get_Download)
+			EndIf
+		Until InetGetInfo($Get_Download, $INET_DOWNLOADCOMPLETE)
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+	EndIf
+	GUIDelete($GUI_Loading)
+EndFunc
+
+Func _RM_Item3()
+	Local $Download_File = $Install_DIR & "ViveHomeSDK.zip"
+
+	If FileExists($Download_File) Then
+		_Download_GUI()
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 30)
+		Local $Download_ZIP = $Install_DIR & "ViveHomeSDK.zip"
+		Local $ViveHome_ZIP = $Install_DIR & "temp\ViveHomeSDK\ViveHome_v1.0.zip"
+		Local $Apps_Folder = $Install_DIR & "Apps\"
+		Local $TEMP_Folder = $Install_DIR & "temp\"
+
+		If Not FileExists($TEMP_Folder) Then DirCreate($TEMP_Folder)
+		_Zip_UnzipAll($Download_ZIP, $TEMP_Folder, 0)
+
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+		Sleep(1000)
+
+		If Not FileExists($Apps_Folder) Then DirCreate($Apps_Folder)
+		_Zip_UnzipAll($ViveHome_ZIP, $Apps_Folder, 0)
+
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		Sleep(1000)
+	Else
+		MsgBox($MB_ICONINFORMATION, "Install VIVE Home", "VIVE Home SDK File is missing." & @CRLF & "Download the VIVE Home SDK first.")
+	EndIf
+
+	Sleep(1000)
+	DirRemove($TEMP_Folder, 1)
+	Sleep(500)
+	MsgBox($MB_ICONINFORMATION, "Install VIVE Home", "VIVE Home successfully installed." & @CRLF & "You can delete the File/Folder:" & @CRLF & _
+														$Download_File & @CRLF & $TEMP_Folder)
+	GUIDelete($GUI_Loading)
+EndFunc
+
+Func _RM_Item4()
+	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
+	Local $Download_File = $Install_DIR & "ViveHomeSDK.zip"
+	Local $TEMP_Folder = $Install_DIR & "temp\"
+
+	$Abfrage = MsgBox($MB_YESNO	 + $MB_ICONINFORMATION, "Delete VIVE Home SDK Files", "VIVE Home SDK Files:" & @CRLF & _
+																					$Install_DIR & "Apps\ViveHome\" & @CRLF & _
+																					$Download_File & @CRLF & _
+																					$TEMP_Folder & @CRLF & @CRLF & _
+																					"Do you want to delete these Files/Folders?")
+
+	If $Abfrage = 6 Then
+		DirRemove($Install_DIR & "Apps\ViveHome\", 1)
+		DirRemove($TEMP_Folder, 1)
+		FileDelete($Download_File)
 	EndIf
 EndFunc
 
