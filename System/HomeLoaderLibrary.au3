@@ -138,6 +138,7 @@ If $First_Start = "true" Then
 
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
+
 	_Settings_GUI()
 	;_Detect_SteamVR_Files()
 EndIf
@@ -3159,12 +3160,12 @@ Func _Button_Exit_Settings_GUI()
 	$Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 	$Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 	If $First_Start = "true" Then
-		If FileExists($System_DIR & "Settings.exe") Then
-			ShellExecute($System_DIR & "Settings.exe", $System_DIR)
-		Else
-			ShellExecute($System_DIR & "Settings.au3", $System_DIR)
-		EndIf
 		IniWrite($Config_INI, "Settings", "First_Start", "Settings")
+		If FileExists($System_DIR & "Settings.exe") Then
+			ShellExecute($System_DIR & "Settings.exe")
+		Else
+			ShellExecute($System_DIR & "Settings.au3")
+		EndIf
 		Exit
 	EndIf
 EndFunc
