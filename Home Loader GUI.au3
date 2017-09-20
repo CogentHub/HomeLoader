@@ -24,6 +24,7 @@ Global $Version = "0.62"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"
+Global $HomeLoader_StartBat = $System_DIR & "StartHomeAPP.bat"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
@@ -66,7 +67,7 @@ WEnd
 
 
 Func _Home_Loader_GUI_1()
-	Global $Home_Loader_GUI = GUICreate("Home Loader GUI", 465, 315, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	Global $Home_Loader_GUI = GUICreate("HomeLoader GUI", 465, 315, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 	Global $Button_1 = GUICtrlCreateButton("Home Loader Library", 15, 15, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
@@ -123,7 +124,7 @@ EndFunc
 
 Func _Home_Loader_GUI_2()
 	Global $aButton[10]
-	Global $Home_Loader_GUI = GUICreate("Test Windows regions", 160, 750, @DesktopWidth-170, -1, $WS_POPUP, $WS_EX_TOPMOST)
+	Global $Home_Loader_GUI = GUICreate("HomeLoader GUI", 160, 750, @DesktopWidth-170, -1, $WS_POPUP, $WS_EX_TOPMOST)
 
 	$aButton[0] = GUICtrlCreateButton("Button 1", 10, 10, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
@@ -235,7 +236,10 @@ Func _Button_3()
 EndFunc
 
 Func _Button_4()
+	$ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+
+	MsgBox(0, "", $ChangeDefaultSteamVRHome)
 
 	If $ChangeDefaultSteamVRHome = "true" Then
 		If Not ProcessExists("vrmonitor.exe") Then
@@ -243,7 +247,7 @@ Func _Button_4()
 		EndIf
 	Else
 		If FileExists($HomeLoader_StartBat) Then
-			ShellExecute($HomeLoader_StartBat)
+			ShellExecute($HomeLoader_StartBat, "", $System_DIR)
 		Else
 			If FileExists($System_DIR & "StartSteamVRHome.exe") Then
 				ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)

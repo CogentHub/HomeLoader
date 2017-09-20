@@ -60,10 +60,7 @@ _Start_Home_APP()
 
 Sleep(1000)
 
-;MsgBox(0, "1", $Advanced_Settings)
-
 If $Advanced_Settings = "true" Then
-	;MsgBox(0, "2", $Advanced_Settings)
 	_Start_Home_Loader()
 EndIf
 
@@ -173,14 +170,11 @@ EndFunc
 
 
 Func _Start_Home_Loader()
-	;MsgBox(0, "4", WinExists("Home Loader"))
-	If Not WinExists("Home Loader") Then
-		If FileExists($System_DIR & "HomeLoader.exe") Then
-			ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
-		Else
-			;MsgBox(0, "5", $Advanced_Settings)
-			ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
-		EndIf
+	If FileExists($System_DIR & "HomeLoader.exe") Then
+		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
+	Else
+		MsgBox(0, "5", $Advanced_Settings)
+		ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 	EndIf
 EndFunc
 
