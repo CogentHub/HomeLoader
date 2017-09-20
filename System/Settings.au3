@@ -25,7 +25,7 @@ Global $ZipFile, $ZipSplit
 
 #Region Variables
 Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.61"
+Global $Version = "0.62"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -78,6 +78,8 @@ Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+
+Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
@@ -397,29 +399,34 @@ Func _StartUp_settings()
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
-	Global $StartUp_Radio_1 = GUICtrlCreateRadio("SteamVR", 10, 25, 75, 20) ; Vive Home
+	Global $StartUp_Radio_0 = GUICtrlCreateRadio("Default", 10, 25, 55, 20) ; Default
+		GuiCtrlSetTip(-1, "Sets default SteamVR Home as SteamVR Home App without the use of any HomeLoader functions.")
+		If $HomeApp = "Default SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+		GUICtrlSetOnEvent($StartUp_Radio_0, "_StartUp_Radio_0")
+
+	Global $StartUp_Radio_1 = GUICtrlCreateRadio("SteamVR", 80, 25, 65, 20) ; SteamVR
 		GuiCtrlSetTip(-1, "Sets SteamVR as SteamVR Home App.")
-		If $WinName = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
+		If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_1, "_StartUp_Radio_1")
 
-	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Vive Home", 90, 25, 70, 20) ; VR Home
+	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Vive Home", 165, 25, 70, 20) ; Vive Home
 		GuiCtrlSetTip(-1, "Sets Vive Home as SteamVR Home App.")
-		If $WinName = "Vive Home" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
+		If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_2, "_StartUp_Radio_2")
 
-	Global $StartUp_Radio_3 = GUICtrlCreateRadio("JanusVR", 170, 25, 65, 20) ; SteamVR
+	Global $StartUp_Radio_3 = GUICtrlCreateRadio("JanusVR", 10, 47, 60, 20) ; JanusVR
 		GuiCtrlSetTip(-1, "Sets JanusVR as SteamVR Home App.")
-		If $WinName = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
+		If $HomeApp = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_3, "_StartUp_Radio_3")
 
-	Global $StartUp_Radio_4 = GUICtrlCreateRadio("VR Toolbox", 10, 47, 75, 20) ; VR Toolbox
+	Global $StartUp_Radio_4 = GUICtrlCreateRadio("VR Toolbox", 80, 47, 75, 20) ; VR Toolbox
 		GuiCtrlSetTip(-1, "Sets VR Toolbox as SteamVR Home App.")
-		If $WinName = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
+		If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_4, "_StartUp_Radio_4")
 
-	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 90, 47, 45, 20) ; JanusVR
+	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 165, 47, 45, 20) ; Other
 	GuiCtrlSetTip(-1, "Sets any other Apllication as SteamVR Home App.")
-		If $WinName <> "Vive Home" And $WinName <> "VR Home" And $WinName <> "VR Toolbox" And $WinName <> "Janus VR" And $WinName <> "SteamVR Home" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
+		If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_5, "_StartUp_Radio_5")
 
 
@@ -695,24 +702,59 @@ Func _DropDown_Add_Other_GUI_Set_Data()
 	GUICtrlSetData($DROPDOWN_Other_GUI, $DROPDOWN_DATA, "Choose Application")
 EndFunc
 
-Func _StartUp_Radio_1() ; SteamVR Home
+Func _StartUp_Radio_0() ; Default [SteamVR Home]
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Default SteamVR Home")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
+	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Default SteamVR Home")
 
-	If $Abfrage = 6 Then
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+	_ADD_2_SteamVR_Home_default()
+
+	_StartUp_Button_HomeLoader()
+
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "The default SteamVR Home app was set as Home app.")
+EndFunc
+
+Func _StartUp_Radio_1() ; SteamVR Home
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "SteamVR Home")
+	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
+	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
+
+	If $Advanced_Settings = "true" Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
+																	"Yes:" & @CRLF & _
+																	"It will change the SteamVR settings." & @CRLF & _
+																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
+																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
+																	"No:" & @CRLF & _
+																	"It will NOT change the SteamVR settings." & @CRLF & _
+																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
+																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
+
+		If $Abfrage = 6 Then
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+			_ADD_2_SteamVR_Home_default()
+		Else
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+			_Restore_Default_SteamVR_Home()
+		EndIf
+	Else
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'SteamVR Home' app was set as Home app.")
 	EndIf
 	_StartUp_Button_HomeLoader()
 EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Vive Home")
 	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
 	Local $ViveHome_Path = $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe"
 
@@ -723,26 +765,44 @@ Func _StartUp_Radio_2() ; Vive Home
 		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $ViveHome_Path)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	Else
-		$FileSelect = FileOpenDialog("Select 'VIVEHome.exe' File", "", "")
+		$FileSelect = FileOpenDialog("Select 'VIVEHome.exe' File", $Install_DIR, "Executable (*.exe)")
 		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $FileSelect)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	EndIf
 
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
+	If $Advanced_Settings = "true" Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
+																	"Yes:" & @CRLF & _
+																	"It will change the SteamVR settings." & @CRLF & _
+																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
+																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
+																	"No:" & @CRLF & _
+																	"It will NOT change the SteamVR settings." & @CRLF & _
+																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
+																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
 
-	If $Abfrage = 6 Then
+		If $Abfrage = 6 Then
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+			_ADD_2_SteamVR_Home_default()
+		Else
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+			_Restore_Default_SteamVR_Home()
+		EndIf
+	Else
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Vive Home' app was set as Home app.")
 	EndIf
 	_StartUp_Button_HomeLoader()
 EndFunc
 
 Func _StartUp_Radio_3() ; Janus VR
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Janus VR")
 	Global $JanusVR_Path = ""
 	If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
 	If FileExists($Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\Janus VR\janusvr.exe"
@@ -810,79 +870,118 @@ Func _StartUp_Radio_3() ; Janus VR
 		Next
 	EndIf
 
+	If $Advanced_Settings = "true" Then
+		Local $Abfrage_3 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home 'Janus VR' [3/3]", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
+																	"Yes:" & @CRLF & _
+																	"It will change the SteamVR settings." & @CRLF & _
+																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
+																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
+																	"No:" & @CRLF & _
+																	"It will NOT change the SteamVR settings." & @CRLF & _
+																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
+																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
 
-	Local $Abfrage_3 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home [3/3]", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
-
-	If $Abfrage_3 = 6 Then
+		If $Abfrage_3 = 6 Then
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+			_ADD_2_SteamVR_Home_default()
+		Else
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+			_Restore_Default_SteamVR_Home()
+		EndIf
+	Else
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "DDefault SteamVR Home 'Janus VR' [3/3]", "'Janus VR' app was set as Home app.")
 	EndIf
 	_StartUp_Button_HomeLoader()
 EndFunc
 
 Func _StartUp_Radio_4() ; VR Toolbox
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "VR Toolbox")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
 
-	If $Abfrage = 6 Then
+	If $Advanced_Settings = "true" Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
+																	"Yes:" & @CRLF & _
+																	"It will change the SteamVR settings." & @CRLF & _
+																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
+																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
+																	"No:" & @CRLF & _
+																	"It will NOT change the SteamVR settings." & @CRLF & _
+																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
+																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
+
+		If $Abfrage = 6 Then
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+			_ADD_2_SteamVR_Home_default()
+		Else
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+			_Restore_Default_SteamVR_Home()
+		EndIf
+	Else
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'VR Toolbox' app was set as Home app.")
 	EndIf
 	_StartUp_Button_HomeLoader()
 EndFunc
 
 Func _StartUp_Radio_5() ; Other
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Other")
 	_StartUp_Add_Other_GUI()
 EndFunc
 
-Func _StartUp_Radio_0() ; VR Home
-	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/575430")
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Home")
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
-
-	If $Abfrage = 6 Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-	EndIf
-	_StartUp_Button_HomeLoader()
-EndFunc
-
 Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
+	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	$DROPDOWN = GUICtrlRead($DROPDOWN_Other_GUI)
 
 	Local $StringSplit = StringSplit($DROPDOWN, '[')
 	Local $SteamStartGameName = StringTrimRight(StringReplace($StringSplit[1], ']', ''), 1)
 	Local $SteamStartURL = "steam://rungameid/" & StringReplace($StringSplit[2], ']', '')
 
+	If $SteamStartGameName = "Bigscreen Beta" Then $SteamStartGameName = "Bigscreen"
 
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", $SteamStartGameName)
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamStartURL)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", $SteamStartGameName)
 
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
+	If $Advanced_Settings = "true" Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
+																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
+																	"Yes:" & @CRLF & _
+																	"It will change the SteamVR settings." & @CRLF & _
+																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
+																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
+																	"No:" & @CRLF & _
+																	"It will NOT change the SteamVR settings." & @CRLF & _
+																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
+																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
 
-	If $Abfrage = 6 Then
+		If $Abfrage = 6 Then
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
+			_ADD_2_SteamVR_Home_default()
+		Else
+			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
+			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+			_Restore_Default_SteamVR_Home()
+		EndIf
+	Else
 		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'" & $SteamStartGameName & "'" & " app was set as Home app.")
 	EndIf
 	_StartUp_Button_HomeLoader()
 	GUIDelete($Add_Other_GUI)
@@ -1051,7 +1150,7 @@ Func _Checkbox_Close_Oculus()
 EndFunc
 
 Func _ADD_2_SteamVR_Home_default()
-	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
 	$NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/System/StartHomeAPP.bat"
 	_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
@@ -1067,7 +1166,7 @@ Func _ADD_2_SteamVR_Home_default()
 
 		If $LOOP_vrmanifest = $Line_NR_binary_path_windows Then
 			$NewLine = '			"binary_path_windows" : "' & $NewHomePath & '",'
-			If $WinName = "SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
+			If $HomeApp = "Default SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
 			FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
 		Else
 			FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])
@@ -1077,18 +1176,20 @@ Func _ADD_2_SteamVR_Home_default()
 EndFunc
 
 Func _Create_StartHomeAPP_BAT_File()
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	If FileExists($StartHomeAPP_bat) Then FileDelete($StartHomeAPP_bat)
 	If FileExists($StartSteamVRHome_au3) Then $StartSteamVRHome_x = "StartSteamVRHome.au3"
 	If FileExists($StartSteamVRHome_exe) Then $StartSteamVRHome_x = "StartSteamVRHome.exe"
 
 	FileWrite($StartHomeAPP_bat, "@echo off" & @CRLF & _
 									"@echo - HOME LOADER [" & $Version & "] -" & @CRLF & _
-									"@echo ..." & @CRLF & _
-									"@echo Starting Home APP..." & @CRLF & _
-									"@echo " & $WinName & @CRLF & _
-									"@echo .." & @CRLF & _
+									"@echo." & @CRLF & _
+									"@echo Starting Home APP:" & @CRLF & _
+									"@echo " & $HomeApp & @CRLF & _
+									"@echo." & @CRLF & _
 									"@echo Please Wait..." & @CRLF & _
-									"@echo ." & @CRLF & _
+									"@echo." & @CRLF & _
+									"@echo HomeLoader by Cogent" & @CRLF & _
 									$StartSteamVRHome_x)
 EndFunc
 
@@ -1103,7 +1204,7 @@ Func _Create_Uninstaller()
 EndFunc
 
 Func _Restore_Default_SteamVR_Home()
-	If Not FileExists($Steam_tools_vrmanifest_File) Then FileCopy($Steam_tools_vrmanifest_File_BAK, $Steam_tools_vrmanifest_File)
+	FileCopy($Steam_tools_vrmanifest_File_BAK, $Steam_tools_vrmanifest_File)
 	$WinName = "SteamVR Home"
 	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
 	$NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/StartSteamVRHome.exe"

@@ -51,7 +51,7 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.61"
+Global $Version = "0.62"
 Global $config_ini = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"

@@ -20,7 +20,7 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.61"
+Global $Version = "0.62"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $config_ini = $System_DIR & "\config.ini"
@@ -29,6 +29,7 @@ Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings"
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Skin = IniRead($Config_INI, "Settings", "Skin", "1")
+Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 
 Global $Home_Loader_GUI, $contextmenu, $RM_Item0,  $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
@@ -235,11 +236,23 @@ EndFunc
 
 Func _Button_4()
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
-		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
+
+	If $ChangeDefaultSteamVRHome = "true" Then
+		If Not ProcessExists("vrmonitor.exe") Then
+			ShellExecute("steam://rungameid/250820")
+		EndIf
 	Else
-		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
+		If FileExists($HomeLoader_StartBat) Then
+			ShellExecute($HomeLoader_StartBat)
+		Else
+			If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+				ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
+			Else
+				ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
+			EndIf
+		EndIf
 	EndIf
+
 	If $Close_MainGUI_after_selection = "true" Then _Button_Exit_GUI()
 EndFunc
 
@@ -298,7 +311,4 @@ Func _Button_Exit_GUI()
 	GUIDelete($Home_Loader_GUI)
 	Exit
 EndFunc
-
-#AutoIt3Wrapper_Run_After=SignMe.exe /"Home Loader GUI.exe" /"Cogent.pfx"
-
 

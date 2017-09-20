@@ -25,6 +25,13 @@ Global $DesktopWidth, $DesktopHeight, $Width, $Height, $X, $Y, $font_arial, $GUI
 Global $hImage1_Path, $hImage2_Path, $Check_StringSplit_NR, $Check_Filename_1, $Check_Filename_2, $Check_Filename_3, $Check_Filename, $hBMPBuff, $hGraphic, $hPen
 Global $hImage1, $hImage2, $GameNameStarted, $GameStarted_State, $FileLines, $Application_name
 Global $GUI_Loading, $COLOR_RED, $DOWNLOAD_URL, $Button_HLStatus, $NewIcon_Path, $GameClosed, $GameStarted
+Global $SteamVR_Status
+#endregion
+
+#Region Colors
+Global $LimeGreen = "0x32CD32"
+Global $Blue = "0x00BFFF"
+Global $Yellow = "0xFFFF00"
 #endregion
 
 #Region Variablen
@@ -34,6 +41,7 @@ Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
+Global $HomeLoader_StartBat = $System_DIR & "StartHomeAPP.bat"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
 Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")
 Global $TEMP_StartHomeLoader = IniRead($Config_INI, "TEMP", "StartHomeLoader", "")
@@ -41,6 +49,7 @@ Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSe
 Global $USE_HL_GUI = IniRead($Config_INI, "Settings", "USE_HL_GUI", "")
 Global $USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
+Global $Reload_HOMEonExit = IniRead($config_ini, "Settings", "Reload_HOMEonExit", "")
 Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
 Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "false")
@@ -150,10 +159,6 @@ _LOOP_1()
 
 #Region GUI
 Func _Main_GUI()
-	Global $LimeGreen = "0x32CD32"
-	Global $Blue = "0x00BFFF"
-	Global $Yellow = "0xFFFF00"
-
 	$USE_HL_GUI = IniRead($Config_INI, "Settings", "USE_HL_GUI", "")
 	If $USE_HL_GUI = "1" Then _Create_GUI_1()
 	If $USE_HL_GUI = "2" Then _Create_GUI_2()
@@ -330,8 +335,6 @@ Func _LOOP_1()
 	$Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 
-	If $WinName = "Bigscreen Beta" Then $WinName = "Bigscreen"
-
 	$SteamVR_PreviousApp = IniRead($Config_INI, "SteamVR_Status", "PreviousApp", "")
 	$SteamVR_CurrentApp = IniRead($Config_INI, "SteamVR_Status", "CurrentApp", "")
 
@@ -344,6 +347,12 @@ Func _LOOP_1()
 	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
 
 	Do
+		$SteamVR_Status = IniRead($Config_INI, "SteamVR_Status", "Status", "")
+		;MsgBox(0, "", $ChangeDefaultSteamVRHome & @CRLF & $Reload_HOMEonExit & @CRLF & $SteamVR_Status)
+		If $ChangeDefaultSteamVRHome = "false" And $Reload_HOMEonExit = "true" Then
+			If $SteamVR_Status = "Game Closed" Then _Start_StartSteamVRHome()
+			IniWrite($Config_INI, "SteamVR_Status", "Status", "")
+		EndIf
 		Sleep(1000)
 		_Check_SteamVR_Exit()
 		_Min_Close_Oculus()
@@ -395,6 +404,8 @@ Func _LOOP_2()
 	If Not ProcessExists("vrmonitor.exe") Then _Exit()
 	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 
+	$GameClosed = "false"
+
 	Do
 		_Check_SteamVR_Exit()
 		_Min_Close_Oculus()
@@ -422,6 +433,7 @@ Func _LOOP_3()
 	If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
 	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
 	_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
+	_Min_Close_Oculus()
 	_Check_SteamVR_Exit()
 	_Restart_HomeLoader()
 EndFunc
@@ -661,6 +673,7 @@ Func _Copy_Icon_2_Icon_Folder()
 EndFunc
 
 Func _Ident_GameID()
+	Sleep(500)
 	$Steam_stats_log_txt = $Install_Folder_Steam_1 & "\logs\stats_log.txt"
 
 	If Not FileExists($Steam_stats_log_txt) Then $Steam_stats_log_txt = $Install_Folder_Steam_1 & "\logs\stats_log.txt"
@@ -741,6 +754,7 @@ Func _Ident_GameID()
 	_Check_SteamVR_Exit()
 
 	If $AppID <> $AppID_last Or $GameStarted = "true" Then
+		WinClose($WinName)
 		IniWrite($Config_INI, "SteamVR_Status", "CurrentApp", $AppID)
 		_GUICtrlButton_SetImage($Button_HLStatus, $Icons & "32x32\steam.app." & $AppID & ".bmp")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " App started: " & "<App ID: " & $AppID & ">" & " - " & "<App Name: " & $AppName & ">")
@@ -753,8 +767,7 @@ Func _Ident_GameID()
 EndFunc
 
 Func _Ident_ClosingGame()
-	$GameClosed = "false"
-
+	Sleep(500)
 	$Steam_stats_log_txt = $Install_Folder_Steam_1 & "\logs\stats_log.txt"
 
 	If Not FileExists($Steam_stats_log_txt) Then $Steam_stats_log_txt = $Install_Folder_Steam_1 & "\logs\stats_log.txt"
@@ -794,7 +807,7 @@ Func _Ident_ClosingGame()
 
 	If $GameClosed = "true" Then
 		IniWrite($Config_INI, "SteamVR_Status", "PreviousApp", $AppID)
-		IniWrite($Config_INI, "SteamVR_Status", "CurrentApp", "")
+		IniWrite($Config_INI, "SteamVR_Status", "Status", "Game Closed")
 		_GUICtrlButton_SetImage($Button_HLStatus, $gfx & "HLStatus_1.bmp")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " App closed: " & "<App ID: " & $AppID & ">" & " - " & "<App Name: " & $AppName & ">")
 		_LOOP_3()
@@ -1038,10 +1051,14 @@ Func _Close_Process()
 EndFunc
 
 Func _Start_StartSteamVRHome()
-	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
-		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
+	If FileExists($HomeLoader_StartBat) Then
+		ShellExecute($HomeLoader_StartBat)
 	Else
-		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
+		If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+			ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
+		Else
+			ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
+		EndIf
 	EndIf
 	Exit
 EndFunc

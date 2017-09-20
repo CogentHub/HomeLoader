@@ -37,6 +37,8 @@ Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 
+Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+
 Global $Array_tools_vrmanifest_File
 
 _First_Start_Empty_Check_1()
@@ -58,7 +60,10 @@ _Start_Home_APP()
 
 Sleep(1000)
 
+;MsgBox(0, "1", $Advanced_Settings)
+
 If $Advanced_Settings = "true" Then
+	;MsgBox(0, "2", $Advanced_Settings)
 	_Start_Home_Loader()
 EndIf
 
@@ -167,41 +172,13 @@ EndFunc
 #endregion
 
 
-Func _Key_Presses_Detection()
-
-	Sleep(1000)
-
-	If _IsPressed("20", $dll_2) Then ; Space Bar Button Pressed
-		_Start_Button_Pressed()
-	EndIf
-	If _IsPressed360(16, $dll_1) Then ; Start Button Pressed
-		_Start_Button_Pressed()
-	EndIf
-	If _IsPressed360(4096, $dll_1) Then ; A Button Pressed
-		_StartUp_Radio_1()
-	EndIf
-	If _IsPressed360(8192, $dll_1) Then ; B Button Pressed
-		_StartUp_Radio_2()
-	EndIf
-	If _IsPressed360(-32768, $dll_1) Then ; Y Button Pressed
-		_StartUp_Radio_3()
-	EndIf
-	If _IsPressed360(16384, $dll_1) Then ; X Button Pressed"
-		_StartUp_Radio_4()
-	EndIf
-	If _IsPressed360(256, $dll_1) Then ; LB Button Pressed
-		_StartUp_Radio_5()
-	EndIf
-	If _IsPressed360(512, $dll_1) Then ; RB Button Pressed
-		_StartUp_Radio_6()
-	EndIf
-EndFunc
-
 Func _Start_Home_Loader()
+	;MsgBox(0, "4", WinExists("Home Loader"))
 	If Not WinExists("Home Loader") Then
 		If FileExists($System_DIR & "HomeLoader.exe") Then
 			ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 		Else
+			;MsgBox(0, "5", $Advanced_Settings)
 			ShellExecute($System_DIR & "HomeLoader.au3", "", $System_DIR)
 		EndIf
 	EndIf
@@ -209,51 +186,27 @@ EndFunc
 
 Func _Start_Home_APP()
 	Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
-	Global $WindowName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	Global $Vive_Home_Folder = ""
 	If Not ProcessExists("vrmonitor.exe") Then
 		ShellExecute("steam://rungameid/250820")
-		Exit
+		;Exit
 	EndIf
 
 	Do
 		Sleep(1000)
 	Until ProcessExists("vrmonitor.exe")
 
-	If $WindowName <> "SteamVR Home" Then
-		If $WindowName = "Vive Home" Then
+	If $HomeApp <> " Default SteamVR Home" Then
+		If $HomeApp = "Vive Home" Then
 			$Vive_Home_Folder_1 = StringInStr($Home_Path, "\", 1, - 1)
 			$Vive_Home_Folder_2 = StringLeft($Home_Path, $Vive_Home_Folder_1)
 			ShellExecute($Home_Path, "", $Vive_Home_Folder_2)
 		Else
-			ShellExecute($Home_Path)
+			If $HomeApp = "SteamVR Home" Then ShellExecute($Home_Path, "-vr")
+			If $HomeApp <> "SteamVR Home" Then ShellExecute($Home_Path)
 		EndIf
 	EndIf
-EndFunc
-
-Func _ADD_2_SteamVR_Home_default()
-	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
-	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
-	$NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/StartSteamVRHome.exe"
-	_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
-	_ArrayDisplay($Array_tools_vrmanifest_File)
-
-	If FileExists($Steam_tools_vrmanifest_File) Then FileDelete($Steam_tools_vrmanifest_File)
-
-    For $LOOP_vrmanifest_1 = 1 To $Array_tools_vrmanifest_File[0]
-		$ReadLine_tools_vrmanifest = $Array_tools_vrmanifest_File[$LOOP_vrmanifest_1]
-		If $ReadLine_tools_vrmanifest = '			"app_key": "openvr.tool.steamvr_environments",' Then
-			Local $Line_NR_binary_path_windows = $LOOP_vrmanifest_1 + 3
-		EndIf
-
-		If $LOOP_vrmanifest_1 = $Line_NR_binary_path_windows Then
-			$NewLine = '			"binary_path_windows" : "' & $NewHomePath & '",'
-			If $WinName =  "SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
-			FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
-		Else
-			FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest_1])
-		EndIf
-    Next
 EndFunc
 
 Func _FirstStart_Restart()
