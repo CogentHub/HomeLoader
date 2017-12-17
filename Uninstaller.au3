@@ -6,7 +6,9 @@
 
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
-Global $Config_INI = $System_DIR & "config.ini"
+;Global $Config_INI = $System_DIR & "config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy($System_DIR & "config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 

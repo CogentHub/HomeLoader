@@ -17,37 +17,34 @@ Global $font_arial = "arial"
 
 #Region Declare Globals
 Global $SteamVR_Status, $Title_1, $Title_2, $Handle_1, $Handle_2, $Title_Array_1, $Title_Array_2, $Handle_Array_1, $Handle_Array_2, $NR_Handle_1, $NR_Handle_2
-Global $GameStarted, $LOOP_VIVEHOMECheck, $OldWindowExists, $Button_Close_Current_Running, $Checkbox_Show_Settings_at_Startup, $Button_Restart, $Button_Exit
+Global $GameStarted, $LOOP_VIVEHOMECheck, $OldWindowExists, $Button_Close_Current_Running, $Button_Restart, $Button_Exit
 Global $Select_HomeApp_Label, $USE_GUI_Backup, $ApplicationList_Read, $Array_tools_vrmanifest_File, $Line_NR_binary_path_windows, $Line_NR_image_path
 Global $Array_tools_vrmanifest_File, $AddShortcut_to_Oculus_GUI, $Add_Other_GUI, $bookmarksArray, $settingsArray, $StartSteamVRHome_x
-Global $ZipFile, $ZipSplit
+Global $ZipFile, $ZipSplit, $Checkbox_Auto_CheckUpdates
 #endregion
 
 #Region Variables
-Global $Config_INI = @ScriptDir & "\config.ini"
-Global $Version = "0.62"
+;Global $Config_INI = @ScriptDir & "\config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
+Global $Version = "0.63"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
-Global $System_DIR = $Install_DIR & "\System\"
 Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
-Global $Show_Settings_at_Startup = IniRead($Config_INI, "Settings", "Show_Settings_at_Startup", "")
 Global $TEMP_StartHomeLoader = IniRead($Config_INI, "TEMP", "StartHomeLoader", "")
 Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
 Global $USE_FB_GUI = IniRead($Config_INI, "Settings", "USE_GUI", "")
-Global $USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
 Global $StartSteamVRHome = $System_DIR & "StartSteamVRHome.exe"
 Global $StartSteamVRHome_au3 = $System_DIR & "StartSteamVRHome.au3"
 Global $StartSteamVRHome_exe = $System_DIR & "StartSteamVRHome.exe"
 Global $StartHomeAPP_bat = $System_DIR & "StartHomeAPP.bat"
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
-Global $Time_Interval = IniRead($Config_INI, "Settings", "Time_Interval", "")
 Global $Status_Checkbox_Minimize_OVRS = IniRead($Config_INI,"Settings", "Minimize_Oculus", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $JanusVR_Page = $Install_DIR & "WebPage\janusvr\" & "index.html"
-Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
 
@@ -80,6 +77,17 @@ Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_too
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 
 Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+
+Global $HomeLoader_Overlay_Folder = $Steam_Path & "steamapps\common\VRUtilityBelt\addons\custom\HomeLoader\overlays\HomeLoader\"
+Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
+Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
+Global $ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
+Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "")
+Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+Global $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
+
+Global $State_Checkbox_Autostart_VRUB = IniRead($config_ini,"Settings", "Autostart_VRUB", "")
 
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
@@ -192,23 +200,31 @@ Func _First_Start_Empty_Check_1()
 		EndIf
 	EndIf
 
-	If $Advanced_Settings = "true" Then
-		$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
-		If $Icon_Folder_1 = "" Then
-			If FileExists($Install_DIR & "WebPage\images\") Then
-				$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
-			EndIf
-		EndIf
 
-		$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
-		If $Icon_Folder_2 = "" Then
-			If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
-				$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
-			EndIf
+	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
+	If $Icon_Folder_1 = "" Then
+		If FileExists($Install_DIR & "WebPage\images\") Then
+			$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
 		EndIf
 	EndIf
+
+	$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
+	If $Icon_Folder_2 = "" Then
+		If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
+			$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
+		EndIf
+	EndIf
+
+	$Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
+	If $Icon_Folder_3 = "" Then
+		If FileExists($HomeLoader_Overlay_Folder & "images\") Then
+			$Icon_Folder_3 = $HomeLoader_Overlay_Folder & "images\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_3", $Icon_Folder_3)
+		EndIf
+	EndIf
+
 
 
 	If $Steam_tools_vrmanifest_File = "" Then
@@ -238,6 +254,15 @@ Func _First_Start_Empty_Check_1()
 	EndIf
 	;_Detect_SteamVR_Files()
 	_Create_Uninstaller()
+
+	If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
+		$HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
+		$StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
+		$HomeLoaderOverlaySteamID = StringReplace($StringReplace_SteamID, '"', '')
+		IniWrite($Config_INI, "Settings", "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID)
+		FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
+	EndIf
+
 EndFunc
 
 Func _Detect_SteamVR_Files()
@@ -357,171 +382,153 @@ Func _Create_JanusVR_Page()
 EndFunc
 
 Func _StartUp_settings()
-	If $Advanced_Settings = "true" Then
-		Global $HEIGHT_GUI = 490
-		Global $POS_X = 10
-		Global $POS_Y_Button_Close = 427
-		Global $POS_Y_Button_StartSteamVR = 370
-		Global $POS_Y_Button_Start_HomeLoaderLibrary = 330
-		Global $POS_X_Advanced_Settings_Label = 10
-		Global $POS_Y_Advanced_Settings_Label = 129
-		Global $POS_X_Check_for_Updates = 5
-		Global $POS_Y_Check_for_Updates = 365
-		Global $POS_X_Checkbox_Auto_CheckUpdates = 5
-		Global $POS_Y_Checkbox_Auto_CheckUpdates = 400
-		Global $Advanced_Settings_img = $gfx & "Advanced_Settings_UP.bmp"
-		Global $ToolTip_Advanced_Settings = "Closes Advanced Settings options."
-	Else
-		Global $HEIGHT_GUI = 235
-		Global $POS_X = 10000
-		Global $POS_Y_Button_Close = 170
-		Global $POS_Y_Button_StartSteamVR = 170
-		Global $POS_Y_Button_Start_HomeLoaderLibrary = 135
-		Global $POS_X_Advanced_Settings_Label = 82
-		Global $POS_Y_Advanced_Settings_Label = 108
-		Global $POS_X_Check_for_Updates = 10000
-		Global $POS_Y_Check_for_Updates = 10000
-		Global $POS_X_Checkbox_Auto_CheckUpdates = 10000
-		Global $POS_Y_Checkbox_Auto_CheckUpdates = 10000
-		Global $Advanced_Settings_img = $gfx & "Advanced_Settings_DOWN.bmp"
-		Global $ToolTip_Advanced_Settings = "Opens Advanced Settings options."
-	EndIf
 
-	If $Show_Settings_at_Startup = "First Start" Then IniWrite($Config_INI, "Settings", "Show_Settings_at_Startup", "")
-    Global $GUI_StartUp_settings = GUICreate("Home Loader - Settings", 250, $HEIGHT_GUI, -1, -1, $WS_EX_TOPMOST)
+	Global $HEIGHT_GUI = 375 ; 440
+	Global $POS_X = 10
+	Global $POS_Y_HomeApp_Group = 5
+	Global $POS_Y_Autostart_Group = 110
+	Global $POS_Y_AdditionalSettings_Group = 160
+	Global $POS_Y_Button_Start_HomeLoaderLibrary = 275
+	Global $POS_Y_Check_for_Updates = 310
+	Global $POS_Y_Checkbox_Auto_CheckUpdates = 345
+	Global $POS_Y_Button_Close = 310 ; 372
+
+	Global $HomeAppGroup
+	Global $HomeAppGroup_Label
+
+    Global $GUI_StartUp_settings = GUICreate("HomeLoader - Settings", 250, $HEIGHT_GUI, -1, -1, $WS_EX_TOPMOST)
 	GUISetIcon(@AutoItExe, -2, $GUI_StartUp_settings)
     GUISetState(@SW_SHOW, $GUI_StartUp_settings)
 
 	Global $font_StartUp_arial = "arial"
 
-	GUICtrlCreateGroup("Home app:", 5, 5, 235, 100)
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+
+	$HomeAppGroup = GUICtrlCreateGroup($HomeAppGroup_Label, 5, $POS_Y_HomeApp_Group, 235, 100)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
-	Global $StartUp_Radio_0 = GUICtrlCreateRadio("Default", 10, 25, 55, 20) ; Default
+	Global $StartUp_Radio_0 = GUICtrlCreateRadio("Default", 10, $POS_Y_HomeApp_Group + 20, 55, 20) ; Default
 		GuiCtrlSetTip(-1, "Sets default SteamVR Home as SteamVR Home App without the use of any HomeLoader functions.")
-		If $HomeApp = "Default SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_0, "_StartUp_Radio_0")
 
-	Global $StartUp_Radio_1 = GUICtrlCreateRadio("SteamVR", 80, 25, 65, 20) ; SteamVR
+	Global $StartUp_Radio_1 = GUICtrlCreateRadio("SteamVR", 80, $POS_Y_HomeApp_Group + 20, 65, 20) ; SteamVR
 		GuiCtrlSetTip(-1, "Sets SteamVR as SteamVR Home App.")
-		If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_1, "_StartUp_Radio_1")
 
-	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Vive Home", 165, 25, 70, 20) ; Vive Home
+	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Vive Home", 165, $POS_Y_HomeApp_Group + 20, 70, 20) ; Vive Home
 		GuiCtrlSetTip(-1, "Sets Vive Home as SteamVR Home App.")
-		If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_2, "_StartUp_Radio_2")
 
-	Global $StartUp_Radio_3 = GUICtrlCreateRadio("JanusVR", 10, 47, 60, 20) ; JanusVR
+	Global $StartUp_Radio_3 = GUICtrlCreateRadio("JanusVR", 10, $POS_Y_HomeApp_Group + 42, 60, 20) ; JanusVR
 		GuiCtrlSetTip(-1, "Sets JanusVR as SteamVR Home App.")
-		If $HomeApp = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_3, "_StartUp_Radio_3")
 
-	Global $StartUp_Radio_4 = GUICtrlCreateRadio("VR Toolbox", 80, 47, 75, 20) ; VR Toolbox
+	Global $StartUp_Radio_4 = GUICtrlCreateRadio("VR Toolbox", 80, $POS_Y_HomeApp_Group + 42, 75, 20) ; VR Toolbox
 		GuiCtrlSetTip(-1, "Sets VR Toolbox as SteamVR Home App.")
-		If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_4, "_StartUp_Radio_4")
 
-	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 165, 47, 45, 20) ; Other
+	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 165, $POS_Y_HomeApp_Group + 42, 45, 20) ; Other
 	GuiCtrlSetTip(-1, "Sets any other Apllication as SteamVR Home App.")
-		If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
 		GUICtrlSetOnEvent($StartUp_Radio_5, "_StartUp_Radio_5")
 
+	If $HomeApp <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
+	If $HomeApp = "Default SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
+	If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
+	If $HomeApp = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
+	If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
+	If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
 
-	Global $Button_Restore_DefaultSteamVRHome = GUICtrlCreateButton("Restore Default SteamVR Home Path", 10, 73, 223, 25)
+
+	Global $Button_Restore_DefaultSteamVRHome = GUICtrlCreateButton("Restore Default SteamVR Home Path", 10, $POS_Y_HomeApp_Group + 68, 223, 25)
 		GuiCtrlSetTip(-1, "Restores the SteamVR Home Path using the Backup Files.")
 		GUICtrlSetOnEvent($Button_Restore_DefaultSteamVRHome, "_Restore_Default_SteamVR_Home")
 
 
-	Global $GUI_Button_Advanced_Settings= GUICtrlCreateButton("", 224, 107, 16, 22, $BS_BITMAP)
-		_GUICtrlButton_SetImage($GUI_Button_Advanced_Settings, $Advanced_Settings_img)
-		GuiCtrlSetTip(-1, $ToolTip_Advanced_Settings)
-		GUICtrlSetOnEvent($GUI_Button_Advanced_Settings, "_GUI_Button_Advanced_Settings")
+	GUICtrlCreateGroup("Autostart:", 5, $POS_Y_Autostart_Group, 235, 45)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
+
+	$State_Checkbox_Autostart_VRUB = IniRead($config_ini,"Settings", "Autostart_VRUB", "")
+	Global $Checkbox_Autostart_VRUB = GUICtrlCreateCheckbox(" VRUtilityBelt [Overlay]", 10, $POS_Y_Autostart_Group + 20, 220, 20)
+		GuiCtrlSetTip(-1, "If activated it will automaticly start VRUB before it starts SteamVR.")
+		If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
+	GUICtrlSetOnEvent($Checkbox_Autostart_VRUB, "_Checkbox_Autostart_VRUB")
 
 
-	GUICtrlCreateLabel("Advanced Settings:", $POS_X_Advanced_Settings_Label, $POS_Y_Advanced_Settings_Label, 142, 35)
-	GUICtrlSetFont(-1, 12, 400, 6, "arial")
-
-
-	GUICtrlCreateGroup("Home Loader Settings:", $POS_X - 5, 150, 235, 107)
+	GUICtrlCreateGroup("Additional Settings:", $POS_X - 5, $POS_Y_AdditionalSettings_Group, 235, 108)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
 
 	$State_Checkbox_Add_PlayersOnline_to_Icons = IniRead($config_ini,"Settings", "Add_PlayersOnline_to_Icons", "")
-	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add current Players to Icons", $POS_X, 170, 220, 20)
+	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add current Players to Icons", $POS_X, $POS_Y_AdditionalSettings_Group + 21, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the number of Players that are" & @CRLF & "currently playing the game and write it on top of the Icon.")
 		If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_PlayersOnline_to_Icons, "_Checkbox_Add_PlayersOnline_to_Icons")
 
 	$State_Checkbox_Add_SS_to_Icons = IniRead($config_ini,"Settings", "Add_SS_to_Icons", "")
-	Global $Checkbox_Add_SS_to_Icons = GUICtrlCreateCheckbox(" Add Supersampling to Icons", $POS_X, 190, 220, 20)
+	Global $Checkbox_Add_SS_to_Icons = GUICtrlCreateCheckbox(" Add Supersampling to Icons", $POS_X, $POS_Y_AdditionalSettings_Group + 41, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the saved Supersampling settings" & @CRLF & "for each game and adds it on top of the Icon.")
 		If $State_Checkbox_Add_SS_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_SS_to_Icons, "_Checkbox_Add_SS_to_Icons")
 
 	$State_Checkbox_Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
-	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automatically add SS per game", $POS_X, 210, 220, 20)
+	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automatically add SS per game", $POS_X, $POS_Y_AdditionalSettings_Group + 61, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the saved Supersampling settings" & @CRLF & "for the current loaded game and adds these value to SteamVR.")
 		If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_SS_per_game, "_Checkbox_Add_SS_per_game")
 
-	Global $Button_Restore_SteamVR_Settings = GUICtrlCreateButton("Restore SteamVR Settings", $POS_X, 230, 223, 20)
+	Global $Button_Restore_SteamVR_Settings = GUICtrlCreateButton("Restore SteamVR Settings", $POS_X, $POS_Y_AdditionalSettings_Group + 81, 223, 20)
 		GuiCtrlSetTip(-1, "Restores the SteamVR Settings." & @CRLF & @CRLF & "It will Restore the following Files:" & @CRLF & "- default.vrsettings" & @CRLF & "- tools.vrmanifest")
 		GUICtrlSetOnEvent($Button_Restore_SteamVR_Settings, "_Button_Restore_SteamVR_Settings")
 
 
-	GUICtrlCreateGroup("Oculus Home:", $POS_X - 5, 258, 235, 63)
-	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
-	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
-	$State_Checkbox_Minimize_Oculus = IniRead($config_ini,"Settings", "Minimize_Oculus", "")
-	Global $Checkbox_Minimize_Oculus = GUICtrlCreateCheckbox(" Minimize Oculus Shop Window", $POS_X, 277, 220, 20)
-		GuiCtrlSetTip(-1, "If activated it will automatically minimize the Oculus Home Window if it is detected.")
-		If $State_Checkbox_Minimize_Oculus = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
-	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
-	GUICtrlSetOnEvent($Checkbox_Minimize_Oculus, "_Checkbox_Minimize_Oculus")
 
-	$State_Checkbox_Close_Oculus = IniRead($config_ini,"Settings", "Close_Oculus", "")
-	Global $Checkbox_Close_Oculus = GUICtrlCreateCheckbox(" Close Oculus Shop Window", $POS_X, 297, 220, 20)
-		GuiCtrlSetTip(-1, "If activated it will automatically close the Oculus Home Window if it is detected.")
-		If $State_Checkbox_Close_Oculus = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
-	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
-	GUICtrlSetOnEvent($Checkbox_Close_Oculus, "_Checkbox_Close_Oculus")
+	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("HomeLoader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
+		If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then
+			GUICtrlSetColor(-1, "0x0000CD")
+			GUICtrlSetFont(-1, 14, 600, 2, $font_StartUp_arial)
+		Else
+			GUICtrlSetData($Button_Start_HomeLoaderLibrary, "Scan Steam Library first")
+			GUICtrlSetColor(-1, "0xFF0000")
+			GUICtrlSetFont(-1, 13, 600, 2, $font_StartUp_arial)
+		EndIf
 
-	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("Home Loader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
-		If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "HomeLoaderLibrary.bmp")
-		If Not FileExists($ApplicationList_SteamLibrary_ALL_INI) Then _GUICtrlButton_SetImage($Button_Start_HomeLoaderLibrary, $gfx & "ScanHomeLoaderLibrary_first.bmp")
+
 		GuiCtrlSetTip(-1, "Starts Home Loader Library.")
 		GUICtrlSetOnEvent($Button_Start_HomeLoaderLibrary, "_Button_Start_HomeLoaderLibrary")
 
 
 
-	Global $Check_for_Updates = GUICtrlCreateButton("Check for Updates", $POS_X_Check_for_Updates, $POS_Y_Check_for_Updates, 235, 30)
-		GuiCtrlSetTip(-1, "Closes Settings Window.")
-		GUICtrlSetFont(-1, 12, 600, 2, $font_StartUp_arial)
-		GUICtrlSetColor(-1, "0x6495ED")
-		GUICtrlSetOnEvent($Check_for_Updates, "_Check_for_Updates_1")
+	;Global $Check_for_Updates = GUICtrlCreateButton("Check for Updates", 5, $POS_Y_Check_for_Updates, 235, 30)
+	;	GuiCtrlSetTip(-1, "Closes Settings Window.")
+	;	GUICtrlSetFont(-1, 12, 600, 2, $font_StartUp_arial)
+	;	GUICtrlSetColor(-1, "0x6495ED")
+	;	GUICtrlSetOnEvent($Check_for_Updates, "_Check_for_Updates_1")
 
 
-	GUICtrlCreateLabel("", $POS_X_Checkbox_Auto_CheckUpdates + 5, $POS_Y_Checkbox_Auto_CheckUpdates, 22, 22)
-	GUICtrlSetBkColor(-1, 0)
-	GUICtrlSetState(-1, $GUI_DISABLE)
-	If $Auto_CheckUpdates = "true" Then $State_Checkbox_Auto_CheckUpdates = "X"
-	If $Auto_CheckUpdates <> "true" Then $State_Checkbox_Auto_CheckUpdates = ""
-	Global $Checkbox_Auto_CheckUpdates = GUICtrlCreateLabel($State_Checkbox_Auto_CheckUpdates, $POS_X_Checkbox_Auto_CheckUpdates + 6, $POS_Y_Checkbox_Auto_CheckUpdates + 1, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
-	GUICtrlSetFont(-1, 16)
-	$Checkbox_Auto_CheckUpdates_Label = GUICtrlCreateLabel("Auto. Check for Updates", $POS_X_Checkbox_Auto_CheckUpdates + 34, $POS_Y_Checkbox_Auto_CheckUpdates, 200, 23) ; ; +26
-	GUICtrlSetFont(-1, 14, 400, 1, "arial")
-	GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates, "_Checkbox_Auto_CheckUpdates")
-	GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates_Label, "_Checkbox_Auto_CheckUpdates")
+	;GUICtrlCreateLabel("", 10, $POS_Y_Checkbox_Auto_CheckUpdates, 22, 22)
+	;GUICtrlSetBkColor(-1, 0)
+	;GUICtrlSetState(-1, $GUI_DISABLE)
+	;If $Auto_CheckUpdates = "true" Then $State_Checkbox_Auto_CheckUpdates = "X"
+	;If $Auto_CheckUpdates <> "true" Then $State_Checkbox_Auto_CheckUpdates = ""
+	;Global $Checkbox_Auto_CheckUpdates = GUICtrlCreateLabel($State_Checkbox_Auto_CheckUpdates, 11, $POS_Y_Checkbox_Auto_CheckUpdates + 1, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+	;GUICtrlSetFont(-1, 16)
+	;$Checkbox_Auto_CheckUpdates_Label = GUICtrlCreateLabel("Auto. Check for Updates", 39, $POS_Y_Checkbox_Auto_CheckUpdates, 200, 23) ; ; +26
+	;GUICtrlSetFont(-1, 14, 400, 1, "arial")
+	;GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates, "_Checkbox_Auto_CheckUpdates")
+	;GUICtrlSetOnEvent($Checkbox_Auto_CheckUpdates_Label, "_Checkbox_Auto_CheckUpdates")
 
 
 	Global $Exit = GUICtrlCreateButton("Close", 5, $POS_Y_Button_Close, 235, 30)
@@ -706,59 +713,39 @@ Func _StartUp_Radio_0() ; Default [SteamVR Home]
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Default SteamVR Home")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Default SteamVR Home")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
 	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-	IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
 	_ADD_2_SteamVR_Home_default()
-
 	_StartUp_Button_HomeLoader()
-
+	_Sync_Config_INI()
 	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "The default SteamVR Home app was set as Home app.")
 EndFunc
 
 Func _StartUp_Radio_1() ; SteamVR Home
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "SteamVR Home")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	If $Advanced_Settings = "true" Then
-		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
-																	"Yes:" & @CRLF & _
-																	"It will change the SteamVR settings." & @CRLF & _
-																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
-																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
-																	"No:" & @CRLF & _
-																	"It will NOT change the SteamVR settings." & @CRLF & _
-																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
-																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
-
-		If $Abfrage = 6 Then
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-			_ADD_2_SteamVR_Home_default()
-		Else
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-			_Restore_Default_SteamVR_Home()
-		EndIf
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'SteamVR Home' app was set as Home app.")
-	EndIf
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'SteamVR Home' app was set as Home app.")
 	_StartUp_Button_HomeLoader()
+	_Sync_Config_INI()
 EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Vive Home")
 	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
+	Local $ViveHome_App_Path = $Install_DIR & "Apps\ViveHome\Home\win32\ViveHome.exe"
 	Local $ViveHome_Path = $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe"
 
 	If FileExists($ViveHome_SDK_Path) Then $ViveHome_Path = $ViveHome_SDK_Path
+	If FileExists($ViveHome_App_Path) Then $ViveHome_Path = $ViveHome_App_Path
 
 	If FileExists($ViveHome_Path) Then
 		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
@@ -770,38 +757,18 @@ Func _StartUp_Radio_2() ; Vive Home
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	EndIf
 
-	If $Advanced_Settings = "true" Then
-		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
-																	"Yes:" & @CRLF & _
-																	"It will change the SteamVR settings." & @CRLF & _
-																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
-																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
-																	"No:" & @CRLF & _
-																	"It will NOT change the SteamVR settings." & @CRLF & _
-																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
-																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
-
-		If $Abfrage = 6 Then
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-			_ADD_2_SteamVR_Home_default()
-		Else
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-			_Restore_Default_SteamVR_Home()
-		EndIf
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Vive Home' app was set as Home app.")
-	EndIf
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Vive Home' app was set as Home app.")
 	_StartUp_Button_HomeLoader()
+	_Sync_Config_INI()
 EndFunc
 
 Func _StartUp_Radio_3() ; Janus VR
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Janus VR")
 	Global $JanusVR_Path = ""
 	If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
@@ -812,6 +779,7 @@ Func _StartUp_Radio_3() ; Janus VR
 	If $JanusVR_Path = "" Then $JanusVR_Path = "steam://rungameid/602090"
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
 	$JanusVR_Settings_Folder = "c:\Users\" & @UserName & "\Documents\janusvr\"
 	$bookmarks_json = "c:\Users\" & @UserName & "\Documents\janusvr\appdata\bookmarks.json"
@@ -870,80 +838,42 @@ Func _StartUp_Radio_3() ; Janus VR
 		Next
 	EndIf
 
-	If $Advanced_Settings = "true" Then
-		Local $Abfrage_3 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home 'Janus VR' [3/3]", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
-																	"Yes:" & @CRLF & _
-																	"It will change the SteamVR settings." & @CRLF & _
-																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
-																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
-																	"No:" & @CRLF & _
-																	"It will NOT change the SteamVR settings." & @CRLF & _
-																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
-																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
 
-		If $Abfrage_3 = 6 Then
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-			_ADD_2_SteamVR_Home_default()
-		Else
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-			_Restore_Default_SteamVR_Home()
-		EndIf
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "DDefault SteamVR Home 'Janus VR' [3/3]", "'Janus VR' app was set as Home app.")
-	EndIf
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "DDefault SteamVR Home 'Janus VR' [3/3]", "'Janus VR' app was set as Home app.")
 	_StartUp_Button_HomeLoader()
+	_Sync_Config_INI()
 EndFunc
 
 Func _StartUp_Radio_4() ; VR Toolbox
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "VR Toolbox")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	If $Advanced_Settings = "true" Then
-		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
-																	"Yes:" & @CRLF & _
-																	"It will change the SteamVR settings." & @CRLF & _
-																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
-																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
-																	"No:" & @CRLF & _
-																	"It will NOT change the SteamVR settings." & @CRLF & _
-																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
-																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
-
-		If $Abfrage = 6 Then
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-			_ADD_2_SteamVR_Home_default()
-		Else
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-			_Restore_Default_SteamVR_Home()
-		EndIf
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'VR Toolbox' app was set as Home app.")
-	EndIf
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'VR Toolbox' app was set as Home app.")
 	_StartUp_Button_HomeLoader()
+	_Sync_Config_INI()
+	_Start_HomeLoaderLibrary_UpdateStartPage()
 EndFunc
 
 Func _StartUp_Radio_5() ; Other
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Other")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 	_StartUp_Add_Other_GUI()
+	_Sync_Config_INI()
 EndFunc
 
 Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 	$DROPDOWN = GUICtrlRead($DROPDOWN_Other_GUI)
 
 	Local $StringSplit = StringSplit($DROPDOWN, '[')
@@ -956,35 +886,15 @@ Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamStartURL)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", $SteamStartGameName)
 
-	If $Advanced_Settings = "true" Then
-		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																	"This can be changed at any time in this settings menu." & @CRLF & @CRLF & _
-																	"Yes:" & @CRLF & _
-																	"It will change the SteamVR settings." & @CRLF & _
-																	"After start it will load the new Home app instead of SteamVR Home." & @CRLF & _
-																	"SteamVR can be started in any way, it will load the Home app every time." & @CRLF & @CRLF & _
-																	"No:" & @CRLF & _
-																	"It will NOT change the SteamVR settings." & @CRLF & _
-																	"SteamVR can be started in any way but it will only load like usual SteamVR Home." & @CRLF & _
-																	"To load the new Home app it is needed to use the 'Advanced settings' mode and to start SteamVR using the Button in the Home Loader GUI." & @CRLF & @CRLF)
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'" & $SteamStartGameName & "'" & " app was set as Home app.")
 
-		If $Abfrage = 6 Then
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-			_ADD_2_SteamVR_Home_default()
-		Else
-			IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-			IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-			_Restore_Default_SteamVR_Home()
-		EndIf
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'" & $SteamStartGameName & "'" & " app was set as Home app.")
-	EndIf
 	_StartUp_Button_HomeLoader()
 	GUIDelete($Add_Other_GUI)
+	$HomeAppGroup_Label = "Home app:"
+	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
 EndFunc
 
 Func _Button_Delete_Backup_SteamVR_Files()
@@ -1011,41 +921,20 @@ Func _Button_Delete_Backup_SteamVR_Files()
 
 EndFunc
 
-Func _GUI_Button_Advanced_Settings()
-	$State_Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
-	If $State_Advanced_Settings = "true" Then
-		$NEW_State_Advanced_Settings = "false"
-		IniWrite($Config_INI, "Settings", "Advanced_Settings", $NEW_State_Advanced_Settings)
-		_GUICtrlButton_SetImage($GUI_Button_Advanced_Settings, $gfx & "Advanced_Settings_UP.bmp")
-		IniWrite($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
-		IniWrite($Config_INI, "Settings", "Add_SS_to_Icons", "false")
-		IniWrite($Config_INI, "Settings", "Add_SS_per_game", "false")
-		IniWrite($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "false")
-		IniWrite($Config_INI, "Settings", "Minimize_Oculus", "false")
-		IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "false")
-		IniWrite($Config_INI, "Folders", "Icon_Folder_1", "")
-		IniWrite($Config_INI, "Folders", "Icon_Folder_2", "")
-		IniWrite($Config_INI, "Folders", "Icon_Folder_3", "")
-		GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_CHECKED)
-		GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_CHECKED)
-		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_CHECKED)
-		GUICtrlSetState($Checkbox_Minimize_Oculus, $GUI_CHECKED)
-	Else
-		$NEW_State_Advanced_Settings = "true"
-		IniWrite($Config_INI, "Settings", "Advanced_Settings", $NEW_State_Advanced_Settings)
-		_GUICtrlButton_SetImage($GUI_Button_Advanced_Settings, $gfx & "Advanced_Settings_DOWN.bmp")
-		IniWrite($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "true")
-		IniWrite($Config_INI, "Settings", "Add_SS_to_Icons", "true")
-		IniWrite($Config_INI, "Settings", "Add_SS_per_game", "true")
-		IniWrite($Config_INI, "Settings", "Start_HomeLoader_with_HomeApp", "true")
-		IniWrite($Config_INI, "Settings", "Minimize_Oculus", "true")
-		GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, "false")
-		GUICtrlSetState($Checkbox_Add_SS_to_Icons, "false")
-		GUICtrlSetState($Checkbox_Add_SS_per_game, "false")
-		GUICtrlSetState($Checkbox_Minimize_Oculus, "false")
+
+Func _Checkbox_Autostart_VRUB()
+	$State_Checkbox = GUICtrlRead($Checkbox_Autostart_VRUB)
+
+	If $State_Checkbox = 1 Then
+		IniWrite($config_ini, "Settings", "Autostart_VRUB", "true")
 	EndIf
-	_Restart()
+
+	If $State_Checkbox = 4 Then
+		IniWrite($config_ini, "Settings", "Autostart_VRUB", "false")
+	EndIf
+	_Sync_Config_INI()
 EndFunc
+
 
 Func _BUTTON_GamePath_Folder_Other_GUI() ; Other GUI BUTTON
 	$FileSelect = FileOpenDialog("Select the app you want to start.", @ScriptDir & "\", "Executable (*.exe;*.au3; ...)", $FD_FILEMUSTEXIST)
@@ -1053,17 +942,10 @@ Func _BUTTON_GamePath_Folder_Other_GUI() ; Other GUI BUTTON
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $FileSelect)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "")
 
-	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Default SteamVR Home", "Do you also want to change the default SteamVR Home app?" & @CRLF & @CRLF & _
-																"This can be changed at any time in this settings menu." & @CRLF)
 
-	If $Abfrage = 6 Then
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "false")
-		_ADD_2_SteamVR_Home_default()
-	Else
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "false")
-		IniWrite($config_ini, "Settings", "Reload_HOMEonExit", "true")
-	EndIf
+	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+	_ADD_2_SteamVR_Home_default()
+
 	_StartUp_Button_HomeLoader()
 	GUIDelete($Add_Other_GUI)
 EndFunc
@@ -1078,6 +960,7 @@ Func _Checkbox_Add_PlayersOnline_to_Icons()
 	If $State_Checkbox = 4 Then
 		IniWrite($config_ini, "Settings", "Add_PlayersOnline_to_Icons", "false")
 	EndIf
+	_Sync_Config_INI()
 EndFunc
 
 Func _Checkbox_Add_SS_to_Icons()
@@ -1090,6 +973,7 @@ Func _Checkbox_Add_SS_to_Icons()
 	If $State_Checkbox = 4 Then
 		IniWrite($config_ini, "Settings", "Add_SS_to_Icons", "false")
 	EndIf
+	_Sync_Config_INI()
 EndFunc
 
 Func _Checkbox_Add_SS_per_game()
@@ -1102,6 +986,7 @@ Func _Checkbox_Add_SS_per_game()
 	If $State_Checkbox = 4 Then
 		IniWrite($config_ini, "Settings", "Add_SS_per_game", "false")
 	EndIf
+	_Sync_Config_INI()
 EndFunc
 
 Func _Button_Restore_SteamVR_Settings()
@@ -1123,31 +1008,10 @@ Func _Button_Restore_SteamVR_Settings()
 			MsgBox($MB_ICONERROR, "Error", "Something went wrong, new Files not created.")
 		EndIf
 	EndIf
+	_Sync_Config_INI()
 EndFunc
 
-Func _Checkbox_Minimize_Oculus()
-	$State_Checkbox = GUICtrlRead($Checkbox_Minimize_Oculus)
 
-	If $State_Checkbox = 1 Then
-		IniWrite($config_ini, "Settings", "Minimize_Oculus", "true")
-	EndIf
-
-	If $State_Checkbox = 4 Then
-		IniWrite($config_ini, "Settings", "Minimize_Oculus", "false")
-	EndIf
-EndFunc
-
-Func _Checkbox_Close_Oculus()
-	$State_Checkbox = GUICtrlRead($Checkbox_Close_Oculus)
-
-	If $State_Checkbox = 1 Then
-		IniWrite($config_ini, "Settings", "Close_Oculus", "true")
-	EndIf
-
-	If $State_Checkbox = 4 Then
-		IniWrite($config_ini, "Settings", "Close_Oculus", "false")
-	EndIf
-EndFunc
 
 Func _ADD_2_SteamVR_Home_default()
 	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
@@ -1226,6 +1090,10 @@ Func _Restore_Default_SteamVR_Home()
 			FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])
 		EndIf
     Next
+
+	GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "SteamVR Files restored", "SteamVR Files sucessfully restored. You can now restart SteamVR or set a new Home App.")
+
 EndFunc
 
 Func _Button_Exit_AddShortcut_to_Oculus_GUI()
@@ -1244,19 +1112,13 @@ Func _Button_Start_HomeLoader()
 EndFunc
 
 Func _Start_HomeLoader()
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
-
-	If $Advanced_Settings = "true" Then
-		IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
-		If FileExists($System_DIR & "StartSteamVRHome.exe") Then
-			ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
-		Else
-			ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
-		EndIf
-		Exit
+	IniWrite($Config_INI, "TEMP", "StartHomeLoader", "true")
+	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
+		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
 	Else
-		ShellExecute("steam://rungameid/250820")
+		ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
 	EndIf
+	Exit
 EndFunc
 
 Func _Button_Start_HomeLoaderLibrary()
@@ -1388,6 +1250,12 @@ Func _RM_Item4()
 EndFunc
 
 
+Func _Sync_Config_INI()
+	FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
+EndFunc
+
+
+
 Func _FirstStart_Restart()
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
 		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
@@ -1395,6 +1263,14 @@ Func _FirstStart_Restart()
 		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
 	EndIf
 	Exit
+EndFunc
+
+Func _Start_HomeLoaderLibrary_UpdateStartPage()
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "UpdateStartPage", $System_DIR)
+	Else
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "UpdateStartPage", $System_DIR)
+	EndIf
 EndFunc
 
 Func _Restart()
@@ -1408,9 +1284,7 @@ Func _Restart()
 EndFunc
 
 Func _Exit()
-	If $USE_PHP_WebServer = "true" Then
-		If ProcessExists("cmd.exe") Then ProcessClose("cmd.exe")
-	EndIf
+	_Sync_Config_INI()
 	Exit
 EndFunc
 

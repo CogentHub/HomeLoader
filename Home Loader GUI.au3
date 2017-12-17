@@ -15,15 +15,18 @@
 #include <StaticConstants.au3>
 #include <ColorConstants.au3>
 #include <InetConstants.au3>
+#include <File.au3>
 #endregion
 
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.62"
+Global $Version = "0.63"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
-Global $config_ini = $System_DIR & "\config.ini"
+;Global $config_ini = $System_DIR & "\config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy($System_DIR & "config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $HomeLoader_StartBat = $System_DIR & "StartHomeAPP.bat"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
@@ -238,8 +241,6 @@ EndFunc
 Func _Button_4()
 	$ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-
-	MsgBox(0, "", $ChangeDefaultSteamVRHome)
 
 	If $ChangeDefaultSteamVRHome = "true" Then
 		If Not ProcessExists("vrmonitor.exe") Then

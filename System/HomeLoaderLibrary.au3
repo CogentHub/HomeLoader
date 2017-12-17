@@ -32,7 +32,9 @@
 #include <IE.au3>
 #include <MsgBoxConstants.au3>
 #include <GuiSlider.au3>
-#include "_Zip.au3"
+#include <SQLite.au3>
+#include <SQLite.dll.au3>
+;#include "_Zip.au3"
 #endregion
 
 Opt("GUIOnEventMode", 1)
@@ -51,8 +53,10 @@ Global $font = "arial"
 Global $font_arial = "arial"
 
 #Region Declare Variables/Const 1
-Global $Version = "0.62"
-Global $config_ini = @ScriptDir & "\config.ini"
+Global $Version = "0.63"
+;Global $config_ini = @ScriptDir & "\config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
@@ -62,21 +66,27 @@ Global $ApplicationList_INI = $Install_DIR & "ApplicationList.ini"
 Global $GamePage_path = $Install_DIR & "WebPage\StartPage.html"
 Global $Steam_Library = IniRead($Config_INI, "Settings", "Steam_Library", "")
 Global $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
-Global $USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
-Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
+Global $Autostart_VRUB = IniRead($Config_INI, "Settings", "Autostart_VRUB", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $Show_Playlist = IniRead($Config_INI, "TEMP", "Show_Playlist", "")
 Global $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
+Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
 
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Icons = $Install_DIR & "Icons\"
 
+Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
+
+Global $HomeLoader_Overlay_Folder = $Steam_Path & "steamapps\common\VRUtilityBelt\addons\custom\HomeLoader\overlays\HomeLoader\"
+Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
+
+Global $VRToolBox_Steam_Folder = $Steam_Path & "steamapps\common\VRToolbox\"
 
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
 Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
@@ -91,6 +101,8 @@ Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
 Global $Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
 Global $Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
+Global $Icon_Folder_4 = IniRead($Config_INI, "Folders", "Icon_Folder_4", "")
+Global $Icon_Folder_5 = IniRead($Config_INI, "Folders", "Icon_Folder_5", "")
 
 Global $default_vrsettings_File = IniRead($Config_INI, "Folders", "Steam_default_vrsettings", "")
 Global $default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
@@ -112,6 +124,8 @@ Global $Playlist_3_INI = $Install_DIR & "System\Playlist\Playlist_3.ini"
 Global $Playlist_4_INI = $Install_DIR & "System\Playlist\Playlist_4.ini"
 Global $Playlist_5_INI = $Install_DIR & "System\Playlist\Playlist_5.ini"
 Global $Add_break = IniRead($Playlist_1_INI, "Playlist", "Add_break", "false")
+
+Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
@@ -159,6 +173,47 @@ If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #endregion
 
+
+If $Autostart_VRUB = "true" Then
+	Local $Parameter_1 = ""
+	If $CmdLine[0] Then
+		;_ArrayDisplay($CmdLine)
+		$Parameter_1 = $CmdLine[1]
+	EndIf
+
+	If $Parameter_1 = "UpdateOverlay" Then
+		Local $UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
+		Local $ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
+		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
+		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
+		_Create_Overlay_StartPage()
+		If $UpdateOverlay_SettingValue = "true" Then _Copy_2_VRUtilityBelt()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating the Overlay:")
+		_Create_GamePages()
+		Exit
+	EndIf
+Else
+	Local $Parameter_1 = ""
+	If $CmdLine[0] Then
+		;_ArrayDisplay($CmdLine)
+		$Parameter_1 = $CmdLine[1]
+	EndIf
+
+	If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
+	If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
+	If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
+	_Create_GamePages()
+
+	If $Parameter_1 = "UpdateStartPage" Then
+		_Create_VRToolBox_StartPage()
+		_Copy_2_VRToolBox()
+		Exit
+	EndIf
+EndIf
+
+
+#Region GUI
 
 If $First_Start <> "true" Then
 	#region GUI Erstellen
@@ -214,6 +269,10 @@ If $First_Start <> "true" Then
 	_GUICtrlButton_SetImage($Button_ShowGamePage, $gfx & "GamePage.bmp")
 	GuiCtrlSetTip(-1, "Opens the created Game Page for the current selection." & @CRLF)
 
+	Global $Button_Add2ViveHomeDB = GUICtrlCreateButton("Add to ViveHome DB", 290, 39, 51, 46, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Add2ViveHomeDB, $gfx & "ViveHomeDB.bmp")
+	GuiCtrlSetTip(-1, "Synchronizes the HomeLoader database with the Vive Home database." & @CRLF)
+
 	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
 	GuiCtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF)
@@ -223,17 +282,13 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	;Global $Button_Playlist = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 31, $BS_BITMAP)
-	;_GUICtrlButton_SetImage($Button_Playlist, $gfx & "HomeLoaderPlaylist.bmp")
-	;GuiCtrlSetTip(-1, "Shows the Home Loader Playlist.")
-
 	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
 	Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
-	GuiCtrlSetTip(-1, "Settings." & @CRLF & @CRLF &  "Includes:" & @CRLF & "- Steam Library Folders" & @CRLF & "- Icon Folders [Advanced mode]")
+	GuiCtrlSetTip(-1, "Settings." & @CRLF & @CRLF &  "Includes:" & @CRLF & "- Steam Library Folders" & @CRLF & "- Icon Folders")
 
 	Global $Button_Restart = GUICtrlCreateButton("Restart", 660, $DesktopHeight - 100, 65, 65, $BS_BITMAP) ;
 	_GUICtrlButton_SetImage($Button_Restart, $gfx & "Restart.bmp")
@@ -331,38 +386,17 @@ If $First_Start <> "true" Then
 	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
 
-	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 100, 166, 35, $BS_BITMAP)
+	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 100, 166, 32, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Create_GamePage, $gfx & "Create_GamePage.bmp")
 	GuiCtrlSetTip(-1, "Create Game Page." & @CRLF & _
-						"This can take some time, depending on how many games are installed and selected." & @CRLF & @CRLF)
+						"This function creates an .html Game Page containing all selected Games." & @CRLF & @CRLF)
 
+	Global $Button_Create_SinglePage = GUICtrlCreateButton("Create Single Page", 70, $DesktopHeight - 67, 166, 32, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Create_SinglePage, $gfx & "Create_SinglePage.bmp")
+	GuiCtrlSetTip(-1, "Create Single Page." & @CRLF & _
+						"This function creates an .html Game Page for every selected Games." & @CRLF & @CRLF)
 
-
-	If $Advanced_Settings = "true" Then
-		GUICtrlCreateLabel("", 72, $DesktopHeight - 61, 22, 22)
-		GUICtrlSetBkColor(-1, 0)
-		GUICtrlSetState(-1, $GUI_DISABLE)
-		If $USE_PHP_WebServer = "true" Then $State_Checkbox_USE_PHP_GamePage = "X"
-		If $USE_PHP_WebServer <> "true" Then $State_Checkbox_USE_PHP_GamePage = ""
-		Global $Checkbox_USE_PHP_GamePage = GUICtrlCreateLabel($State_Checkbox_USE_PHP_GamePage, 73, $DesktopHeight - 60, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
-		GUICtrlSetFont(-1, 16)
-		$Checkbox_USE_PHP_GamePage_Label = GUICtrlCreateLabel("PHP Game Page", 97, $DesktopHeight - 60, 155, 23) ; ; +26
-		GUICtrlSetFont(-1, 14, 400, 1, "arial")
-	Else
-		Global $POS_X_Label = 10000
-		GUICtrlCreateLabel("", $POS_X_Label - 1, $DesktopHeight - 61, 22, 22)
-		GUICtrlSetBkColor(-1, 0)
-		GUICtrlSetState(-1, $GUI_DISABLE)
-		If $USE_PHP_WebServer = "true" Then $State_Checkbox_USE_PHP_GamePage = "X"
-		If $USE_PHP_WebServer <> "true" Then $State_Checkbox_USE_PHP_GamePage = ""
-		Global $Checkbox_USE_PHP_GamePage = GUICtrlCreateLabel($State_Checkbox_USE_PHP_GamePage, $POS_X_Label, $DesktopHeight - 60, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
-		GUICtrlSetFont(-1, 16)
-		$Checkbox_USE_PHP_GamePage_Label = GUICtrlCreateLabel("PHP Game Page", $POS_X_Label + 24, $DesktopHeight - 60, 155, 23) ; ; +26
-		GUICtrlSetFont(-1, 14, 400, 1, "arial")
-	EndIf
-
-
-	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 243, $DesktopHeight - 100, 117, 35, $BS_BITMAP)
+	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 243, $DesktopHeight - 100, 130, 32, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
 		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
@@ -371,9 +405,9 @@ If $First_Start <> "true" Then
 	EndIf
 	GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
 
-	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 244, $DesktopHeight - 64, 115, 15, $CBS_DROPDOWNLIST)
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 244, $DesktopHeight - 66, 128, 18, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetFont(-1, 14, 400, 2, "arial")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
 		GUICtrlSetState($Combo_Add_to_Custom, $GUI_SHOW)
 	Else
@@ -393,6 +427,7 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
 	GUICtrlSetOnEvent($Button_ShowGamePage, "_Show_HTML_GamePage_GUI")
+	GUICtrlSetOnEvent($Button_Add2ViveHomeDB, "_Button_Add2ViveHomeDB")
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
 
@@ -407,11 +442,10 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Checkbox_CreatePage, "_Checkbox_all")
 	GUICtrlSetOnEvent($Checkbox_CreatePage_Label, "_Checkbox_all")
-	GUICtrlSetOnEvent($Checkbox_USE_PHP_GamePage, "_Checkbox_USE_PHP_GamePage")
 
 	GUICtrlSetOnEvent($Button_Create_GamePage, "_Button_Create_GamePage_selected")
+	GUICtrlSetOnEvent($Button_Create_SinglePage, "_Button_Create_SinglePage_selected")
 	GUICtrlSetOnEvent($Button_Add_to_Custom, "_Button_Add_to_Custom")
-	;GUICtrlSetOnEvent($Button_Playlist, "_Playlist_GUI")
 
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
@@ -436,7 +470,7 @@ If $First_Start <> "true" Then
 	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndIf
 
-
+#endregion
 
 
 $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
@@ -517,21 +551,28 @@ Func _First_Start_Empty_Check_1()
 		EndIf
 	EndIf
 
-	If $Advanced_Settings = "true" Then
-		$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
-		If $Icon_Folder_1 = "" Then
-			If FileExists($Install_DIR & "WebPage\images\") Then
-				$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
-			EndIf
-		EndIf
 
-		$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
-		If $Icon_Folder_2 = "" Then
-			If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
-				$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
-				IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
-			EndIf
+	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
+	If $Icon_Folder_1 = "" Then
+		If FileExists($Install_DIR & "WebPage\images\") Then
+			$Icon_Folder_1 = $Install_DIR & "WebPage\images\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_1", $Icon_Folder_1)
+		EndIf
+	EndIf
+
+	$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
+	If $Icon_Folder_2 = "" Then
+		If FileExists($HTCVive_Path & "Updater\App\Dashboard\win32\header_image\") Then
+			$Icon_Folder_2 = $HTCVive_Path & "Updater\App\Dashboard\win32\header_image\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_2", $Icon_Folder_2)
+		EndIf
+	EndIf
+
+	$Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
+	If $Icon_Folder_3 = "" Then
+		If FileExists($HomeLoader_Overlay_Folder & "images\") Then
+			$Icon_Folder_3 = $HomeLoader_Overlay_Folder & "images\"
+			IniWrite($Config_INI, "Folders", "Icon_Folder_3", $Icon_Folder_3)
 		EndIf
 	EndIf
 
@@ -562,6 +603,15 @@ Func _First_Start_Empty_Check_1()
 		EndIf
 	EndIf
 	_Detect_SteamVR_Files()
+
+	If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
+		$HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
+		$StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
+		$HomeLoaderOverlaySteamID = StringReplace($StringReplace_SteamID, '"', '')
+		IniWrite($Config_INI, "Settings", "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID)
+		FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
+	EndIf
+
 EndFunc
 
 Func _Update_Performed_Check()
@@ -646,17 +696,13 @@ Func _Loading_GUI()
 EndFunc
 
 Func _Settings_GUI()
-	If $Advanced_Settings = "true" Then
-		Global $HEIGHT_GUI = 600
-		Global $POS_Y_Button_Exit_Settings_GUI = 560
-		Global $POS_X_Input_Icon_Folder_1 = 10
-		Global $POS_X_IconFolders_Group = 5
-	Else
-		Global $HEIGHT_GUI = 375
-		Global $POS_Y_Button_Exit_Settings_GUI = 335
-		Global $POS_X_Input_Icon_Folder_1 = 10000
-		Global $POS_X_IconFolders_Group = 10000
-	EndIf
+	Global $HEIGHT_GUI = 710
+	Global $POS_X = 5
+	Global $POS_Y_SteamLibraryFolders_Group = 5
+	Global $POS_Y_IconFolders_Group = 335
+
+	Global $POS_Y_Button_Exit_Settings_GUI = 670
+
 
 	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
 	$Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
@@ -665,91 +711,91 @@ Func _Settings_GUI()
 	$Settings_GUI = GUICreate("Settings", 540, $HEIGHT_GUI, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 #Region Folders
-	GUICtrlCreateGroup("Steam Library Folders", 5, 5, 531, 325)
+	GUICtrlCreateGroup("Steam Library Folders", 5, $POS_Y_SteamLibraryFolders_Group, 531, 325)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
-	GUICtrlCreateLabel("Library Folder 1:", 10, 42, 270, 25)
+	GUICtrlCreateLabel("Library Folder 1:", 10, $POS_Y_SteamLibraryFolders_Group + 37, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Install_Folder_Steam_1 = GUICtrlCreateInput($Install_Folder_Steam_1, 10, 65, 410, 30)
+	Global $Input_Install_Folder_Steam_1 = GUICtrlCreateInput($Install_Folder_Steam_1, 10, $POS_Y_SteamLibraryFolders_Group + 60, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Install_Folder_Steam_1 = GUICtrlCreateButton("...", 430, 66, 30, 30, 0)
+	Global $Button_Install_Folder_Steam_1 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_1_open = GUICtrlCreateButton("Open", 465, 66, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_1_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_1_save = GUICtrlCreateButton("Save", 500, 66, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_1_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Library Folder 2:", 10, 97, 270, 25)
+	GUICtrlCreateLabel("Library Folder 2:", 10, $POS_Y_SteamLibraryFolders_Group + 92, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Install_Folder_Steam_2 = GUICtrlCreateInput($Install_Folder_Steam_2, 10, 120, 410, 30)
+	Global $Input_Install_Folder_Steam_2 = GUICtrlCreateInput($Install_Folder_Steam_2, 10, $POS_Y_SteamLibraryFolders_Group + 115, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Install_Folder_Steam_2 = GUICtrlCreateButton("...", 430, 119, 30, 30, 0)
+	Global $Button_Install_Folder_Steam_2 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_2_open = GUICtrlCreateButton("Open", 465, 119, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_2_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_2_save = GUICtrlCreateButton("Save", 500, 119, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_2_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Library Folder 3:", 10, 152, 270, 25)
+	GUICtrlCreateLabel("Library Folder 3:", 10, $POS_Y_SteamLibraryFolders_Group + 147, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Install_Folder_Steam_3 = GUICtrlCreateInput($Install_Folder_Steam_3, 10, 175, 410, 30)
+	Global $Input_Install_Folder_Steam_3 = GUICtrlCreateInput($Install_Folder_Steam_3, 10, $POS_Y_SteamLibraryFolders_Group + 170, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Install_Folder_Steam_3 = GUICtrlCreateButton("...", 430, 174, 30, 30, 0)
+	Global $Button_Install_Folder_Steam_3 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_3_open = GUICtrlCreateButton("Open", 465, 174, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_3_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_3_save = GUICtrlCreateButton("Save", 500, 174, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_3_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Library Folder 4:", 10, 207, 270, 25)
+	GUICtrlCreateLabel("Library Folder 4:", 10, $POS_Y_SteamLibraryFolders_Group + 202, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Install_Folder_Steam_4 = GUICtrlCreateInput($Install_Folder_Steam_4, 10, 230, 410, 30)
+	Global $Input_Install_Folder_Steam_4 = GUICtrlCreateInput($Install_Folder_Steam_4, 10, $POS_Y_SteamLibraryFolders_Group + 225, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Install_Folder_Steam_4 = GUICtrlCreateButton("...", 430, 229, 30, 30, 0)
+	Global $Button_Install_Folder_Steam_4 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_4_open = GUICtrlCreateButton("Open", 465, 229, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_4_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_4_save = GUICtrlCreateButton("Save", 500, 229, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_4_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Library Folder 5:", 10, 262, 270, 25)
+	GUICtrlCreateLabel("Library Folder 5:", 10, $POS_Y_SteamLibraryFolders_Group + 257, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Install_Folder_Steam_5 = GUICtrlCreateInput($Install_Folder_Steam_5, 10, 285, 410, 30)
+	Global $Input_Install_Folder_Steam_5 = GUICtrlCreateInput($Install_Folder_Steam_5, 10, $POS_Y_SteamLibraryFolders_Group + 280, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Install_Folder_Steam_5 = GUICtrlCreateButton("...", 430, 284, 30, 30, 0)
+	Global $Button_Install_Folder_Steam_5 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_5_open = GUICtrlCreateButton("Open", 465, 284, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_5_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_5_save = GUICtrlCreateButton("Save", 500, 284, 30, 30, $BS_BITMAP)
+	$Button_Install_Folder_Steam_5_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_5_open, $gfx & "Folder_small.bmp")
@@ -758,14 +804,14 @@ Func _Settings_GUI()
 
 
 #Region Icon Folders
-	GUICtrlCreateGroup("Icon Folders", $POS_X_IconFolders_Group, 335, 531, 215)
+	GUICtrlCreateGroup("Icon Folders", $POS_X, $POS_Y_IconFolders_Group, 531, 325)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
 	Local $Label_Icon_Path_1 = "Custom 1:"
 	If $Icon_Folder_1 = $Install_DIR & "WebPage\images\" Then
-		$Label_Icon_Path_1 = "HTML Icon folder:"
+		$Label_Icon_Path_1 = "Web Page:"
 	EndIf
 
 	Local $Label_Icon_Path_2 = "Custom 2:"
@@ -773,56 +819,95 @@ Func _Settings_GUI()
 		$Label_Icon_Path_2 = "Vive Home:"
 	EndIf
 
-	GUICtrlCreateLabel($Label_Icon_Path_1, $POS_X_Input_Icon_Folder_1, 372, 270, 25)
+	Local $Label_Icon_Path_3 = "Custom 3:"
+	Local $Icon_Folder_3_StringInStr = StringInStr($Icon_Folder_3, "VRUtilityBelt")
+	If $Icon_Folder_3_StringInStr <> 0 Then $Label_Icon_Path_3 = "VRUtilityBelt Overlay:"
+
+
+	GUICtrlCreateLabel($Label_Icon_Path_1, $POS_X + 5, $POS_Y_IconFolders_Group + 37, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_1 = GUICtrlCreateInput($Icon_Folder_1, $POS_X_Input_Icon_Folder_1, 395, 410, 30)
+	Global $Input_Icon_Folder_1 = GUICtrlCreateInput($Icon_Folder_1, $POS_X + 5, $POS_Y_IconFolders_Group + 60, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 396, 30, 30, 0)
+	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 61, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 396, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 396, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_1_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_1_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel($Label_Icon_Path_2, $POS_X_Input_Icon_Folder_1, 427, 270, 25)
+	GUICtrlCreateLabel($Label_Icon_Path_2, $POS_X + 5, $POS_Y_IconFolders_Group + 92, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_2 = GUICtrlCreateInput($Icon_Folder_2, $POS_X_Input_Icon_Folder_1, 450, 410, 30)
+	Global $Input_Icon_Folder_2 = GUICtrlCreateInput($Icon_Folder_2, $POS_X + 5, $POS_Y_IconFolders_Group + 115, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 451, 30, 30, 0)
+	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 116, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 451, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 451, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_2_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_2_save, $gfx & "Save_small.bmp")
 
-	GUICtrlCreateLabel("Custom 3:", $POS_X_Input_Icon_Folder_1, 482, 270, 25)
+	GUICtrlCreateLabel($Label_Icon_Path_3, $POS_X + 5, $POS_Y_IconFolders_Group + 147, 270, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
-	Global $Input_Icon_Folder_3 = GUICtrlCreateInput($Icon_Folder_3, $POS_X_Input_Icon_Folder_1, 505, 410, 30)
+	Global $Input_Icon_Folder_3 = GUICtrlCreateInput($Icon_Folder_3, $POS_X + 5, $POS_Y_IconFolders_Group + 170, 410, 30)
 	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
 	GuiCtrlSetTip(-1, "Enter Folder path.")
-	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", $POS_X_Input_Icon_Folder_1 + 420, 506, 30, 30, 0)
+	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 171, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", $POS_X_Input_Icon_Folder_1 + 455, 506, 30, 30, $BS_BITMAP)
+	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", $POS_X_Input_Icon_Folder_1 + 490, 506, 30, 30, $BS_BITMAP)
-	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
+	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_3_open, $gfx & "Folder_small.bmp")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_3_save, $gfx & "Save_small.bmp")
+
+	GUICtrlCreateLabel("Custom 4:", $POS_X + 5, $POS_Y_IconFolders_Group + 202, 270, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+	Global $Input_Icon_Folder_4 = GUICtrlCreateInput($Icon_Folder_4, $POS_X + 5, $POS_Y_IconFolders_Group + 225, 410, 30)
+	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
+	GuiCtrlSetTip(-1, "Enter Folder path.")
+	Global $Button_Icon_Folder_4 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 226, 30, 30, 0)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4")
+	GuiCtrlSetTip(-1, "Choose Folder.")
+	$Button_Icon_Folder_4_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4_open")
+	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
+	$Button_Icon_Folder_4_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4_save")
+	GuiCtrlSetTip(-1, "Saves Folder Path.")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_4_open, $gfx & "Folder_small.bmp")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_4_save, $gfx & "Save_small.bmp")
+
+	GUICtrlCreateLabel("Custom 5:", $POS_X + 5, $POS_Y_IconFolders_Group + 257, 270, 25)
+	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
+	Global $Input_Icon_Folder_5 = GUICtrlCreateInput($Icon_Folder_5, $POS_X + 5, $POS_Y_IconFolders_Group + 280, 410, 30)
+	GUICtrlSetFont(-1, 14, 400, 1, $font_arial)
+	GuiCtrlSetTip(-1, "Enter Folder path.")
+	Global $Button_Icon_Folder_5 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 281, 30, 30, 0)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5")
+	GuiCtrlSetTip(-1, "Choose Folder.")
+	$Button_Icon_Folder_5_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5_open")
+	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
+	$Button_Icon_Folder_5_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
+	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5_save")
+	GuiCtrlSetTip(-1, "Saves Folder Path.")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_5_open, $gfx & "Folder_small.bmp")
+	_GUICtrlButton_SetImage($Button_Icon_Folder_5_save, $gfx & "Save_small.bmp")
 #endregion
 
 
@@ -1331,9 +1416,9 @@ Func _ApplicationList_Update()
 				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", "")
 			EndIf
 
-			If Not FileExists($Icons & "steam.app." & $appid & ".jpg") Then
-				_Download_Icon_for_SteamGameID()
-			EndIf
+
+			_Download_Icon_for_SteamGameID()
+
 
 			If Not FileExists($Icons & "32x32\" & "steam.app." & $appid & ".bmp") Then
 				_Get_SteamGame_Icon_32x32()
@@ -1454,10 +1539,25 @@ EndFunc
 
 Func _Download_Icon_for_SteamGameID()
 	Local $Application_appid = $appid
-	Local $Download_Icon_path_jpg = $Icons & "steam.app." & $Application_appid & '.jpg'
+	Local $Download_Icon_path_1_jpg = $Icons & "steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_2_jpg = $Icons & "460x215\steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_3_jpg = $Icon_Folder_1 & "steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_4_jpg = $Icon_Folder_2 & "steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_5_jpg = $Icon_Folder_3 & "steam.app." & $Application_appid & ".jpg"
 
-	Local $URL = 'http://cdn.akamai.steamstatic.com/steam/apps/' & $Application_appid & '/header.jpg'
-	InetGet($URL, $Download_Icon_path_jpg, 16, 0)
+	Local $URL = "http://cdn.akamai.steamstatic.com/steam/apps/" & $Application_appid & "/header.jpg"
+	If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
+	If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
+
+	If $Icon_Folder_1 <> "" Then
+		If Not FileExists($Download_Icon_path_3_jpg) Then InetGet($URL, $Download_Icon_path_3_jpg, 16, 0)
+	EndIf
+	If $Icon_Folder_2 <> "" Then
+		If Not FileExists($Download_Icon_path_4_jpg) Then InetGet($URL, $Download_Icon_path_4_jpg, 16, 0)
+	EndIf
+	If $Icon_Folder_3 <> "" Then
+		If Not FileExists($Download_Icon_path_5_jpg) Then InetGet($URL, $Download_Icon_path_5_jpg, 16, 0)
+	EndIf
 EndFunc
 #endregion
 
@@ -1914,7 +2014,6 @@ Func _ADD_Icons_32x32_to_ListView()
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
 
-
 Func _RM_Menu_Item_8() ; RM_UP
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
 	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -2180,8 +2279,6 @@ Func _RM_Menu_Item11() ; Delete ListView item
 	;_Restart()
 EndFunc
 
-
-
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     Local $tagNMHDR, $event, $hwndFrom, $code
     $tagNMHDR = DllStructCreate("int;int;int", $lParam)
@@ -2220,23 +2317,29 @@ Func _Change_Preview_Icon_ListView()
 	Local $Check_AppID = _GUICtrlListView_GetItemText($ListView, $ListView_Selected_Row_Nr - 1, 1)
 	Local $CheckImagePath = $Icons & "steam.app." & $Check_AppID & ".jpg"
 
-	If $ButtonTAB_State = 1 Then
-		$CheckImagePath = $Icons & "steam.app." & $Check_AppID & ".jpg"
+	$CheckImagePath = $Icons & "460x215\SS_Values\steam.app." & $Check_AppID & ".jpg"
+	If Not FileExists($CheckImagePath) Then $CheckImagePath = $Icons & "460x215\steam.app." & $Check_AppID & ".jpg"
+	If Not FileExists($CheckImagePath) Then $CheckImagePath = $Icons & "steam.app." & $Check_AppID & ".jpg"
+
+	If Not FileExists($CheckImagePath) Then
+		If $ButtonTAB_State = 1 Then
+			$CheckImagePath = $Icons & "steam.app." & $Check_AppID & ".jpg"
+		EndIf
+
+		If $ButtonTAB_State = 2 Then
+			$CheckImagePath = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $Check_AppID, "IconPath", "")
+		EndIf
+
+		If $ButtonTAB_State = 3 Then
+			$CheckImagePath = IniRead($ApplicationList_Custom_1_INI, "Application_" & $Check_AppID, "IconPath", "")
+		EndIf
+
+		If $ButtonTAB_State = 4 Then
+			$CheckImagePath = IniRead($ApplicationList_Custom_2_INI, "Application_" & $Check_AppID, "IconPath", "")
+		EndIf
 	EndIf
 
-	If $ButtonTAB_State = 2 Then
-		$CheckImagePath = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $Check_AppID, "IconPath", "")
-	EndIf
-
-	If $ButtonTAB_State = 3 Then
-		$CheckImagePath = IniRead($ApplicationList_Custom_1_INI, "Application_" & $Check_AppID, "IconPath", "")
-	EndIf
-
-	If $ButtonTAB_State = 4 Then
-		$CheckImagePath = IniRead($ApplicationList_Custom_2_INI, "Application_" & $Check_AppID, "IconPath", "")
-	EndIf
-
-	If $CheckImagePath = "" or $CheckImagePath = $Icons & "" & ".jpg" or Not FileExists($CheckImagePath) Then $CheckImagePath = $gfx & "Icon_Preview.jpg"
+	If $CheckImagePath = "" or $CheckImagePath = $Icons & "" & ".jpg" or Not FileExists($CheckImagePath) Then $CheckImagePath = $gfx & "Icon_Preview2.jpg"
 	GUICtrlSetImage($Icon_Preview_Image, $CheckImagePath)
 EndFunc
 
@@ -2379,48 +2482,7 @@ Func _Checkbox_CheckUncheck()
 EndFunc
 
 Func _Checkbox_USE_PHP_GamePage()
-	Local $State_Checkbox = GUICtrlRead($Checkbox_USE_PHP_GamePage)
-	$Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 
-	If $State_Checkbox = "" Then
-		If $Advanced_Settings = "true" Then
-			GUICtrlSetData($Checkbox_USE_PHP_GamePage, "X")
-			IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
-
-			If Not FileExists(@ScriptDir & "\php\") Then
-				$DOWNLOAD_URL = "http://windows.php.net/downloads/releases/php-7.1.7-nts-Win32-VC14-x86.zip"
-
-				Local $Abfrage = MsgBox($MB_YESNO, "Needed Files not found", "Needed Files for the 'PHP Function' not found." & @CRLF & @CRLF & _
-														"Do you want to Download the needed Files from the following Page?" & @CRLF & _
-														$DOWNLOAD_URL & @CRLF & @CRLF & _
-														"Warning:" & @CRLF & _
-														"This web server was designed to aid application development. It may also be" & @CRLF & _
-														"useful for testing purposes or for application demonstrations that are run" & @CRLF & _
-														"in controlled environments. It is not intended to be a full-featured web server." & @CRLF & _
-														"It should not be used on a public network." & @CRLF)
-
-				If $Abfrage = 6 Then
-					_Loading_GUI()
-					DirCreate(@ScriptDir & "\php\")
-					InetGet($DOWNLOAD_URL, @ScriptDir & "\temp.zip", 16, 0)
-					Sleep(1000)
-					_Zip_UnzipAll(@ScriptDir & "\temp.zip", @ScriptDir & "\php\")
-					FileDelete(@ScriptDir & "\temp.zip")
-					Sleep(2000)
-					GUIDelete($GUI_Loading)
-				EndIf
-
-			Else
-				GUICtrlSetData($Checkbox_USE_PHP_GamePage, "X")
-				IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "true")
-			EndIf
-		Else
-			MsgBox($MB_ICONINFORMATION, "Advanced Settings", "Advanced Settings needs to be enabled [settings] to be able to use this function.")
-		EndIf
-	Else
-		GUICtrlSetData($Checkbox_USE_PHP_GamePage, "")
-		IniWrite($Config_INI, "Settings", "USE_PHP_WebServer", "false")
-	EndIf
 EndFunc
 
 Func _Button_Create_GamePage_all()
@@ -2508,7 +2570,6 @@ EndFunc
 
 Func _Button_Create_GamePage_selected()
 	_GUICtrlStatusBar_SetText($Statusbar, "Creating Game Page..." & @TAB & @TAB & "'Version " & $Version & "'")
-	$USE_PHP_WebServer = IniRead($Config_INI, "Settings", "USE_PHP_WebServer", "")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
 	$Combo = GUICtrlRead($Combo_SteamLibrary)
@@ -2602,51 +2663,12 @@ Func _Button_Create_GamePage_selected()
 					FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
 
-				If $WinName = "VR Toolbox" And $USE_PHP_WebServer <> "true" Then
+				If $WinName = "VR Toolbox" Then
 					FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 
-				If $WinName <> "VR Toolbox" And $USE_PHP_WebServer <> "true" Then
+				If $WinName <> "VR Toolbox" Then
 					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
-				EndIf
-
-				If $USE_PHP_WebServer = "true" Then
-					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="http://localhost:8000/WebPage/' & $Application_appid & '.php"' & ' class="auto-style1">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
-
-					FileWrite($Install_DIR & "/WebPage/" & $Application_appid & ".php", '<head>' & @CRLF & _
-								'<style type="text/css">' & @CRLF & _
-								'{' & @CRLF & _
-								"  font-family: 'Josefin Sans', sans-serif;" & @CRLF & _
-								'  -webkit-box-sizing: border-box;' & @CRLF & _
-								'  -moz-box-sizing: border-box;' & @CRLF & _
-								'  box-sizing: border-box;' & @CRLF & _
-								'}' & @CRLF & _
-								'.auto-style1 {' & @CRLF & _
-								'	font-family: "WRC Clean Bold";' & @CRLF & _
-								'	font-size: medium;' & @CRLF & _
-								'}' & @CRLF & _
-								'.auto-style2 {' & @CRLF & _
-								'	color: #0000FF;' & @CRLF & _
-								'}' & @CRLF & _
-								'</style>' & @CRLF & _
-								'</head>' & @CRLF & _
-								'<?php' & @CRLF & _
-								"	if (file_exists('temp.txt'))" & @CRLF & _
-								"	{" & @CRLF & _
-								"		$dat = " & $Application_appid & ";" & @CRLF & _
-								"		$fil = fopen('temp.txt', w);" & @CRLF & _
-								"		fwrite($fil, $dat);" & @CRLF & _
-								"	}" & @CRLF & _
-								"	else" & @CRLF & _
-								"	{" & @CRLF & _
-								"		$dat = " & $Application_appid & ";" & @CRLF & _
-								"		$fil = fopen('temp.txt', w);" & @CRLF & _
-								"		fwrite($fil, $dat);" & @CRLF & _
-								"		fclose($fil);" & @CRLF & _
-								"	}" & @CRLF & _
-								"?>" & @CRLF & _
-								'<img src="' & $WebPage_IconPath & '" width="300">' & @CRLF & _
-								'<p class="auto-style1">Loading... ' & '<span class="auto-style2"> ' & $Application_name & '</span></p>')
 				EndIf
 			Else
 
@@ -2668,6 +2690,151 @@ Func _Button_Create_GamePage_selected()
 	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
+
+
+
+
+Func _Button_Create_SinglePage_selected()
+	_GUICtrlStatusBar_SetText($Statusbar, "Creating Single Page..." & @TAB & @TAB & "'Version " & $Version & "'")
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
+	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+
+	If $ButtonTAB_State = "1" Then
+		If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
+		If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
+		If $Combo = "Steam Library 3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_3.ini"
+		If $Combo = "Steam Library 4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_4.ini"
+		If $Combo = "Steam Library 5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_5.ini"
+	EndIf
+
+	If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
+	If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
+	If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_2.ini"
+	If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_3.ini"
+	If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_4.ini"
+
+	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+
+	$GamePage_path = $Install_DIR & "WebPage\GamesPage.html"
+
+	If $ButtonTAB_State = "2" Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+	If $ButtonTAB_State = "3" Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+	If $ButtonTAB_State = "4" Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+	If $ButtonTAB_State = "5" Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+	If $ButtonTAB_State = "6" Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+
+	If $ButtonTAB_State = "1" Then $listview_Temp = $ListView
+	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
+	If $ButtonTAB_State = "3" Then $listview_Temp = $ListView_3
+	If $ButtonTAB_State = "4" Then $listview_Temp = $ListView_4
+	If $ButtonTAB_State = "5" Then $listview_Temp = $ListView_5
+	If $ButtonTAB_State = "6" Then $listview_Temp = $ListView_6
+
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
+
+	Local $TEMP_NR_selected = "false"
+	For $NR = 1 To $NR_Applications
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+		Local $TEMP_selected = _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1)
+		If $TEMP_selected = "true" Then $TEMP_NR_selected = "true"
+	Next
+
+	If $TEMP_NR_selected = "true" Then
+		If FileExists($GamePage_path) Then FileDelete($GamePage_path)
+
+		FileWrite($GamePage_path, '<html>' & @CRLF & _
+									'<head>' & @CRLF & _
+									'    <title>Games</title>' & @CRLF & _
+									'    <link href="css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
+									'</head>' & @CRLF & _
+									'<body>' & @CRLF & _
+									'<script>' & @CRLF & _
+									' ' & @CRLF & _
+									'</script>' & @CRLF & _
+									'<br><br><br>' & @CRLF & _
+									'<div class="icons">' & @CRLF)
+
+
+		For $NR = 1 To $NR_Applications
+			GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
+			If _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1) Then
+				Local $Install_DIR_TEMP = StringReplace($Install_DIR, '\','/')
+				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
+				Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR, "appid", "")
+				Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $NR, "name", "")
+				Global $Application_installdir = IniRead($ApplicationList_TEMP, "Application_" & $NR, "installdir", "")
+				Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
+				Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
+				Local $HTMLSinglePage_Path = $Install_DIR & "WebPage\steam.app." & $Application_appid & ".html"
+				If FileExists($HTMLSinglePage_Path) Then FileDelete($HTMLSinglePage_Path)
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($Application_IconPath, $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_TEMP & 'WebPage/' & 'steam.app.' & $Application_appid & '.html' & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+
+				FileWriteLine($HTMLSinglePage_Path, '<html>')
+				FileWriteLine($HTMLSinglePage_Path, '<head>')
+				FileWriteLine($HTMLSinglePage_Path, '    <title>Game</title>')
+				FileWriteLine($HTMLSinglePage_Path, '    <link href="css/games.css" rel="stylesheet" type="text/css">')
+				FileWriteLine($HTMLSinglePage_Path, '</head>')
+				FileWriteLine($HTMLSinglePage_Path, '<body>')
+				FileWriteLine($HTMLSinglePage_Path, '<script>')
+				FileWriteLine($HTMLSinglePage_Path, '    function VRTStartCommand(cmd) {')
+				FileWriteLine($HTMLSinglePage_Path, "      var s = '{ " & '"LightVRCallback": { "ShellExec": "' & "' + cmd + '" & '" } }' & "';")
+				FileWriteLine($HTMLSinglePage_Path, '      console.log(s);')
+				FileWriteLine($HTMLSinglePage_Path, '    }')
+				FileWriteLine($HTMLSinglePage_Path, '</script>')
+				FileWriteLine($HTMLSinglePage_Path, '<div class="icons">')
+				FileWriteLine($HTMLSinglePage_Path, '	<br><br><br><br>')
+				If $WinName = "VR Toolbox" Then
+					FileWriteLine($HTMLSinglePage_Path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
+				Else
+					FileWriteLine($HTMLSinglePage_Path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
+				EndIf
+				FileWriteLine($HTMLSinglePage_Path, ' </div>')
+				FileWriteLine($HTMLSinglePage_Path, '</body>')
+				FileWriteLine($HTMLSinglePage_Path, '</html>')
+			Else
+
+			EndIf
+			;GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
+		Next
+		Sleep(100)
+		FileWriteLine($GamePage_path, ' </div>')
+		FileWriteLine($GamePage_path, '</body>')
+		FileWriteLine($GamePage_path, '</html>')
+		Sleep(100)
+	Else
+		MsgBox($MB_ICONWARNING, "No Application selected", "You need to select at least one Application to be able to create the HTML page.")
+	EndIf
+	_GUICtrlStatusBar_SetText($Statusbar, "Game Page created." & @TAB & @TAB & "'Version " & $Version & "'")
+	Sleep(100)
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+	Sleep(600)
+	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Steam Library' if a game was added or removed." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
+EndFunc
+
+
+
+
+
+
+
+
 
 Func _Button_Add_to_Custom()
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
@@ -2733,7 +2900,6 @@ Func _Button_Add_to_Custom()
 		Next
 	EndIf
 EndFunc
-
 
 Func _Button_HomeLoaderSettings()
 	If FileExists($System_DIR & "Settings.exe") Then
@@ -3011,6 +3177,123 @@ Func _Button_ReScan_Steam_Library()
 EndFunc
 
 
+Func _Button_Add2ViveHomeDB_Backup()
+	Local $Check_GameName
+	Local $VIVE_Home_DB_Path = $System_DIR & "vive.sqlite"
+	Local $HomeLoader_DB_Path = $System_DIR & "homeloader.sqlite"
+	$VIVE_Home_DB_TABLE_Name = "apps"
+
+	Local $hQuery, $aRow, $iRows, $iCols, $aNames
+
+	_SQLite_Startup()
+
+	Local $VIVE_Home_DB = _SQLite_Open($VIVE_Home_DB_Path) ; open Database
+
+	_SQLite_GetTable2d(-1, "SELECT * FROM " & $VIVE_Home_DB_TABLE_Name & ";", $aRow, $iRows, $iCols)
+	If $iRows <> "" Then $iRows = $iRows + 1
+	If $iRows = "" Then $iRows = 1
+
+
+	_SQLite_Query($VIVE_Home_DB, "SELECT ROWID,* FROM " & $VIVE_Home_DB_TABLE_Name & " ORDER BY ROWID;", $hQuery)
+
+
+	_SQLite_FetchNames($hQuery, $aNames)
+	ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aNames[0], $aNames[1], $aNames[2], $aNames[3], $aNames[4], $aNames[5], $aNames[6], $aNames[7], $aNames[8], $aNames[9]) & @CRLF)
+
+	While _SQLite_FetchData($hQuery, $aRow, False, False) = $SQLITE_OK ; Read Out the next Row
+		ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aRow[0], $aRow[1], $aRow[2], $aRow[3], $aRow[4], $aRow[5], $aRow[6], $aRow[7], $aRow[8], $aRow[9]) & @CRLF)
+	WEnd
+
+
+	_SQLite_Query($VIVE_Home_DB, "SELECT ROWID,* FROM " & $VIVE_Home_DB_TABLE_Name & " ORDER BY ROWID;", $hQuery)
+	_SQLite_FetchNames($hQuery, $aNames)
+
+
+	For $NR = 1 To $iRows - 1
+		_SQLite_GetTable2d(-1, "SELECT * FROM " & $VIVE_Home_DB_TABLE_Name & ";", $aRow, $iRows, $iCols)
+		If $iRows <> "" Then $iRows = $iRows + 1
+		If $iRows = "" Then $iRows = 1
+
+		_SQLite_FetchData($hQuery, $aRow, False, False) ; Read Out the next Row
+		ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aRow[0], $aRow[1], $aRow[2], $aRow[3], $aRow[4], $aRow[5], $aRow[6], $aRow[7], $aRow[8], $aRow[9]) & @CRLF)
+
+		For $NR_2 = 1 To $iRows - 1
+			$Check_Application_Name = IniRead($ApplicationList_INI, "Application_" & $NR_2, "Name", "")
+			If $Check_Application_Name = $Check_GameName Then ; $ListView_Item_Array[1]
+				$Check_Application_AppId = IniRead($ApplicationList_INI, "Application_" & $NR_2, "AppId", "")
+				;$NewIcon_Path = $Icons_DIR_2 & "Favorites\" & $Check_Application_AppId & ".jpg"
+				$GetItem_NR = IniRead($ApplicationList_INI, "Application_" & $Check_Application_AppId, "NR", "")
+				;IniWrite($ApplicationList_INI, "Application_" & $Check_Application_AppId, "IconPath", $NewIcon_Path)
+				;IniWrite($ApplicationList_INI, "Application_" & $GetItem_NR, "IconPath", $NewIcon_Path)
+				ExitLoop
+			EndIf
+		Next
+
+		If $Check_Application_AppId = $aRow[1] Then
+			;_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
+			;								$aRow[0] & "','" & $aRow[1] & "','" & $aRow[2] & "','" & $aRow[3] & "','" & $aRow[4] & "','" & "1" & "','" & $aRow[6] & "','" & $aRow[7] & "','" & $aRow[8] & "','" & $NewIcon_Path & "','" & $aRow[10] & "');")
+
+		Else
+			;_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
+			;								$aRow[0] & "','" & $aRow[1] & "','" & $aRow[2] & "','" & $aRow[3] & "','" & $aRow[4] & "','" & $aRow[5] & "','" & $aRow[6] & "','" & $aRow[7] & "','" & $aRow[8] & "','" & $aRow[9] & "','" & $aRow[10] & "');")
+		EndIf
+	Next
+
+	_SQLite_QueryFinalize($hQuery)
+	_SQLite_Close($System_DIR & "vive.sqlite")
+	_SQLite_Shutdown()
+
+	Sleep(100)
+
+	$ListView_Item_Array = 0
+	$ListView_Selected_Row_Value = ""
+EndFunc
+
+Func _Button_Add2ViveHomeDB()
+	Local $Check_GameName
+	Local $VIVE_Home_DB_Path = "C:\Users\" & @UserName & "\AppData\Roaming\HTC\Vive\vive.sqlite"
+	Local $HomeLoader_DB_Path = $System_DIR & "homeloader.sqlite"
+	$VIVE_Home_DB_TABLE_Name = "apps"
+
+	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+
+	_SQLite_Startup()
+
+	Local $VIVE_Home_DB = _SQLite_Open($VIVE_Home_DB_Path) ; open Database
+
+	For $NR = 1 To $NR_Applications
+		$Check_Application_NR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "NR", "")
+		$Check_Application_appid = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "appid", "")
+		$Check_Application_name = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "name", "")
+		$Check_Application_installdir = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "installdir", "")
+		$Check_Application_IconPath = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_Application_appid, "IconPath", "")
+
+		$rowid = $Check_Application_NR
+		$app_key = "steam.app." & $Check_Application_NR
+		$img_url = "http:\\cdn.akamai.steamstatic.com\steam\apps\steam.app." & $Check_Application_appid & "\header.jpg"
+		$img_file_path = $Icons & "460x215\SS_Values\" & "steam.app." & $Check_Application_appid & ".jpg"
+		If Not FileExists($img_file_path) Then $img_file_path = $Icons & "460x215\" & "steam.app." & $Check_Application_appid & ".jpg"
+		If Not FileExists($img_file_path) Then $img_file_path = $Icons & "steam.app." & $Check_Application_appid & ".jpg"
+		If Not FileExists($img_file_path) Then $img_file_path = $Check_Application_IconPath
+		If Not FileExists($img_file_path) Then $img_file_path = $gfx & "Icon_Preview2" & ".jpg"
+		If Not FileExists($img_file_path) Then $img_file_path = $img_url
+
+		If $Check_Application_AppId <> "" Then
+			_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
+											$rowid & "','" & $app_key & "','" & "0" & "','" & "0" & "','" & "0" & "','" & "0" & "','" & "0" & "','" & $img_url & "','" & "0" & "','" & $img_file_path & "','" & "0" & "');")
+		EndIf
+
+		;Sleep(100)
+		GUICtrlSetData($Anzeige_Fortschrittbalken_2, $NR * 100 / $NR_Applications)
+	Next
+
+	_SQLite_Close($VIVE_Home_DB_Path)
+	_SQLite_Shutdown()
+
+	Sleep(700)
+	GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
+EndFunc
+
 #endregion
 
 #Region Func Add to Library GUI
@@ -3261,6 +3544,7 @@ Func _Button_Install_Folder_Steam_5_open()
 	EndIf
 EndFunc
 
+
 Func _Button_Install_Folder_Steam_1_save()
 	Local $Value_Input = GUICtrlRead($Input_Install_Folder_Steam_1)
 	Local $Check_Value_Input = StringRight($Value_Input, 1)
@@ -3363,8 +3647,27 @@ Func _Button_Icon_Folder_3()
 		GUICtrlSetData($Input_Icon_Folder_3, $FileSelectFolder & "\")
 		IniWrite($config_ini, "Folders", "Icon_Folder_3", $FileSelectFolder & "\")
 	Else
-		MsgBox($MB_ICONWARNING, "Attention!", "Wrong Steam Library folder selected." & @CRLF & @CRLF & "The right one you need to choose contains the File 'Steam.dll' and 'SteamApps' folder.")
 		IniWrite($Config_INI, "Folders", "Icon_Folder_3", "")
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_4()
+	Local $FileSelectFolder = FileSelectFolder($install_dir, "")
+	If $FileSelectFolder <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_4, $FileSelectFolder & "\")
+		IniWrite($config_ini, "Folders", "Icon_Folder_4", $FileSelectFolder & "\")
+	Else
+		IniWrite($Config_INI, "Folders", "Icon_Folder_4", "")
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_5()
+	Local $FileSelectFolder = FileSelectFolder($install_dir, "")
+	If $FileSelectFolder <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_5, $FileSelectFolder & "\")
+		IniWrite($config_ini, "Folders", "Icon_Folder_5", $FileSelectFolder & "\")
+	Else
+		IniWrite($Config_INI, "Folders", "Icon_Folder_5", "")
 	EndIf
 EndFunc
 
@@ -3389,6 +3692,21 @@ Func _Button_Icon_Folder_3_open()
 		ShellExecute($Value_Input)
 	EndIf
 EndFunc
+
+Func _Button_Icon_Folder_4_open()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_4)
+	If $Value_Input <> "" Then
+		ShellExecute($Value_Input)
+	EndIf
+EndFunc
+
+Func _Button_Icon_Folder_5_open()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_5)
+	If $Value_Input <> "" Then
+		ShellExecute($Value_Input)
+	EndIf
+EndFunc
+
 
 Func _Button_Icon_Folder_1_save()
 	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_1)
@@ -3432,7 +3750,33 @@ Func _Button_Icon_Folder_3_save()
 	EndIf
 EndFunc
 
+Func _Button_Icon_Folder_4_save()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_4)
+	Local $Check_Value_Input = StringRight($Value_Input, 1)
+	If $Check_Value_Input <> "" And $Check_Value_Input <> "\" Then $Value_Input = $Value_Input & "\"
+	If $Value_Input <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_4, $Value_Input)
+		IniWrite($config_ini, "Folders", "Icon_Folder_4", $Value_Input)
+	Else
+		If $Check_Value_Input <> "" Then
+			IniWrite($Config_INI, "Folders", "Icon_Folder_4", "")
+		EndIf
+	EndIf
+EndFunc
 
+Func _Button_Icon_Folder_5_save()
+	Local $Value_Input = GUICtrlRead($Input_Icon_Folder_5)
+	Local $Check_Value_Input = StringRight($Value_Input, 1)
+	If $Check_Value_Input <> "" And $Check_Value_Input <> "\" Then $Value_Input = $Value_Input & "\"
+	If $Value_Input <> "" Then
+		GUICtrlSetData($Input_Icon_Folder_5, $Value_Input)
+		IniWrite($config_ini, "Folders", "Icon_Folder_5", $Value_Input)
+	Else
+		If $Check_Value_Input <> "" Then
+			IniWrite($Config_INI, "Folders", "Icon_Folder_5", "")
+		EndIf
+	EndIf
+EndFunc
 #endregion
 
 #Region Func SS_Settings GUI
@@ -4378,6 +4722,417 @@ Func _Beenden()
 	IniWrite($Config_INI, "TEMP", "Show_SS_Menu", "")
 	Exit
 EndFunc
+#endregion
+
+#Region Func OVERLAY
+
+Func _Overlay_ReScan_Steam_Library()
+	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
+	Local $NR_temp4
+	$Combo = "ALL"
+
+	If $Combo = "ALL" Then
+		If $Install_Folder_Steam_1 <> "" Then $NR_temp4 = 1
+		If $Install_Folder_Steam_2 <> "" Then $NR_temp4 = 2
+		If $Install_Folder_Steam_3 <> "" Then $NR_temp4 = 3
+		If $Install_Folder_Steam_4 <> "" Then $NR_temp4 = 4
+		If $Install_Folder_Steam_5 <> "" Then $NR_temp4 = 5
+		If $NR_temp4 = "" Then $NR_temp4 = 1
+
+		For $NR_Library = 1 To $NR_temp4
+			$NR_Library_temp = $NR_Library
+			_Overlay_Search_Files()
+			Sleep(500)
+		Next
+		$NR_Library_temp = ""
+		$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
+		FileCopy($ApplicationList_INI, $ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini", $FC_OVERWRITE + $FC_CREATEPATH)
+		Sleep(500)
+	EndIf
+EndFunc
+
+Func _Overlay_Search_Files()
+	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
+	$Combo = "ALL"
+	If $Combo = "ALL" Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
+
+	If $Combo = "ALL" Then
+			If $NR_Library_temp = 1 Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
+			If $NR_Library_temp = 2 Then $s_LocalFolder = $Install_Folder_Steam_2 & "SteamApps\"
+			If $NR_Library_temp = 3 Then $s_LocalFolder = $Install_Folder_Steam_3 & "SteamApps\"
+			If $NR_Library_temp = 4 Then $s_LocalFolder = $Install_Folder_Steam_4 & "SteamApps\"
+			If $NR_Library_temp = 5 Then $s_LocalFolder = $Install_Folder_Steam_5 & "SteamApps\"
+
+			Local $FileList = _FileListToArray($s_LocalFolder , "*.acf" , 1)
+			Global $Application_NR = 1
+
+			If $FileList <> "" Then
+				For $NR_temp2 = 1 To $FileList[0]
+					Global $FileList_NR = $FileList[0]
+					Global $File_Name = $FileList[$NR_temp2]
+					Global $File_Path = $s_LocalFolder & $File_Name
+					If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
+						_Overlay_ApplicationList_Update()
+						$Application_NR = $Application_NR + 1
+					EndIf
+					$File_Path =  ""
+				Next
+				Sleep(500)
+			EndIf
+			$FileList = ""
+	EndIf
+EndFunc
+
+Func _Overlay_ApplicationList_Update()
+	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
+	Global $File = $File_Path
+	Global $Wert_Zeile = ""
+
+	If $File <> "" Then
+			For $iCount_1 = 1 To 7
+				Local $Wert_Zeile_komplett = FileReadLine($File, $iCount_1)
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "appid")
+				If $iPosition <> 0 Then
+					Global $appid = StringReplace($Wert_Zeile_komplett, '	"appid"		"', '')
+					$appid = StringReplace($appid, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "Universe")
+				If $iPosition <> 0 Then
+					Global $Universe = StringReplace($Wert_Zeile_komplett, '	"Universe"		"', '')
+					$Universe = StringReplace($Universe, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "name")
+				If $iPosition <> 0 Then
+					$name = StringReplace($Wert_Zeile_komplett, '	"name"		"', '')
+					$name = StringReplace($name, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "StateFlags")
+				If $iPosition <> 0 Then
+					Global $StateFlags = StringReplace($Wert_Zeile_komplett, '	"StateFlags"		"', '')
+					$StateFlags = StringReplace($StateFlags, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "installdir")
+				If $iPosition <> 0 Then
+					Global $installdir = StringReplace($Wert_Zeile_komplett, '	"installdir"		"', '')
+					$installdir = StringReplace($installdir, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "LastUpdated")
+				If $iPosition <> 0 Then
+					Global $LastUpdated = StringReplace($Wert_Zeile_komplett, '	"LastUpdated"		"', '')
+					$LastUpdated = StringReplace($LastUpdated, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "UpdateResult")
+				If $iPosition <> 0 Then
+					Global $UpdateResult = StringReplace($Wert_Zeile_komplett, '	"UpdateResult"		"', '')
+					$UpdateResult = StringReplace($UpdateResult, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "SizeOnDisk")
+				If $iPosition <> 0 Then
+					Global $SizeOnDisk = StringReplace($Wert_Zeile_komplett, '	"SizeOnDisk"		"', '')
+					$SizeOnDisk = StringReplace($SizeOnDisk, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "buildid")
+				If $iPosition <> 0 Then
+					Global $buildid = StringReplace($Wert_Zeile_komplett, '	"buildid"		"', '')
+					$buildid = StringReplace($buildid, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "LastOwner")
+				If $iPosition <> 0 Then
+					Global $LastOwner = StringReplace($Wert_Zeile_komplett, '	"LastOwner"		"', '')
+					$LastOwner = StringReplace($LastOwner, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "BytesToDownload")
+				If $iPosition <> 0 Then
+					Global $BytesToDownload = StringReplace($Wert_Zeile_komplett, '	"BytesToDownload"		"', '')
+					$BytesToDownload = StringReplace($BytesToDownload, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "BytesDownloaded")
+				If $iPosition <> 0 Then
+					Global $BytesDownloaded = StringReplace($Wert_Zeile_komplett, '	"BytesDownloaded"		"', '')
+					$BytesDownloaded = StringReplace($BytesDownloaded, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "AutoUpdateBehavior")
+				If $iPosition <> 0 Then
+					Global $AutoUpdateBehavior = StringReplace($Wert_Zeile_komplett, '	"AutoUpdateBehavior"		"', '')
+					$AutoUpdateBehavior = StringReplace($AutoUpdateBehavior, '"', '')
+				EndIf
+
+				Local $iPosition = StringInStr($Wert_Zeile_komplett, "AllowOtherDownloadsWhileRunning")
+				If $iPosition <> 0 Then
+					Global $AllowOtherDownloadsWhileRunning = StringReplace($Wert_Zeile_komplett, '	"AllowOtherDownloadsWhileRunning"		"', '')
+					$AllowOtherDownloadsWhileRunning = StringReplace($AllowOtherDownloadsWhileRunning, '"', '')
+				EndIf
+			Next
+
+			IniWrite($ApplicationList_INI, "ApplicationList", "NR_Applications", $Application_NR)
+			IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "NR", $Application_NR)
+			IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "appid", $appid)
+			IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "name", $name)
+			IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "installdir", $installdir)
+
+			IniWrite($ApplicationList_INI, "ApplicationList", "NR_Applications", $Application_NR)
+			IniWrite($ApplicationList_INI, "Application_" & $appid, "NR", $Application_NR)
+			IniWrite($ApplicationList_INI, "Application_" & $appid, "appid", $appid)
+			IniWrite($ApplicationList_INI, "Application_" & $appid, "name", $name)
+			IniWrite($ApplicationList_INI, "Application_" & $appid, "installdir", $installdir)
+
+			If $appid <> "" Then
+				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", $Icons & "steam.app." & $appid & ".jpg")
+				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", $Icons & "steam.app." & $appid & ".jpg")
+			Else
+				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", "")
+				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", "")
+			EndIf
+
+			_Download_Icon_for_SteamGameID()
+
+			If Not FileExists($Icons & "32x32\" & "steam.app." & $appid & ".bmp") Then
+				_Get_SteamGame_Icon_32x32()
+			EndIf
+
+			If Not FileExists($Icons & "256x256\" & "steam.app." & $appid & ".bmp") Then
+				_Get_SteamGame_Icon_256x256()
+			EndIf
+
+			If $appid <> "" Then
+				_Get_ADD_PlayersOnline_DATA()
+			EndIf
+	EndIf
+EndFunc
+
+
+Func _Create_Overlay_StartPage()
+	Local $Array_StartPageTemplate_Value
+	$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+	$Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
+	Local $StartPage_path = $Install_DIR & "WebPage\OverlayStartPage.html"
+	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
+	Local $StartPageTemplate = $Install_DIR & "WebPage\Overlay.html"
+	_FileReadToArray($StartPageTemplate, $Array_StartPageTemplate_Value, $FRTA_COUNT)
+
+	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
+
+	$StartPage_NR_1 = IniRead($Config_INI, "TEMP", "StartPage_NR_1", "26")
+	For $Loop_NR1 = 1 To $Array_StartPageTemplate_Value[0] - $StartPage_NR_1
+		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR1])
+	Next
+
+	;MsgBox(0, "$Array_StartPageTemplate_Value", $Array_StartPageTemplate_Value[0] - 26)
+
+	For $Loop_NR2 = 1 To $NR_Applications
+		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "NR", "")
+		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "appid", "")
+		Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "name", "")
+		Global $Application_installdir = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "installdir", "")
+		Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
+		Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
+
+		If Not FileExists($WebPage_IconPath) Then
+			FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		EndIf
+
+		If Not FileExists($WebPage_IconPath) Then
+			FileCopy($Application_IconPath, $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		EndIf
+
+		If Not FileExists($WebPage_IconPath) Then
+			FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		EndIf
+
+		If $Use_Local_Icons = "false" Then
+			FileWriteLine($StartPage_path, '            <a href="#"' & '><img src="http://cdn.edgecast.steamstatic.com/steam/apps/' & $Application_appid & '/header.jpg?t=1503264891" id="' & $Application_appid & '" name="steam://launch/" onclick="updateLink(this);" style="width: 216px"></a>')
+		Else
+			Local $Icons_Path_html = $HomeLoader_Overlay_Folder & "images\" & "steam.app." & $Application_appid & ".jpg"
+			If Not FileExists($Icons_Path_html) Then FileCopy($Icons & "460x215\steam.app." & $Application_appid & ".jpg", $Icons_Path_html, $FC_OVERWRITE + $FC_CREATEPATH)
+			If Not FileExists($Icons & "460x215\steam.app." & $Application_appid & ".jpg") Then FileCopy($gfx & "Icon_Preview2.jpg", $Icons_Path_html, $FC_OVERWRITE + $FC_CREATEPATH)
+			$Icons_Path_html = "images/" & "steam.app." & $Application_appid & ".jpg"
+			FileWriteLine($StartPage_path, '            <a href="#"' & '><img src="' & $Icons_Path_html & '" id="' & $Application_appid & '" name="steam://launch/" onclick="updateLink(this);" style="width: 216px"></a>')
+		EndIf
+	Next
+
+	$StartPage_NR_2 = IniRead($Config_INI, "TEMP", "StartPage_NR_2", "113")
+	For $Loop_NR3 = $StartPage_NR_2 To $Array_StartPageTemplate_Value[0]
+		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR3])
+	Next
+EndFunc
+
+Func _Copy_2_VRUtilityBelt()
+	Local $OverlayPage_path
+	Local $StartPage_Template_path = $Install_DIR & "WebPage\OverlayStartPage.html"
+
+	If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
+EndFunc
+
+#endregion
+
+
+#Region Func VR ToolBox
+
+Func _Create_VRToolBox_StartPage()
+	Local $Array_StartPageTemplate_Value
+
+	Local $StartPage_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
+	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
+	Local $StartPageTemplate = $Install_DIR & "WebPage\VRToolBox.html"
+	_FileReadToArray($StartPageTemplate, $Array_StartPageTemplate_Value, $FRTA_COUNT)
+
+	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
+
+	$StartPage_NR_3 = IniRead($Config_INI, "TEMP", "StartPage_NR_3", "3")
+	For $Loop_NR3 = 1 To $Array_StartPageTemplate_Value[0] - $StartPage_NR_3
+		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR3])
+	Next
+
+	;MsgBox(0, "$Array_StartPageTemplate_Value", $Array_StartPageTemplate_Value[0] - 26)
+
+	$Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
+
+	FileWriteLine($StartPage_path, '    <br><br><br><br>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_ALL.html' & '">         <img class="icon" src="images/GamePageAllGames.png" width="190" />                    <span class="tooltiptext">All Games</span></a></div>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Non-Steam_Appl' & '">         <img class="icon" src="images/GamePage_NonSteamAppl.png" width="190" />                    <span class="tooltiptext">Non-Steam Appl.</span></a></div>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Custom_1.html' & '">         <img class="icon" src="images/GamePage1.png" width="190" />                    <span class="tooltiptext">Game Page 1</span></a></div>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Custom_2.html' & '">         <img class="icon" src="images/GamePage2.png" width="190" />                    <span class="tooltiptext">Game Page 2</span></a></div>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Custom_3.html' & '">         <img class="icon" src="images/GamePage3.png" width="190" />                    <span class="tooltiptext">Game Page 3</span></a></div>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Custom_4.html' & '">         <img class="icon" src="images/GamePage4.png" width="190" />                    <span class="tooltiptext">Game Page 4</span></a></div>')
+	FileWriteLine($StartPage_path, '    <br><br><br><br>')
+	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamesPage.html' & '">         <img class="icon" src="images/Game.png" width="300" />                    <span class="tooltiptext">Game</span></a></div>')
+	FileWriteLine($StartPage_path, '    <br><br><br><br>')
+	FileWriteLine($StartPage_path, '  </div>')
+	FileWriteLine($StartPage_path, '</body>')
+	FileWriteLine($StartPage_path, '</html>')
+EndFunc
+
+Func _Copy_2_VRToolBox()
+	Local $VRToolBox_path = $VRToolBox_Steam_Folder & "utils\StartPage.html"
+	Local $VRToolBox_image_path = $VRToolBox_Steam_Folder & "utils\images\"
+	Local $StartPage_Template_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
+	Local $PageImageAll = $Install_DIR & "WebPage\images\GamePageAllGames.png"
+	Local $PageImageNonSteamAppl = $Install_DIR & "WebPage\images\GamePage_NonSteamAppl.png"
+	Local $PageImage1 = $Install_DIR & "WebPage\images\GamePage1.png"
+	Local $PageImage2 = $Install_DIR & "WebPage\images\GamePage2.png"
+	Local $PageImage3 = $Install_DIR & "WebPage\images\GamePage3.png"
+	Local $PageImage4 = $Install_DIR & "WebPage\images\GamePage4.png"
+	Local $PageImage5 = $Install_DIR & "WebPage\images\GamePage5.png"
+	Local $PageImageGame = $Install_DIR & "WebPage\images\Game.png"
+
+	If Not FileExists($VRToolBox_path & ".bak") Then FileCopy($VRToolBox_path, $VRToolBox_path & ".bak", $FC_OVERWRITE + $FC_CREATEPATH)
+
+	If FileExists($PageImageAll) Then FileCopy($PageImageAll, $VRToolBox_image_path & "GamePageAllGames.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImageNonSteamAppl) Then FileCopy($PageImageNonSteamAppl, $VRToolBox_image_path & "GamePage_NonSteamAppl.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImage1) Then FileCopy($PageImage1, $VRToolBox_image_path & "GamePage1.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImage2) Then FileCopy($PageImage2, $VRToolBox_image_path & "GamePage2.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImage3) Then FileCopy($PageImage3, $VRToolBox_image_path & "GamePage3.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImage4) Then FileCopy($PageImage4, $VRToolBox_image_path & "GamePage4.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImage5) Then FileCopy($PageImage4, $VRToolBox_image_path & "GamePage5.png", $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($PageImageGame) Then FileCopy($PageImageGame, $VRToolBox_image_path & "Game.png", $FC_OVERWRITE + $FC_CREATEPATH)
+
+	If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $VRToolBox_path, $FC_OVERWRITE + $FC_CREATEPATH)
+EndFunc
+
+#endregion
+
+
+#Region Func Create Game Pages
+
+Func _Create_GamePages()
+	Local $ApplicationList_TEMP, $GamePage_path, $NR_Applications, $PageName
+
+	For $Loop_Temp = 1 To 6
+		If $Loop_Temp = 1 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+		If $Loop_Temp = 2 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
+		If $Loop_Temp = 3 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
+		If $Loop_Temp = 4 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_2.ini"
+		If $Loop_Temp = 5 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_3.ini"
+		If $Loop_Temp = 6 Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_Custom_4.ini"
+
+		If $Loop_Temp = 1 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_ALL.html"
+		If $Loop_Temp = 2 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+		If $Loop_Temp = 3 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+		If $Loop_Temp = 4 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+		If $Loop_Temp = 5 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+		If $Loop_Temp = 6 Then $GamePage_path = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+
+		If $Loop_Temp = 1 Then $PageName = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
+		If $Loop_Temp = 2 Then $PageName = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
+		If $Loop_Temp = 3 Then $PageName = IniRead($Config_INI, "Settings", "TAB3_Name", "Custom 1")
+		If $Loop_Temp = 4 Then $PageName = IniRead($Config_INI, "Settings", "TAB4_Name", "Custom 2")
+		If $Loop_Temp = 5 Then $PageName = IniRead($Config_INI, "Settings", "TAB5_Name", "Custom 3")
+		If $Loop_Temp = 6 Then $PageName = IniRead($Config_INI, "Settings", "TAB6_Name", "Custom 4")
+
+
+		If FileExists($ApplicationList_TEMP) Then
+			$NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+
+
+			If FileExists($GamePage_path) Then FileDelete($GamePage_path)
+
+			FileWrite($GamePage_path, '<html>' & @CRLF & _
+										'<head>' & @CRLF & _
+										'    <title>GamesPage 1</title>' & @CRLF & _
+										'    <link href="css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
+										'</head>' & @CRLF & _
+										'<body>' & @CRLF & _
+										'<script>' & @CRLF & _
+										'    function VRTStartCommand(cmd) {' & @CRLF & _
+										"      var s = '{ " & '"LightVRCallback": { "ShellExec": "' & "' + cmd + '" & '" } }' & "';" & @CRLF & _
+										'      console.log(s);' & @CRLF & _
+										'    }' & @CRLF & _
+										'</script>' & @CRLF & _
+										'<h1>' & $PageName & '</h1>' & @CRLF & _
+										'<div class="icons">' & @CRLF)
+
+
+			For $NR = 1 To $NR_Applications
+				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
+				Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $NR, "appid", "")
+				Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $NR, "name", "")
+				Global $Application_installdir = IniRead($ApplicationList_TEMP, "Application_" & $NR, "installdir", "")
+				Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
+				Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($Application_IconPath, $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				If Not FileExists($WebPage_IconPath) Then
+					FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+
+				If $WinName = "VR Toolbox" Then
+					FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				EndIf
+
+				If $WinName <> "VR Toolbox" Then
+					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				EndIf
+			Next
+			Sleep(100)
+			FileWriteLine($GamePage_path, ' </div>')
+			FileWriteLine($GamePage_path, '</body>')
+			FileWriteLine($GamePage_path, '</html>')
+			Sleep(100)
+		EndIf
+	Next
+EndFunc
+
 #endregion
 
 #endregion

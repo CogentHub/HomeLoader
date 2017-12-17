@@ -7,7 +7,9 @@ Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $System_DIR = $Install_DIR & "\System\"
-Global $Config_INI = $System_DIR & "config.ini"
+;Global $Config_INI = $System_DIR & "config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Config_NEW_INI = $System_DIR & "config_NEW.ini"
 Global $Version = IniRead($config_ini, "Settings", "Version", "")
 Global $Version_Right = StringRight($Version, 2)
@@ -17,9 +19,9 @@ Global $UpdateTargetFolder = $Install_DIR
 Global $Update_ZIP = $System_DIR & "TEMP.zip"
 Global $Changelog_TXT = $System_DIR & "Changelog.txt"
 
-Global $Read_Version, $Read_Show_Settings_at_Startup, $Read_Advanced_Settings , $Read_USE_GUI, $Read_Minimize_Oculus, $Read_Time_Interval, $Read_First_Start
-Global $Read_Steam_Library, $Read_ButtonTAB_State, $Read_USE_PHP_WebServer, $Read_ChangeDefaultSteamVRHome, $Read_USE_Key_Presses, $Read_Reload_HOMEonExit
-Global $Read_Add_PlayersOnline_to_Icons, $Read_Add_SS_to_Icons, $Read_Add_SS_per_game, $Read_Start_HomeLoader_with_HomeApp, $Read_TAB1_Name, $Read_TAB2_Name
+Global $Read_Version, $Read_USE_GUI, $Read_Minimize_Oculus, $Read_First_Start
+Global $Read_Steam_Library, $Read_ButtonTAB_State, $Read_USE_PHP_WebServer, $Read_ChangeDefaultSteamVRHome, $Read_USE_Key_Presses
+Global $Read_Add_PlayersOnline_to_Icons, $Read_Add_SS_to_Icons, $Read_Add_SS_per_game, $Read_TAB1_Name, $Read_TAB2_Name
 Global $Read_TAB3_Name, $Read_TAB4_Name, $Read_TAB5_Name, $Read_TAB6_Name, $Read_Install_Folder_Steam_1, $Read_Install_Folder_Steam_2, $Read_Install_Folder_Steam_3
 Global $Read_Install_Folder_Steam_4, $Read_Install_Folder_Steam_5, $Read_Steam_default_vrsettings, $Read_Steam_tools_vrmanifest, $Read_Icon_Folder_1, $Read_Icon_Folder_2
 Global $Read_Icon_Folder_3, $Read_Home_Path, $Read_WindowName
@@ -71,22 +73,17 @@ EndFunc
 
 Func _Read_from_Backup_INI()
 	;$Read_Version = IniRead($Backup_File, "Settings", "Version", "")
-	$Read_Show_Settings_at_Startup = IniRead($Backup_File, "Settings", "Show_Settings_at_Startup", "")
-	$Read_Advanced_Settings = IniRead($Backup_File, "Settings", "Advanced_Settings", "")
 	$Read_USE_GUI = IniRead($Backup_File, "Settings", "USE_GUI", "")
 	$Read_Minimize_Oculus = IniRead($Backup_File, "Settings", "Minimize_Oculus", "")
-	$Read_Time_Interval = IniRead($Backup_File, "Settings", "Time_Interval", "")
 	$Read_First_Start = IniRead($Backup_File, "Settings", "First_Start", "")
 	$Read_Steam_Library = IniRead($Backup_File, "Settings", "Steam_Library", "")
 	$Read_ButtonTAB_State = IniRead($Backup_File, "Settings", "ButtonTAB_State", "")
 	$Read_USE_PHP_WebServer = IniRead($Backup_File, "Settings", "USE_PHP_WebServer", "")
 	$Read_ChangeDefaultSteamVRHome = IniRead($Backup_File, "Settings", "ChangeDefaultSteamVRHome", "")
 	$Read_USE_Key_Presses = IniRead($Backup_File, "Settings", "USE_Key_Presses", "")
-	$Read_Reload_HOMEonExit = IniRead($Backup_File, "Settings", "Reload_HOMEonExit", "")
 	$Read_Add_PlayersOnline_to_Icons = IniRead($Backup_File, "Settings", "Add_PlayersOnline_to_Icons", "")
 	$Read_Add_SS_to_Icons = IniRead($Backup_File, "Settings", "Add_SS_to_Icons", "")
 	$Read_Add_SS_per_game = IniRead($Backup_File, "Settings", "Add_SS_per_game", "")
-	$Read_Start_HomeLoader_with_HomeApp = IniRead($Backup_File, "Settings", "Start_HomeLoader_with_HomeApp", "")
 	$Read_TAB1_Name = IniRead($Backup_File, "Settings", "TAB1_Name", "")
 	$Read_TAB2_Name = IniRead($Backup_File, "Settings", "TAB2_Name", "")
 	$Read_TAB3_Name = IniRead($Backup_File, "Settings", "TAB3_Name", "")
@@ -109,22 +106,17 @@ EndFunc
 
 Func _Write_to_Target_INI()
 	;IniWrite($Config_NEW_INI, "Settings", "Version", $Read_Version)
-	IniWrite($Config_NEW_INI, "Settings", "Show_Settings_at_Startup", $Read_Show_Settings_at_Startup)
-	IniWrite($Config_NEW_INI, "Settings", "Advanced_Settings", $Read_Advanced_Settings)
 	IniWrite($Config_NEW_INI, "Settings", "USE_GUI", $Read_USE_GUI)
 	IniWrite($Config_NEW_INI, "Settings", "Minimize_Oculus", $Read_Minimize_Oculus)
-	IniWrite($Config_NEW_INI, "Settings", "Time_Interval", $Read_Time_Interval)
 	IniWrite($Config_NEW_INI, "Settings", "First_Start", $Read_First_Start)
 	IniWrite($Config_NEW_INI, "Settings", "Steam_Library", $Read_Steam_Library)
 	IniWrite($Config_NEW_INI, "Settings", "ButtonTAB_State", $Read_ButtonTAB_State)
 	IniWrite($Config_NEW_INI, "Settings", "USE_PHP_WebServer", $Read_USE_PHP_WebServer)
 	IniWrite($Config_NEW_INI, "Settings", "ChangeDefaultSteamVRHome", $Read_ChangeDefaultSteamVRHome)
 	IniWrite($Config_NEW_INI, "Settings", "USE_Key_Presses", $Read_USE_Key_Presses)
-	IniWrite($Config_NEW_INI, "Settings", "Reload_HOMEonExit", $Read_Reload_HOMEonExit)
 	IniWrite($Config_NEW_INI, "Settings", "Add_PlayersOnline_to_Icons", $Read_Add_PlayersOnline_to_Icons)
 	IniWrite($Config_NEW_INI, "Settings", "Add_SS_to_Icons", $Read_Add_SS_to_Icons)
 	IniWrite($Config_NEW_INI, "Settings", "Add_SS_per_game", $Read_Add_SS_per_game)
-	IniWrite($Config_NEW_INI, "Settings", "Start_HomeLoader_with_HomeApp", $Read_Start_HomeLoader_with_HomeApp)
 	IniWrite($Config_NEW_INI, "Settings", "TAB1_Name", $Read_TAB1_Name)
 	IniWrite($Config_NEW_INI, "Settings", "TAB2_Name", $Read_TAB2_Name)
 	IniWrite($Config_NEW_INI, "Settings", "TAB3_Name", $Read_TAB3_Name)

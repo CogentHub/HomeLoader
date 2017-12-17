@@ -1,0 +1,58 @@
+<html>
+<head>
+  <title>LightVR Start Page</title>
+  <link href="css/lightvr.css" rel="stylesheet" type="text/css">
+  <link href='http://fonts.googleapis.com/css?family=Josefin+Sans&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+</head>
+<body>
+<script>
+function LightVROpen() {
+    var addr = document.getElementById("URL").value;
+    if (addr.includes("://") || addr.includes("www")) {
+        window.location.href = addr;
+    } else {
+        window.location.href = "https://www.google.com/search?hl=en&q=" + addr;
+    }
+}
+
+function LightVRKeyDown() {
+    if (event.keyCode == 13) {
+        LightVROpen();
+    }
+}
+</script>
+  <div class="navigation-bar w-container">
+      <a href="http://lightvr.co/"><img src="images/toolbox_logo_black.png" width="300" /></a>
+  </div>
+  <div class="content w-container">
+    <div class="content-wrapper" style="background-attachment: fixed;">
+      <div class="url-field w-row">
+        <div class="w-col w-col-11">
+          <input class="url-field w-input" id="URL" maxlength="256" placeholder="Enter Address or Search String..." type="text" onkeydown="LightVRKeyDown()"/> 
+        </div>
+        <div class="w-col w-col-1">
+          <input class="w-button yellow-button" style="margin-top: 0px" type="submit" value="GO" onclick="LightVROpen();"/>
+        </div>
+      </div>
+      <br />
+      <br />
+    </div>
+  </div>
+  <div class="icons">
+    <div class="tooltip"><a href="https://www.youtube.com/">         <img class="icon" src="images/youtube.png" width="65" />                       <span class="tooltiptext">YouTube</span></a></div>
+    <div class="tooltip"><a href="https://www.youtube.com/channel/UCzuqhhs6NWbgTzMuM09WKDQ"><img class="icon" src="images/yt360.png" width="65" />  <span class="tooltiptext">YouTube 360</span></a></div>
+    <div class="tooltip"><a href="https://www.twitch.tv">            <img class="icon" src="images/twitch.png" width="65" />                        <span class="tooltiptext">Twitch</span></a></div>
+    <div class="tooltip"><a href="https://www.facebook.com/">        <img class="icon" src="images/facebook.png" width="65" />                      <span class="tooltiptext">FaceBook</span></a></div>
+    <div class="tooltip"><a href="http://www.twitter.com">           <img class="icon" src="images/twitter.png" width="65" />                       <span class="tooltiptext">Twitter</span></a></div>
+    <div class="tooltip"><a href="https://www.google.com/finance">   <img class="icon" src="images/google_finance.png" width="65" />                <span class="tooltiptext">Google Finance</span></a></div>
+    <div class="tooltip"><a href="https://www.reddit.com/">          <img class="icon" src="images/reddit.png" width="65" />                        <span class="tooltiptext">Reddit</span></a></div>
+    <div class="tooltip"><a href="https://web.skype.com/">           <img class="icon" src="images/skype.png" width="65" />                         <span class="tooltiptext">Skype</span></a></div>
+    <div class="tooltip"><a href="https://docs.google.com/document/"><img class="icon" src="images/google_docs.png" width="65" />                   <span class="tooltiptext">Google Docs</span></a></div>
+    <div class="tooltip"><a href="https://images.google.com/">       <img class="icon" src="images/images.png" width="65" />                        <span class="tooltiptext">Google Images</span></a></div>
+    <div class="tooltip"><a href="https://www.google.com/search?site=&tbm=isch&source=hp&biw=1920&bih=979&q=cats+wallpapers"><img class="icon" src="images/cats.png" width="65" />          <span class="tooltiptext">Cat Images</span></a></div>
+    <div class="tooltip"><a href="https://www.google.com/search?site=&tbm=isch&source=hp&biw=1920&bih=979&q=baby+chicken+wallpapers"><img class="icon" src="images/chick.png" width="65" /> <span class="tooltiptext">Chicken Images</span></a></div>
+    <div class="tooltip"><a href="https://www.instagram.com/">       <img class="icon" src="images/instagram.png" width="65" />                     <span class="tooltiptext">Instagram</span></a></div>
+    <div class="tooltip"><a href="https://awwapp.com/">              <img class="icon" src="images/whiteboard.png" width="65" />                    <span class="tooltiptext">Whiteboard</span></a></div>  	
+  </div>
+</body>
+</html>

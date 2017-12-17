@@ -5,7 +5,9 @@
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
-Global $Config_INI = $System_DIR & "config.ini"
+;Global $Config_INI = $System_DIR & "config.ini"
+Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+If Not FileExists($Config_INI) Then FileCopy($System_DIR & "config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Version = IniRead($config_ini, "Settings", "Version", "")
 
 Global $UpdateTargetFolder = $Install_DIR

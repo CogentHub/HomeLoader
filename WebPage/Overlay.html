@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+ 
+<body>
+    <span class="h1" id="homel">HomeLoader Overlay</span>
+    
+    <h1 class="h1" id="HomeAppLabel">Home App:</h1>
+    <div class="dropdown">
+	  <button class="dropbtn" id="drop1">Select Home App</button>
+	  <div class="dropdown-content">
+	    <a href="javascript:Function_SaveHomeApp_Default();">Default SteamVR Home</a>
+	    <a href="javascript:Function_SaveHomeApp_SteamVRHome();">SteamVR Home</a>
+	    <a href="javascript:Function_SaveHomeApp_ViveHome();">Vive Home</a>
+	    <a href="javascript:Function_SaveHomeApp_JanusVR();">JanusVR</a>
+	    <a href="javascript:Function_SaveHomeApp_VRToolbox();">VR Toolbox</a>
+	    <a href="javascript:Function_SaveHomeApp_Other();">Other</a>
+	  </div>
+	</div>
+	&nbsp;
+	<button class="button" name="StartHomeApp" id="StartHomeApp" style="width=300px;height:50px">Start Home App</button>&nbsp;
+	<button class="button" name="Settings" id="Settings" style="width=300px;height:50px">Settings</button>&nbsp;
+	<button class="button" name="EditMode" id="EditMode" style="width=300px;height:50px">Edit Mode</button>&nbsp;
+	<br>
+	<br>
+	<img height="7" src="images/Frame.jpg" width="878">
+	<button class="button" name="GamePage1" id="GamePage1" style="height:33px">Steam Library</button>&nbsp;
+	<button class="button" name="GamePage2" id="GamePage2" style="height:33px">Non-Steam</button>&nbsp;
+	<button class="button" name="GamePage3" id="GamePage3" style="height:33px">Page 3</button>&nbsp;
+	<button class="button" name="GamePage4" id="GamePage4" style="height:33px">Page 4</button>&nbsp;
+	<button class="button" name="GamePage5" id="GamePage5" style="height:33px">Page 5</button>&nbsp;
+	<button class="button" name="GamePage6" id="GamePage6" style="height:33px">Page 6</button>&nbsp;
+	<img height="7" src="images/Frame.jpg" width="878">
+	<br>
+	<br>
+	<!-- The Modal -->
+	<div id="Modal2" class="modal2">
+	  <!-- Modal content -->
+	  <div class="modal2-content">
+	    <div class="modal2-header">
+	      <span class="close2">&times;</span>
+	      <h2>First Start</h2>
+	    </div>
+	    <div class="modal2-body">
+	      <p>This is the first start of the HomeLoader Overlay.</p>
+	      <p>The Overlay needs HomeLoader to be already installed to work properly. </p>
+	      <p>HomeLoader needs to be started at least one time after installation and an new Home App needs to be set through it. This can be also the original SteamVR Home, it just should not be set to 'default' to work properly.</p>
+	      <br>
+	      <a href="https://github.com/CogentHub/HomeLoader/releases">HomeLoader GitHub Download</a>
+	      <br>
+	      <br>
+	    </div>
+	    <div class="modal2-footer">
+	      <h3>First Start</h3>
+	    </div>
+	  </div>
+	</div>	
+	<div id="overlay" onclick="Function_Overlay_off()">
+	  <div id="text"></div>
+	    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+		<button class="buttonOverlay" name="StartGame" id="StartGame" style="height:50px">Start Game</button><br>
+		<button class="buttonOverlay" name="AddAsHomeApp" id="AddAsHomeApp" style="height:50px">Add as Home App</button><br>
+	    <div class="dropdownOverlay">
+		  <button class="dropdownOverlaybtn" id="drop2" style="height:50px">Add to Section</button>
+		  <div class="dropdown-content">
+		    <a href="javascript:Function_AddGame_To_Custom_3();" id="DropDownGamePage3">VR</a>
+		    <a href="javascript:Function_AddGame_To_Custom_4();" id="DropDownGamePage4">Favorites</a>
+		    <a href="javascript:Function_AddGame_To_Custom_5();" id="DropDownGamePage5">Custom 5</a>
+		    <a href="javascript:Function_AddGame_To_Custom_6();" id="DropDownGamePage6">Custom 6</a>
+		  </div>
+		</div>
+		<br>
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<button class="UpDownButtonUP" id="SS_UP1" onclick="Function_SS_UP1()">></button>
+		<input class="UpDown" id="SS_Input1" name="RTM" value="1.0">
+		<button class="UpDownButtonDOWN" id="SS_DOWN1" onclick="Function_SS_DOWN1()"><</button>&nbsp;
+		<label class="" for="max">RT Multiplier:</label>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<button class="UpDownButtonUP" id="SS_UP2" onclick="Function_SS_UP2()">></button>
+		<input class="UpDown" id="SS_Input2" name="SSS" value="1.0">
+		<button class="UpDownButtonDOWN" id="SS_DOWN2" onclick="Function_SS_DOWN2()"><</button>&nbsp;
+		<label class="UpDownLabel" for="max">SS Scale:</label>
+		<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<button class="UpDownButtonUP" id="SS_UP3" onclick="Function_SS_UP3()">></button>
+		<input class="UpDown" id="SS_Input3" name="ASF" value="true">
+		<button class="UpDownButtonDOWN" id="SS_DOWN3" onclick="Function_SS_DOWN3()"><</button>&nbsp;
+		<label class="UpDownLabel" for="max">Allow SS Filtering:</label>
+		<br>
+	</div>
+			
+    <div id="game-list">
+    	<div class="game">
+
+		</div>
+	</div>
+	  
+    <script src="vrub://libs/jquery-3.2.1.min.js"></script>
+    <script src="addon://overlays/HomeLoader/scripts.js"></script>
+    
+    <script>
+        var modal2 = document.getElementById('Modal2');
+		var span = document.getElementsByClassName("close2")[0];
+					
+		// When the user clicks on <span> (x), close the modal
+		span.onclick = function() {
+		    modal2.style.display = "none";
+		}
+		
+		// When the user clicks anywhere outside of the modal, close it
+		window.onclick = function(event) {
+		    if (event.target == modal2) {
+		        modal2.style.display = "none";
+		    }
+		}
+	</script>
+
+</body>
+</html>
