@@ -13,7 +13,7 @@ Opt("GUIOnEventMode", 1)
 
 #Region Declare Globals
 Global $Array_tools_vrmanifest_File, $GUI_Loading
-Global $HomeApp_Overlay, $HomeAppSteamID_Overlay, $HomeApp_Overlay, $HomeLoaderOverlaySteamID_Overlay
+Global $HomeApp_Overlay, $HomeAppSteamID_Overlay, $HomeLoaderOverlaySteamID_Overlay
 Global $PressedOverlayButton_Overlay, $AppIDLoaded_Overlay
 Global $OverlaySettings_RenderTargetMultiplier, $OverlaySettings_SupersampleScale, $OverlaySettings_AllowSupersampleFiltering
 Global $OverlaySettings_Checkbox1, $OverlaySettings_Checkbox2, $OverlaySettings_Checkbox3
@@ -148,7 +148,7 @@ If $First_Start = "true" Then
 EndIf
 
 If $Autostart_VRUB = "true" Then
-	If $UpdateOverlay = "true" Then _Copy_2_VRUtilityBelt()
+	;If $UpdateOverlay = "true" Then _Copy_2_VRUtilityBelt()
 	_Read_from_VRUB_PersistentStore_File()
 EndIf
 
@@ -322,7 +322,7 @@ Func _Read_from_VRUB_PersistentStore_File()
 		If $StringSplit[1] = "FirstStart" Then
 			$FirstStart_Overlay = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "FirstStart = <" & $FirstStart_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $HomeApp_Overlay)
+			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $FirstStart_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeApp" Then
 			$HomeApp_Overlay = $StringSplit[2] ; Home App
@@ -542,11 +542,13 @@ Func _Start_Home_APP()
 
 	If $Autostart_VRUB = "true" Then
 		If Not ProcessExists("VRUtilityBelt.exe") Then
-			;Sleep(10000)
+			_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+			Sleep(1000)
 			ShellExecute("steam://rungameid/645370")
 			Sleep(5000)
-			If $HomeApp_Overlay = "" Then _Write_HomeApp_to_VRUB_PersistentStore_File()
-			If $HomeAppSteamID_Overlay = "" Then _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
+			;If $HomeApp_Overlay = "" Then Or $HomeAppSteamID_Overlay = "" Then _Write_config_INI_Values_to_VRUB_PersistentStore_File()
+			;If $HomeApp_Overlay = "" Then _Write_HomeApp_to_VRUB_PersistentStore_File()
+			;If $HomeAppSteamID_Overlay = "" Then _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 		EndIf
 	EndIf
 
@@ -567,7 +569,6 @@ Func _Start_Home_APP()
 			EndIf
 		EndIf
 	EndIf
-
 EndFunc
 
 Func _Add_Default_SS_to_SteamVR()
@@ -776,6 +777,73 @@ EndFunc
 #endregion
 
 #Region Overlay Functions
+Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
+	Local $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
+	Local $NEW_sText = ""
+	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
+	;Local $filePath2 = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader2.json", @AppDataDir)
+    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+
+	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "200")
+	Local $appid_TEMP = ""
+	Local $SteamLibraryContent = ""
+
+	For $Loop_SteamLibrary = 1 To $NR_Applications
+		$appid_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_SteamLibrary, "appid", "")
+		 $SteamLibraryContent = $SteamLibraryContent & "_" & $appid_TEMP
+		 If $Loop_SteamLibrary = 1 Then $SteamLibraryContent = $appid_TEMP
+	Next
+
+    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
+		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
+		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
+        Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
+
+		;MsgBox($MB_SYSTEMMODAL, $i1, $StringSplit[1] & @CRLF & $StringSplit[2])
+
+		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then
+			;$HomeApp = $StringSplit[2]
+			If $HomeAppSteamID_Overlay = "" Then
+				If $i1 <> $aArray[0] Then
+					$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeLoaderOverlaySteamID & '",'
+				Else
+					$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $HomeLoaderOverlaySteamID & '"}'
+				EndIf
+			EndIf
+		Else
+			If $StringSplit[1] = "HomeApp" Then
+				;$HomeApp = $StringSplit[2]
+				If $HomeApp_Overlay = "" Then
+					If $i1 <> $aArray[0] Then
+						$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeApp & '",'
+					Else
+						$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $HomeApp & '"}'
+					EndIf
+				EndIf
+			Else
+				If $StringSplit[1] = "SteamLibrary" Then
+					If $i1 <> $aArray[0] Then
+						$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $SteamLibraryContent & '",'
+					Else
+						$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $SteamLibraryContent & '"}'
+					EndIf
+				Else
+					$NEW_sText = $NEW_sText & $aArray[$i1] & ","
+				EndIf
+			EndIf
+		EndIf
+		;MsgBox($MB_SYSTEMMODAL, "$NEW_sText", $NEW_sText)
+    Next
+	Local $StringRightCheck = StringRight($NEW_sText, '1')
+	;MsgBox($MB_SYSTEMMODAL, "$StringRightCheck", $StringRightCheck)
+	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
+	;MsgBox($MB_SYSTEMMODAL, "$NEW_sText 1", $filePath & @CRLF & @CRLF & $NEW_sText)
+	If FileExists($filePath) Then FileDelete($filePath)
+	FileWrite($filePath, $NEW_sText)
+EndFunc   ;==>Example
+
 Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 	Local $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
 	Local $NEW_sText = ""
@@ -852,7 +920,7 @@ Func _Copy_2_VRUtilityBelt()
 	Local $OverlayPage_path
 	Local $StartPage_Template_path = $Install_DIR & "WebPage\OverlayStartPage.html"
 
-	If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
+	;If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
 EndFunc
 
 Func _Sync_Config_INI()

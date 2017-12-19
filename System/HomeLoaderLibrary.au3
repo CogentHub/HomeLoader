@@ -187,8 +187,8 @@ If $Autostart_VRUB = "true" Then
 		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
 		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
 		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
-		_Create_Overlay_StartPage()
-		If $UpdateOverlay_SettingValue = "true" Then _Copy_2_VRUtilityBelt()
+		;_Create_Overlay_StartPage()
+		;If $UpdateOverlay_SettingValue = "true" Then _Copy_2_VRUtilityBelt()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating the Overlay:")
 		_Create_GamePages()
 		Exit
@@ -4974,7 +4974,7 @@ Func _Copy_2_VRUtilityBelt()
 	Local $OverlayPage_path
 	Local $StartPage_Template_path = $Install_DIR & "WebPage\OverlayStartPage.html"
 
-	If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
+	;If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
 EndFunc
 
 #endregion
@@ -5019,7 +5019,7 @@ EndFunc
 Func _Copy_2_VRToolBox()
 	Local $VRToolBox_path = $VRToolBox_Steam_Folder & "utils\StartPage.html"
 	Local $VRToolBox_image_path = $VRToolBox_Steam_Folder & "utils\images\"
-	Local $StartPage_Template_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
+	Local $VRToolBox_StartPage_Template_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
 	Local $PageImageAll = $Install_DIR & "WebPage\images\GamePageAllGames.png"
 	Local $PageImageNonSteamAppl = $Install_DIR & "WebPage\images\GamePage_NonSteamAppl.png"
 	Local $PageImage1 = $Install_DIR & "WebPage\images\GamePage1.png"
@@ -5040,7 +5040,7 @@ Func _Copy_2_VRToolBox()
 	If FileExists($PageImage5) Then FileCopy($PageImage4, $VRToolBox_image_path & "GamePage5.png", $FC_OVERWRITE + $FC_CREATEPATH)
 	If FileExists($PageImageGame) Then FileCopy($PageImageGame, $VRToolBox_image_path & "Game.png", $FC_OVERWRITE + $FC_CREATEPATH)
 
-	If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $VRToolBox_path, $FC_OVERWRITE + $FC_CREATEPATH)
+	If FileExists($VRToolBox_StartPage_Template_path) Then FileCopy($VRToolBox_StartPage_Template_path, $VRToolBox_path, $FC_OVERWRITE + $FC_CREATEPATH)
 EndFunc
 
 #endregion
