@@ -46,7 +46,7 @@ Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_
 Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group, $Playlist_GUI, $POS_X_PlaylistButton
 Global $TAB_NR, $listview_7, $listview_8, $listview_9, $listview_10, $listview_11, $listview_TEMP
 Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
-Global $Checkbox_Add_break, $Combo_Add_break, $GUI
+Global $Checkbox_Add_break, $Combo_Add_break, $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue
 #endregion
 
 Global $font = "arial"
@@ -172,7 +172,6 @@ If $TAB4_Label = "" Then $TAB4_Label = "Custom 2"
 If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #endregion
-
 
 If $Autostart_VRUB = "true" Then
 	Local $Parameter_1 = ""
