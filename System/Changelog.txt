@@ -1,3 +1,3 @@
 - Added HomeLoader Overlay (VRUB)
-- Added new File "HomeLoaderOverlay.exe"
+- Added new Files "HomeLoaderOverlay.exe" and "StartHomeApp.au3"
 - Changed/Optimized some functions for the new Overlay

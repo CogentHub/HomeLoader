@@ -32,8 +32,8 @@
 #include <IE.au3>
 #include <MsgBoxConstants.au3>
 #include <GuiSlider.au3>
-#include <SQLite.au3>
-#include <SQLite.dll.au3>
+;#include <SQLite.au3>
+;#include <SQLite.dll.au3>
 ;#include "_Zip.au3"
 #endregion
 
@@ -268,9 +268,9 @@ If $First_Start <> "true" Then
 	_GUICtrlButton_SetImage($Button_ShowGamePage, $gfx & "GamePage.bmp")
 	GuiCtrlSetTip(-1, "Opens the created Game Page for the current selection." & @CRLF)
 
-	Global $Button_Add2ViveHomeDB = GUICtrlCreateButton("Add to ViveHome DB", 290, 39, 51, 46, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Add2ViveHomeDB, $gfx & "ViveHomeDB.bmp")
-	GuiCtrlSetTip(-1, "Synchronizes the HomeLoader database with the Vive Home database." & @CRLF)
+	;Global $Button_Add2ViveHomeDB = GUICtrlCreateButton("Add to ViveHome DB", 290, 39, 51, 46, $BS_BITMAP)
+	;_GUICtrlButton_SetImage($Button_Add2ViveHomeDB, $gfx & "ViveHomeDB.bmp")
+	;GuiCtrlSetTip(-1, "Synchronizes the HomeLoader database with the Vive Home database." & @CRLF)
 
 	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
@@ -426,7 +426,7 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
 	GUICtrlSetOnEvent($Button_ShowGamePage, "_Show_HTML_GamePage_GUI")
-	GUICtrlSetOnEvent($Button_Add2ViveHomeDB, "_Button_Add2ViveHomeDB")
+	;GUICtrlSetOnEvent($Button_Add2ViveHomeDB, "_Button_Add2ViveHomeDB")
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
 
@@ -3174,125 +3174,6 @@ Func _Button_ReScan_Steam_Library()
 	_Read_from_INI_ADD_2_ListView()
 	_GUICtrlStatusBar_SetText($Statusbar, "Rescan of Steam Library finished." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
-
-
-Func _Button_Add2ViveHomeDB_Backup()
-	Local $Check_GameName
-	Local $VIVE_Home_DB_Path = $System_DIR & "vive.sqlite"
-	Local $HomeLoader_DB_Path = $System_DIR & "homeloader.sqlite"
-	$VIVE_Home_DB_TABLE_Name = "apps"
-
-	Local $hQuery, $aRow, $iRows, $iCols, $aNames
-
-	_SQLite_Startup()
-
-	Local $VIVE_Home_DB = _SQLite_Open($VIVE_Home_DB_Path) ; open Database
-
-	_SQLite_GetTable2d(-1, "SELECT * FROM " & $VIVE_Home_DB_TABLE_Name & ";", $aRow, $iRows, $iCols)
-	If $iRows <> "" Then $iRows = $iRows + 1
-	If $iRows = "" Then $iRows = 1
-
-
-	_SQLite_Query($VIVE_Home_DB, "SELECT ROWID,* FROM " & $VIVE_Home_DB_TABLE_Name & " ORDER BY ROWID;", $hQuery)
-
-
-	_SQLite_FetchNames($hQuery, $aNames)
-	ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aNames[0], $aNames[1], $aNames[2], $aNames[3], $aNames[4], $aNames[5], $aNames[6], $aNames[7], $aNames[8], $aNames[9]) & @CRLF)
-
-	While _SQLite_FetchData($hQuery, $aRow, False, False) = $SQLITE_OK ; Read Out the next Row
-		ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aRow[0], $aRow[1], $aRow[2], $aRow[3], $aRow[4], $aRow[5], $aRow[6], $aRow[7], $aRow[8], $aRow[9]) & @CRLF)
-	WEnd
-
-
-	_SQLite_Query($VIVE_Home_DB, "SELECT ROWID,* FROM " & $VIVE_Home_DB_TABLE_Name & " ORDER BY ROWID;", $hQuery)
-	_SQLite_FetchNames($hQuery, $aNames)
-
-
-	For $NR = 1 To $iRows - 1
-		_SQLite_GetTable2d(-1, "SELECT * FROM " & $VIVE_Home_DB_TABLE_Name & ";", $aRow, $iRows, $iCols)
-		If $iRows <> "" Then $iRows = $iRows + 1
-		If $iRows = "" Then $iRows = 1
-
-		_SQLite_FetchData($hQuery, $aRow, False, False) ; Read Out the next Row
-		ConsoleWrite(StringFormat(" %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s  %-10s %-10s  %-10s  %-10s ", $aRow[0], $aRow[1], $aRow[2], $aRow[3], $aRow[4], $aRow[5], $aRow[6], $aRow[7], $aRow[8], $aRow[9]) & @CRLF)
-
-		For $NR_2 = 1 To $iRows - 1
-			$Check_Application_Name = IniRead($ApplicationList_INI, "Application_" & $NR_2, "Name", "")
-			If $Check_Application_Name = $Check_GameName Then ; $ListView_Item_Array[1]
-				$Check_Application_AppId = IniRead($ApplicationList_INI, "Application_" & $NR_2, "AppId", "")
-				;$NewIcon_Path = $Icons_DIR_2 & "Favorites\" & $Check_Application_AppId & ".jpg"
-				$GetItem_NR = IniRead($ApplicationList_INI, "Application_" & $Check_Application_AppId, "NR", "")
-				;IniWrite($ApplicationList_INI, "Application_" & $Check_Application_AppId, "IconPath", $NewIcon_Path)
-				;IniWrite($ApplicationList_INI, "Application_" & $GetItem_NR, "IconPath", $NewIcon_Path)
-				ExitLoop
-			EndIf
-		Next
-
-		If $Check_Application_AppId = $aRow[1] Then
-			;_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
-			;								$aRow[0] & "','" & $aRow[1] & "','" & $aRow[2] & "','" & $aRow[3] & "','" & $aRow[4] & "','" & "1" & "','" & $aRow[6] & "','" & $aRow[7] & "','" & $aRow[8] & "','" & $NewIcon_Path & "','" & $aRow[10] & "');")
-
-		Else
-			;_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
-			;								$aRow[0] & "','" & $aRow[1] & "','" & $aRow[2] & "','" & $aRow[3] & "','" & $aRow[4] & "','" & $aRow[5] & "','" & $aRow[6] & "','" & $aRow[7] & "','" & $aRow[8] & "','" & $aRow[9] & "','" & $aRow[10] & "');")
-		EndIf
-	Next
-
-	_SQLite_QueryFinalize($hQuery)
-	_SQLite_Close($System_DIR & "vive.sqlite")
-	_SQLite_Shutdown()
-
-	Sleep(100)
-
-	$ListView_Item_Array = 0
-	$ListView_Selected_Row_Value = ""
-EndFunc
-
-Func _Button_Add2ViveHomeDB()
-	Local $Check_GameName
-	Local $VIVE_Home_DB_Path = "C:\Users\" & @UserName & "\AppData\Roaming\HTC\Vive\vive.sqlite"
-	Local $HomeLoader_DB_Path = $System_DIR & "homeloader.sqlite"
-	$VIVE_Home_DB_TABLE_Name = "apps"
-
-	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
-
-	_SQLite_Startup()
-
-	Local $VIVE_Home_DB = _SQLite_Open($VIVE_Home_DB_Path) ; open Database
-
-	For $NR = 1 To $NR_Applications
-		$Check_Application_NR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "NR", "")
-		$Check_Application_appid = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "appid", "")
-		$Check_Application_name = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "name", "")
-		$Check_Application_installdir = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR, "installdir", "")
-		$Check_Application_IconPath = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_Application_appid, "IconPath", "")
-
-		$rowid = $Check_Application_NR
-		$app_key = "steam.app." & $Check_Application_NR
-		$img_url = "http:\\cdn.akamai.steamstatic.com\steam\apps\steam.app." & $Check_Application_appid & "\header.jpg"
-		$img_file_path = $Icons & "460x215\SS_Values\" & "steam.app." & $Check_Application_appid & ".jpg"
-		If Not FileExists($img_file_path) Then $img_file_path = $Icons & "460x215\" & "steam.app." & $Check_Application_appid & ".jpg"
-		If Not FileExists($img_file_path) Then $img_file_path = $Icons & "steam.app." & $Check_Application_appid & ".jpg"
-		If Not FileExists($img_file_path) Then $img_file_path = $Check_Application_IconPath
-		If Not FileExists($img_file_path) Then $img_file_path = $gfx & "Icon_Preview2" & ".jpg"
-		If Not FileExists($img_file_path) Then $img_file_path = $img_url
-
-		If $Check_Application_AppId <> "" Then
-			_SQLite_Exec($VIVE_Home_DB, "REPLACE INTO " & $VIVE_Home_DB_TABLE_Name & "(rowid,app_key,launch_count,last_launched,total_played,is_favorite,installed_time,img_url,img_timestamp,img_file_path,img_fetch_time) VALUES ('" & _
-											$rowid & "','" & $app_key & "','" & "0" & "','" & "0" & "','" & "0" & "','" & "0" & "','" & "0" & "','" & $img_url & "','" & "0" & "','" & $img_file_path & "','" & "0" & "');")
-		EndIf
-
-		;Sleep(100)
-		GUICtrlSetData($Anzeige_Fortschrittbalken_2, $NR * 100 / $NR_Applications)
-	Next
-
-	_SQLite_Close($VIVE_Home_DB_Path)
-	_SQLite_Shutdown()
-
-	Sleep(700)
-	GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
-EndFunc
-
 #endregion
 
 #Region Func Add to Library GUI
