@@ -66,12 +66,12 @@ Global $OverlaySettings_LabelCustomPage6
 Global $OverlayGameRenderTargetMultiplier, $OverlayGameSupersampleScale, $OverlayGameAllowSupersampleFiltering
 
 
-
 If $CmdLine[0] Then
-	;_ArrayDisplay($CmdLine)
+	_ArrayDisplay($CmdLine)
 	$Parameter_1 = $CmdLine[1]
-	;MsgBox(0, "$Parameter_1", $Parameter_1)
+	MsgBox(0, "$Parameter_1", $Parameter_1)
 EndIf
+
 
 If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
 	Local $HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")

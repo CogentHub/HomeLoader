@@ -137,13 +137,15 @@ If $Autostart_VRUB = "true" Then
 		Exit
 	EndIf
 Else
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating without Overlay:")
+	_Start_HomeLoaderLibrary_Update()
 	If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
 	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
 EndIf
 
 
 #Region GUI
-	_Main_GUI()
+	;_Main_GUI()
 #endregion
 
 _Min_Close_Oculus()
@@ -1251,9 +1253,17 @@ EndFunc
 #Region Restart/Exit
 Func _Start_HomeLoaderLibrary_UpdateOverlay()
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "UpdateOverlay", $System_DIR)
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.exe", "UpdateOverlay", $System_DIR)
 	Else
-		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "UpdateOverlay", $System_DIR)
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.au3", "UpdateOverlay", $System_DIR)
+	EndIf
+EndFunc
+
+Func _Start_HomeLoaderLibrary_Update()
+	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+	Else
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
 	EndIf
 EndFunc
 #endregion

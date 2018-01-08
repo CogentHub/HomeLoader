@@ -152,15 +152,15 @@ If $Autostart_VRUB = "true" Then
 	_Read_from_VRUB_PersistentStore_File()
 EndIf
 
-_Start_Home_APP()
-
-Sleep(500)
-
 If $Autostart_VRUB = "false" Then
 	If $ScanLibrary_OnStart_SettingValue = "true" Or $Add_PlayersOnline_to_Icons = "true" Or $Add_SS_to_Icons = "true" Then
 		_Start_Home_Loader()
 	EndIf
 EndIf
+
+_Start_Home_APP()
+
+Sleep(500)
 
 _Sync_Config_INI()
 
@@ -953,7 +953,7 @@ Func _Start_Home_APP_File()
 	Else
 		ShellExecute($System_DIR & "StartHomeApp.au3", "", $System_DIR)
 	EndIf
-	Exit
+	;Exit
 EndFunc
 
 Func _FirstStart_Restart()
