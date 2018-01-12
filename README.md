@@ -9,7 +9,7 @@ Please read the Home Loader Guide for further explanations and information to th
 # Preview Video / Installation / First Start:
 https://youtu.be/NLHmKWOvmSA
 
-https://www.youtube.com/watch?v=Tkwu8j0XDK8&t
+https://youtu.be/Tkwu8j0XDK8
 
 https://youtu.be/0F6zeGrc8KA
 
