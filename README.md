@@ -7,11 +7,11 @@ Please read the Home Loader Guide for further explanations and information to th
 [HomeLoaderGuide.pdf](https://github.com/CogentHub/HomeLoader/blob/master/HomeLoaderGuide.pdf)
 
 # Preview Video / Installation / First Start:
-https://youtu.be/NLHmKWOvmSA
+HomeLoader 0.63 Preview: https://youtu.be/NLHmKWOvmSA
 
-https://youtu.be/Tkwu8j0XDK8
+Using VR Toolbox as Home App/Game Launcher: https://youtu.be/Tkwu8j0XDK8
 
-https://youtu.be/0F6zeGrc8KA
+Home Loader - First Start Preview: https://youtu.be/0F6zeGrc8KA
 
 # Pictures:
 
