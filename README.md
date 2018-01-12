@@ -6,7 +6,9 @@ Please read the Home Loader Guide for further explanations and information to th
 
 [HomeLoaderGuide.pdf](https://github.com/CogentHub/HomeLoader/blob/master/HomeLoaderGuide.pdf)
 
-# Installation / First Start Preview Video:
+# Preview Video / Installation / First Start:
+https://youtu.be/NLHmKWOvmSA
+https://www.youtube.com/watch?v=Tkwu8j0XDK8&t
 https://youtu.be/0F6zeGrc8KA
 
 # Pictures:
