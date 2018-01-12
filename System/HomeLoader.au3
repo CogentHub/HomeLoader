@@ -99,7 +99,7 @@ Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 Global $Steam_stats_log_txt = $Install_Folder_Steam_1 & "\logs\stats_log.txt"
 
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
-Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $DefaultClickAction = IniRead($Config_INI, "TEMP", "DefaultClickAction", "")
@@ -732,7 +732,6 @@ Func _Add_SS_to_SteamVR()
 	FileCopy($default_vrsettings_File_new, $default_vrsettings_File, $FC_OVERWRITE)
 	FileDelete($default_vrsettings_File_new)
 	If Not FileExists($default_vrsettings_File) Then FileCopy($default_vrsettings_File_BAK, $default_vrsettings_File, $FC_OVERWRITE)
-	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "loaded")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS to SteamVR: " & "<App ID: " & $Game_ID & ">" & " - " & "<App Name: " & $Steam_app_Name & ">")
 EndFunc
 
@@ -1261,9 +1260,9 @@ EndFunc
 
 Func _Start_HomeLoaderLibrary_Update()
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.exe", "Update", $System_DIR)
 	Else
-		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
+		ShellExecuteWait($System_DIR & "HomeLoaderLibrary.au3", "Update", $System_DIR)
 	EndIf
 EndFunc
 #endregion

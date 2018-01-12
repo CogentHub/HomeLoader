@@ -9,6 +9,7 @@
 #include <GUIConstants.au3>
 #include <InetConstants.au3>
 #include "_Zip.au3"
+#include <Date.au3>
 
 
 Opt("GUIOnEventMode", 1)
@@ -60,7 +61,7 @@ Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
 
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
-Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -88,6 +89,8 @@ Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", ""
 Global $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
 
 Global $State_Checkbox_Autostart_VRUB = IniRead($config_ini,"Settings", "Autostart_VRUB", "")
+
+Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
@@ -410,17 +413,17 @@ Func _StartUp_settings()
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_StartUp_arial)
 
-	Global $StartUp_Radio_0 = GUICtrlCreateRadio("Default", 10, $POS_Y_HomeApp_Group + 20, 55, 20) ; Default
-		GuiCtrlSetTip(-1, "Sets default SteamVR Home as SteamVR Home App without the use of any HomeLoader functions.")
-		GUICtrlSetOnEvent($StartUp_Radio_0, "_StartUp_Radio_0")
-
-	Global $StartUp_Radio_1 = GUICtrlCreateRadio("SteamVR", 80, $POS_Y_HomeApp_Group + 20, 65, 20) ; SteamVR
+	Global $StartUp_Radio_0 = GUICtrlCreateRadio("SteamVR", 10, $POS_Y_HomeApp_Group + 20, 62, 20) ; Default
 		GuiCtrlSetTip(-1, "Sets SteamVR as SteamVR Home App.")
-		GUICtrlSetOnEvent($StartUp_Radio_1, "_StartUp_Radio_1")
+		GUICtrlSetOnEvent($StartUp_Radio_0, "_StartUp_Radio_1")
 
-	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Vive Home", 165, $POS_Y_HomeApp_Group + 20, 70, 20) ; Vive Home
+	Global $StartUp_Radio_1 = GUICtrlCreateRadio("Vive Home", 80, $POS_Y_HomeApp_Group + 20, 70, 20) ; SteamVR
 		GuiCtrlSetTip(-1, "Sets Vive Home as SteamVR Home App.")
-		GUICtrlSetOnEvent($StartUp_Radio_2, "_StartUp_Radio_2")
+		GUICtrlSetOnEvent($StartUp_Radio_1, "_StartUp_Radio_2")
+
+	Global $StartUp_Radio_2 = GUICtrlCreateRadio("Viveport VR", 160, $POS_Y_HomeApp_Group + 20, 75, 20) ; Vive Home
+		GuiCtrlSetTip(-1, "Sets Viveport as SteamVR Home App.")
+		GUICtrlSetOnEvent($StartUp_Radio_2, "_StartUp_Radio_6")
 
 	Global $StartUp_Radio_3 = GUICtrlCreateRadio("JanusVR", 10, $POS_Y_HomeApp_Group + 42, 60, 20) ; JanusVR
 		GuiCtrlSetTip(-1, "Sets JanusVR as SteamVR Home App.")
@@ -430,21 +433,22 @@ Func _StartUp_settings()
 		GuiCtrlSetTip(-1, "Sets VR Toolbox as SteamVR Home App.")
 		GUICtrlSetOnEvent($StartUp_Radio_4, "_StartUp_Radio_4")
 
-	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 165, $POS_Y_HomeApp_Group + 42, 45, 20) ; Other
+	Global $StartUp_Radio_5 = GUICtrlCreateRadio("Other", 160, $POS_Y_HomeApp_Group + 42, 45, 20) ; Other
 	GuiCtrlSetTip(-1, "Sets any other Apllication as SteamVR Home App.")
 		GUICtrlSetOnEvent($StartUp_Radio_5, "_StartUp_Radio_5")
 
 	If $HomeApp <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
-	If $HomeApp = "Default SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
-	If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
-	If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
+	;If $HomeApp = "Default SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
+	If $HomeApp = "Viveport VR" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
 	If $HomeApp = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
 	If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
 	If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
 
 
 	Global $Button_Restore_DefaultSteamVRHome = GUICtrlCreateButton("Restore Default SteamVR Home Path", 10, $POS_Y_HomeApp_Group + 68, 223, 25)
-		GuiCtrlSetTip(-1, "Restores the SteamVR Home Path using the Backup Files.")
+		GuiCtrlSetTip(-1, "Restores the SteamVR Home Path.")
 		GUICtrlSetOnEvent($Button_Restore_DefaultSteamVRHome, "_Restore_Default_SteamVR_Home")
 
 
@@ -739,13 +743,14 @@ Func _StartUp_Radio_1() ; SteamVR Home
 EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Setting Home App to Vive Home:")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Vive Home")
 	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
-	Local $ViveHome_App_Path = $Install_DIR & "Apps\ViveHome\Home\win32\ViveHome.exe"
 	Local $ViveHome_Path = $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe"
 
 	If FileExists($ViveHome_SDK_Path) Then $ViveHome_Path = $ViveHome_SDK_Path
-	If FileExists($ViveHome_App_Path) Then $ViveHome_Path = $ViveHome_App_Path
+
+	FileWriteLine($stats_log_FILE, "- Vive Home Path = " & $ViveHome_Path)
 
 	If FileExists($ViveHome_Path) Then
 		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
@@ -757,15 +762,18 @@ Func _StartUp_Radio_2() ; Vive Home
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	EndIf
 
-	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-	_ADD_2_SteamVR_Home_default()
-	$HomeAppGroup_Label = "Home app:"
-	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
-	GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
-	MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Vive Home' app was set as Home app.")
-	_StartUp_Button_HomeLoader()
+	If FileExists($ViveHome_Path) Then
+		IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
+		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+		_ADD_2_SteamVR_Home_default()
+		$HomeAppGroup_Label = "Home app:"
+		If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+		GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Vive Home' app was set as Home app.")
+		_StartUp_Button_HomeLoader()
+	EndIf
 	_Sync_Config_INI()
+	;MsgBox(0, "HomePath", $ViveHome_Path)
 EndFunc
 
 Func _StartUp_Radio_3() ; Janus VR
@@ -871,6 +879,37 @@ Func _StartUp_Radio_5() ; Other
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 	_StartUp_Add_Other_GUI()
 	_Sync_Config_INI()
+EndFunc
+
+Func _StartUp_Radio_6() ; Viveport VR
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Setting Home App to Viveport VR:")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Viveport VR")
+	Local $Viveport_Path = $HTCVive_Path & "Updater\App\ViveportVR\VPNextApp.exe"
+
+	FileWriteLine($stats_log_FILE, "- ViveportVR Path = " & $Viveport_Path)
+
+	If FileExists($Viveport_Path) Then
+		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
+		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $Viveport_Path)
+		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Viveport VR")
+	Else
+		$FileSelect = FileOpenDialog("Select 'VPNextApp.exe' File", $Install_DIR, "Executable (*.exe)")
+		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $FileSelect)
+		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Viveport VR")
+	EndIf
+
+	If FileExists($Viveport_Path) Then
+		IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
+		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
+		_ADD_2_SteamVR_Home_default()
+		$HomeAppGroup_Label = "Home app:"
+		If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
+		GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Viveport VR' app was set as Home app.")
+		_StartUp_Button_HomeLoader()
+	EndIf
+	_Sync_Config_INI()
+	;MsgBox(0, "HomePath", $Viveport_Path)
 EndFunc
 
 Func _DROPDOWN_Other_GUI() ; Other GUI DropDown
@@ -1069,7 +1108,11 @@ EndFunc
 
 Func _Restore_Default_SteamVR_Home()
 	FileCopy($Steam_tools_vrmanifest_File_BAK, $Steam_tools_vrmanifest_File)
-	$WinName = "SteamVR Home"
+	$WinName = "Default SteamVR Home"
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Default SteamVR Home")
+	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
+	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Default SteamVR Home")
+	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 	$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
 	$NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/StartSteamVRHome.exe"
 	_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
@@ -1084,7 +1127,7 @@ Func _Restore_Default_SteamVR_Home()
 
 		If $LOOP_vrmanifest = $Line_NR_binary_path_windows Then
 			$NewLine = '			"binary_path_windows" : "' & $NewHomePath & '",'
-			If $WinName = "SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
+			If $WinName = "Default SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
 			FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
 		Else
 			FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])

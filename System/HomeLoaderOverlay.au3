@@ -23,7 +23,7 @@ Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "Ste
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
-Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -522,7 +522,6 @@ Func _Add_SS_to_SteamVR()
 	FileCopy($default_vrsettings_File_new, $default_vrsettings_File, $FC_OVERWRITE)
 	FileDelete($default_vrsettings_File_new)
 	If Not FileExists($default_vrsettings_File) Then FileCopy($default_vrsettings_File_BAK, $default_vrsettings_File, $FC_OVERWRITE)
-	IniWrite($Config_INI, "TEMP", "HomeLoaderState_SSDATA", "loaded")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS to SteamVR: " & "<App ID: " & $Game_ID & ">" & " - " & "<App Name: " & $Steam_app_Name & ">")
 EndFunc
 

@@ -89,7 +89,7 @@ Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 Global $VRToolBox_Steam_Folder = $Steam_Path & "steamapps\common\VRToolbox\"
 
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
-Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\HTCVRMarketplaceUserContextHelper.exe', '')
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -169,6 +169,7 @@ If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #endregion
 
+
 If $Autostart_VRUB = "true" Then
 	Local $Parameter_1 = ""
 	If $CmdLine[0] Then
@@ -177,6 +178,7 @@ If $Autostart_VRUB = "true" Then
 	EndIf
 
 	If $Parameter_1 = "UpdateOverlay" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating Overlay:")
 		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
@@ -185,9 +187,12 @@ If $Autostart_VRUB = "true" Then
 		;_Create_Overlay_StartPage()
 		;If $UpdateOverlay_SettingValue = "true" Then _Copy_2_VRUtilityBelt()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating the Overlay:")
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Game Pages:")
 		_Create_GamePages()
-		;_Create_SinglePage_all()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Game Pages:")
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Single Game Pages:")
 		_Create_SinglePages()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Single Game Pages:")
 		Exit
 	EndIf
 Else
@@ -197,24 +202,33 @@ Else
 		$Parameter_1 = $CmdLine[1]
 	EndIf
 
-	$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
-	$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+	If $Parameter_1 = "Update" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating:")
+		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
+		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 
-	If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
-	If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
-	If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
-	_Create_GamePages()
-	;_Create_SinglePage_all()
-	_Create_SinglePages()
+		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
+		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
+		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating:")
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Game Pages:")
+		_Create_GamePages()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Game Pages:")
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Single Game Pages:")
+		_Create_SinglePages()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Single Game Pages:")
 
-	If $Parameter_1 = "UpdateStartPage" Then
-		_Create_VRToolBox_StartPage()
-		_Copy_2_VRToolBox()
 		Exit
 	EndIf
-	Exit
-EndIf
 
+	If $Parameter_1 = "UpdateStartPage" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating VRToolBox StartPage:")
+		_Create_VRToolBox_StartPage()
+		_Copy_2_VRToolBox()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating VRToolBox StartPage:")
+		Exit
+	EndIf
+EndIf
 
 #Region GUI
 
@@ -1098,132 +1112,6 @@ Func _SS_GUI()
 	GUISetState()
 EndFunc
 
-Func _Playlist_GUI()
-	$Playlist_GUI = GUICreate("Playlist", 600, 485, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
-
-	Global $TAB_NR = GUICtrlCreateTab(197, 50, 555, 275, BitOR($TCS_BUTTONS, $TCS_FLATBUTTONS))
-	GUICtrlSetOnEvent($TAB_NR, "_Tab")
-
-	Global $TAB_NR_1 = GUICtrlCreateTabItem("Playlist 1")
-	_Create_ListView_7()
-	GUICtrlCreateTabItem("")
-
-	Global $TAB_NR_2 = GUICtrlCreateTabItem("Playlist 2")
-	_Create_ListView_8()
-	GUICtrlCreateTabItem("")
-
-	Global $TAB_NR_3 = GUICtrlCreateTabItem("Playlist 3")
-	_Create_ListView_9()
-	GUICtrlCreateTabItem("")
-
-	Global $TAB_NR_4 = GUICtrlCreateTabItem("Playlist 4")
-	_Create_ListView_10()
-	GUICtrlCreateTabItem("")
-
-	Global $TAB_NR_5 = GUICtrlCreateTabItem("Playlist 5")
-	_Create_ListView_11()
-	GUICtrlCreateTabItem("")
-
-
-	GUICtrlCreateGroup("Create / Add Appl. to Playlist", 5, 5, 591, 325)
-	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
-	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
-
-	Global $Combo_Playlist_LIBRARY = GUICtrlCreateCombo("Choose LIBRARY", 10, 70, 175, 25, $CBS_DROPDOWNLIST)
-	GUICtrlSetData(-1, $TAB1_Label & "|" & $TAB2_Label & "|" & $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, $TAB1_Label)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetOnEvent(- 1, "_Combo_Playlist_LIBRARY")
-
-	Global $Combo_Choose_Application = GUICtrlCreateCombo("Choose Application", 10, 105, 175, 25)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetOnEvent(- 1, "_Combo_Choose_Application")
-
-
-	GUICtrlCreateLabel("Playtime", 10, 147, 120, 30)
-	GUICtrlSetFont(-1, 11, 400, 6, "arial")
-	GUICtrlCreateLabel("[Minutes]", 67, 148, 120, 30)
-	GUICtrlSetFont(-1, 9, 400, 1, "arial")
-
-	GUICtrlCreateLabel("renderTargetM.", 10, 182, 140, 30)
-	GUICtrlSetFont(-1, 11, 400, 6, "arial")
-
-	GUICtrlCreateLabel("supersampleS.", 10, 217, 140, 30)
-	GUICtrlSetFont(-1, 11, 400, 6, "arial")
-
-	GUICtrlCreateLabel("SupersampleF.", 10, 252, 140, 20)
-	GUICtrlSetFont(-1, 11, 400, 6, "arial")
-
-
-	Global $Combo_Playtime = GUICtrlCreateCombo("", 120, 142, 65, 20)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetData(-1, "05" & "|" & "10" & "|" & "15" & "|" & "20" & "|" & "30" & "|" & "45" & "|" & "60" & "|" & "90" & "|" & "120", "15")
-
-	Global $Combo_renderTargetMultiplie = GUICtrlCreateCombo("", 120, 177, 65, 20)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetData(-1, "0.5" & "|" & "0.6" & "|" & "0.7" & "|" & "0.8" & "|" & "0.9" & "|" & "1.0" & "|" & "1.1" & "|" & "1.2" & "|" & "1.3" & "|" & "1.4" & "|" & _
-						"1.5" & "|" & "1.6" & "|" & "1.7" & "|" & "1.8" & "|" & "1.9" & "|" & "2.0" & "|" & "2.1" & "|" & "2.2" & "|" & "2.3" & "|" & "2.4" & "|" & "2.5", "1.0")
-
-	Global $Combo_supersampleScale = GUICtrlCreateCombo("1.0", 120, 212, 65, 20)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetData(-1, "0.5" & "|" & "0.6" & "|" & "0.7" & "|" & "0.8" & "|" & "0.9" & "|" & "1.0" & "|" & "1.1" & "|" & "1.2" & "|" & "1.3" & "|" & "1.4" & "|" & _
-						"1.5" & "|" & "1.6" & "|" & "1.7" & "|" & "1.8" & "|" & "1.9" & "|" & "2.0" & "|" & "2.1" & "|" & "2.2" & "|" & "2.3" & "|" & "2.4" & "|" & "2.5", "1.0")
-
-	Global $Combo_allowSupersampleFiltering = GUICtrlCreateCombo("", 120, 247, 65, 20)
-	GUICtrlSetFont(-1, 12, 400, 2, "arial")
-	GUICtrlSetData(-1, "true" & "|" & "false", "true")
-
-
-	Global $Button_Add2Playlist = GUICtrlCreateButton("Add to Playlist", 9, 282, 177, 36, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Add2Playlist, $gfx & "Add2Playlist.bmp")
-	GUICtrlSetOnEvent(- 1, "_Button_Add2Playlist")
-
-
-	GUICtrlCreateGroup("Control Playlist", 5, 340, 591, 100)
-	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
-	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
-
-	Global $Button_StartPlaylist = GUICtrlCreateButton("Add to Playlist", 9, 380, 136, 53, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_StartPlaylist, $gfx & "StartPlaylist.bmp")
-	GUICtrlSetOnEvent(- 1, "_Button_StartPlaylist")
-
-	Global $Button_StopPlaylist = GUICtrlCreateButton("Add to Playlist", 148, 380, 136, 53, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_StopPlaylist, $gfx & "StopPlaylist.bmp")
-	GUICtrlSetOnEvent(- 1, "_Button_StopPlaylist")
-
-	$Add_break = IniRead($Playlist_1_INI, "Playlist", "Add_break", "false")
-	GUICtrlCreateLabel("", 287, 383, 22, 22)
-	GUICtrlSetBkColor(-1, 0)
-	GUICtrlSetState(-1, $GUI_DISABLE)
-	If $Add_break = "true" Then $State_Checkbox_Add_break = "X"
-	If $Add_break <> "true" Then $State_Checkbox_Add_break = ""
-	Global $Checkbox_Add_break = GUICtrlCreateLabel($State_Checkbox_Add_break, 288, 384, 20, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
-	GUICtrlSetFont(-1, 16)
-	$Checkbox_Add_break_Label = GUICtrlCreateLabel("Break between applications", 312, 385, 199, 23) ; ; +26
-	GUICtrlSetFont(-1, 13, 400, 1, "arial")
-	GUICtrlSetOnEvent($Checkbox_Add_break, "_Checkbox_Add_break")
-	GUICtrlSetOnEvent($Checkbox_Add_break_Label, "_Checkbox_Add_break")
-
-	Global $Combo_Add_break = GUICtrlCreateCombo("", 513, 382, 77, 20)
-	GUICtrlSetFont(-1, 11, 400, 2, "arial")
-	GUICtrlSetData(-1, "00 Min." & "|" & "01 Min." & "|" & "02 Min." & "|" & "04 Min." & "|" & "06 Min." & "|" & "08 Min." & "|" & "10 Min." & "|" & "15 Min.")
-	GUICtrlSetOnEvent(- 1, "_Combo_Add_break")
-
-
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 560, 445, 35, 35, $BS_BITMAP)
-	GUICtrlSetOnEvent(- 1, "_Button_Exit_Playlist_GUI")
-	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
-	GuiCtrlSetTip(-1, "Closes GUI Window.")
-
-
-	$State_Combobox = GUICtrlRead($Combo_Playlist_LIBRARY)
-	If $State_Combobox <> "" And $State_Combobox <> "Choose Application" Then _Combo_Playlist_LIBRARY()
-
-	_Read_from_INI_ADD_2_Playlist_ListView_7()
-
-	GUISetState()
-EndFunc
 
 Func _Update_StatusBar()
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
