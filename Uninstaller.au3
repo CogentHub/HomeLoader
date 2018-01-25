@@ -59,9 +59,9 @@ Func _Start_Uninstal()
 	DirRemove($Install_DIR & "WebPage", 1)
 	FileDelete($Install_DIR & "Uninstaller.exe")
 	FileDelete($Install_DIR & "Uninstaller.au3")
-	FileDelete($Install_DIR & "Uninstal.exe")
+	;FileDelete($Install_DIR & "Uninstal.exe")
 	Sleep(500)
-	If FileExists($Install_DIR & "Uninstal.exe") Then FileDelete($Install_DIR & "Uninstal.exe")
+	;If FileExists($Install_DIR & "Uninstal.exe") Then FileDelete($Install_DIR & "Uninstal.exe")
 	DirRemove($Install_DIR, 1)
 	Exit
 EndFunc

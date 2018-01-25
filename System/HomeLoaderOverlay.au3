@@ -357,7 +357,6 @@ Func _StartUp_Radio_0() ; Default [SteamVR Home]
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Default SteamVR Home")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	_ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Sync_Config_INI()
@@ -368,7 +367,6 @@ Func _StartUp_Radio_1() ; SteamVR Home
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Sync_Config_INI()
@@ -386,7 +384,6 @@ Func _StartUp_Radio_2() ; Vive Home
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $ViveHome_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Sync_Config_INI()
@@ -404,7 +401,6 @@ Func _StartUp_Radio_3() ; Janus VR
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Sync_Config_INI()
@@ -415,7 +411,6 @@ Func _StartUp_Radio_4() ; VR Toolbox
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Sync_Config_INI()
@@ -439,20 +434,13 @@ Func _StartGame_Check()
 	Local $Application_IconPath = IniRead($ApplicationList_Read, "Application_" & $SteamGameID, "IconPath", "")
 
 	If $Add_SS_per_game = "true" Then
-		;MsgBox(0, "_StartGame_Check 1", $Add_SS_per_game & @CRLF & $SteamGameID)
 		_Add_SS_to_SteamVR()
 
 		If ProcessExists("vrmonitor.exe") Then
 			ProcessClose("vrmonitor.exe")
-			;Sleep(10000)
-			;ShellExecute("steam://rungameid/250820")
 		EndIf
 
 		Sleep(7000)
-
-		;Do
-			;Sleep(1000)
-		;Until ProcessExists("vrmonitor.exe")
 
 		ShellExecute("steam://rungameid/" & $SteamGameID)
 
@@ -484,8 +472,6 @@ Func _Add_SS_to_SteamVR()
 	Local $renderTargetMultiplier_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "renderTargetMultiplier", $default_renderTargetMultiplier_value)
 	Local $supersampleScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "supersampleScale", $default_supersampleScale_value)
 	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "allowSupersampleFiltering", $default_allowSupersampleFiltering_value)
-
-	;MsgBox(0, "_Add_SS_to_SteamVR 1", $Add_SS_per_game & @CRLF & @CRLF & $Game_ID & @CRLF & $renderTargetMultiplier_value & @CRLF & $supersampleScale_value & @CRLF & $allowSupersampleFiltering_value)
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " <renderTargetMultiplier: " & $renderTargetMultiplier_value & ">" & " - " & "<supersampleScale: " & $supersampleScale_value & ">" & " - " & "<allowSupersampleFiltering: " & $allowSupersampleFiltering_value & ">")
 

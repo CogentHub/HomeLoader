@@ -1,29 +1,23 @@
 
+#Region Includes
 #include <File.au3>
-#include <Misc.au3>
-#include <Constants.au3>
 #include <Date.au3>
-#include <Array.au3>
-#include <MsgBoxConstants.au3>
-#include "_GDIPlus_WTOB.au3"
-#include <GDIPlus.au3>
-#include <Inet.au3>
+#endregion
 
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Globals
-Global $Array_tools_vrmanifest_File, $GUI_Loading
+Global $Array_tools_vrmanifest_File, $GUI_Loading, $FileSelect
 Global $HomeApp_Overlay, $HomeAppSteamID_Overlay, $HomeLoaderOverlaySteamID_Overlay
 Global $PressedOverlayButton_Overlay, $AppIDLoaded_Overlay
 Global $OverlaySettings_RenderTargetMultiplier, $OverlaySettings_SupersampleScale, $OverlaySettings_AllowSupersampleFiltering
 Global $OverlaySettings_Checkbox1, $OverlaySettings_Checkbox2, $OverlaySettings_Checkbox3
 Global $OverlaySettings_Checkbox4, $OverlaySettings_Checkbox5, $OverlaySettings_Checkbox6
 Global $OverlaySettings_LabelCustomPage3, $OverlaySettings_LabelCustomPage4, $OverlaySettings_LabelCustomPage5
-Global $OverlaySettings_LabelCustomPage6, $FirstStart_Overlay
+Global $OverlaySettings_LabelCustomPage6, $FirstStart_Overlay, $HomeAppGroup
 #endregion
 
 #Region Variables
-;Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Version = IniRead($Config_INI, "Settings", "Version", "")
@@ -32,7 +26,6 @@ Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "System\"
 Global $Apps_DIR = $Install_DIR & "Apps\"
 
-Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Autostart_VRUB = IniRead($Config_INI, "Settings", "Autostart_VRUB", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSettings", "")
@@ -88,9 +81,9 @@ Global $default_supersampleScale = IniRead($Config_INI, "SteamVR_Status", "defau
 Global $default_allowSupersampleFiltering = IniRead($Config_INI, "SteamVR_Status", "default_allowSupersampleFiltering", "")
 
 Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
-Global $TPCast_log_FILE = $System_DIR & "Logs\tpcast_log.txt"
+	Local $stats_log_FILE_Lines = _FileCountLines($stats_log_FILE)
+	If $stats_log_FILE_Lines > 400 Then FileDelete($stats_log_FILE)
 
-Global $TPCast_Folder = "C:\Program Files\TPCAST\"
 #endregion
 
 #region Declare Names
@@ -108,8 +101,7 @@ If $TAB5_Label = "" Then $TAB5_Label = "Page 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Page 4"
 #endregion
 
-
-; Start LOG ;;
+#region Start LOG
 FileWrite($stats_log_FILE, @CRLF & "[Start SteamVR_HomeApp: " & _Now() & "]" & @CRLF & _
 								"- Home App: " & $HomeApp & @CRLF & _
 								"- Autostart VRUB: " & $State_Checkbox_Autostart_VRUB & @CRLF & _
@@ -120,9 +112,9 @@ FileWrite($stats_log_FILE, @CRLF & "[Start SteamVR_HomeApp: " & _Now() & "]" & @
 								"- Add SS to Icons: " & $Add_SS_to_Icons & @CRLF & _
 								"- Add SS per game: " & $Add_SS_per_game & @CRLF & _
 								"- HomeLoader Overlay SteamID: " & $HomeLoaderOverlaySteamID & @CRLF)
+#endregion
 
-; End LOG ;;
-
+#region First Start Check
 _First_Start_Empty_Check_1()
 
 If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
@@ -130,7 +122,6 @@ If $default_vrsettings_File = "" Then MsgBox(48, "Attention!", "Default.vrsettin
 
 If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK, $FC_OVERWRITE)
 If $Steam_tools_vrmanifest_File = ""  Then MsgBox(48, "Attention!", "Tools.vrmanifest File not found. Write the path to the File manually to the config.ini File in Home Loader folder.")
-
 
 If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
 	Local $HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
@@ -140,34 +131,34 @@ If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
 	FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
 EndIf
 
-
 If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
 	_FirstStart_Restart()
 EndIf
 
+#endregion
+
+#region Start Check
 If $Autostart_VRUB = "true" Then
-	;If $UpdateOverlay = "true" Then _Copy_2_VRUtilityBelt()
 	_Read_from_VRUB_PersistentStore_File()
+	_Start_Home_Loader()
 EndIf
 
-If $Autostart_VRUB = "false" Then
+If $Autostart_VRUB <> "true" Then
 	If $ScanLibrary_OnStart_SettingValue = "true" Or $Add_PlayersOnline_to_Icons = "true" Or $Add_SS_to_Icons = "true" Then
 		_Start_Home_Loader()
 	EndIf
 EndIf
+#endregion
 
-_Start_Home_APP()
-
-Sleep(500)
 
 _Sync_Config_INI()
-
+_Start_Home_APP()
 _Exit()
 
 
-#Region First Start And Empty Check
+#Region Func First Start And Empty Check
 Func _First_Start_Empty_Check_1()
 	;_Update_Performed_Check()
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
@@ -284,136 +275,98 @@ Func _First_Start_Empty_Check_1()
 EndFunc
 #endregion
 
-#Region MAIN
-Func _Loading_GUI()
-	Local Const $PG_WS_POPUP = 0x80000000
-	Local Const $PG_WS_DLGFRAME = 0x00400000
-
-	$GUI_Loading = GUICreate("Loading...please wait...", 250, 65, - 1, - 1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
-	GUISetIcon(@AutoItExe, -2, $GUI_Loading)
-	GUISetBkColor("0x00BFFF")
-
-	Global $font = "arial"
-	GUICtrlCreateLabel("Starting TPCast", 43, 5, 180, 25)
-	GUICtrlSetFont(-1, 17, 800, 1, $font)
-	GUICtrlSetColor(-1, $COLOR_RED)
-	GUICtrlCreateLabel("...Please wait...", 49, 32, 160, 25)
-	GUICtrlSetFont(-1, 17, 800, 1, $font)
-	GUICtrlSetColor(-1, $COLOR_RED)
-
-	GUISetState(@SW_SHOW, $GUI_Loading)
-	WinSetOnTop("Loading...please wait...", "", $WINDOWS_ONTOP)
-EndFunc
-
+#Region Func MAIN
 Func _Read_from_VRUB_PersistentStore_File()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Read_from_VRUB_PersistentStore_File' -----" & _Now() & "]")
 	$HomeApp_Overlay = ""
 	$HomeLoaderOverlaySteamID_Overlay = ""
 
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
-    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
-    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+    For $i1 = 1 To $aArray[0]
 		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
 		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
 		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
         Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
 
 		If $StringSplit[1] = "FirstStart" Then
-			$FirstStart_Overlay = $StringSplit[2] ; Home App
+			$FirstStart_Overlay = $StringSplit[2] ; FirstStart
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "FirstStart = <" & $FirstStart_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $FirstStart_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeApp" Then
 			$HomeApp_Overlay = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeApp = <" & $HomeApp_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $HomeApp_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeAppSteamID" Then
-			$HomeAppSteamID_Overlay = $StringSplit[2] ; Home App
+			$HomeAppSteamID_Overlay = $StringSplit[2] ; HomeAppSteamID
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeAppSteamID = <" & $HomeAppSteamID_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $HomeAppSteamID_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then
 			$HomeLoaderOverlaySteamID_Overlay = $StringSplit[2] ; HomeLoaderOverlaySteamID
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeLoaderOverlaySteamID = <" & $HomeLoaderOverlaySteamID_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID_Overlay)
 		EndIf
 		If $StringSplit[1] = "PressedOverlayButton" Then
 			$PressedOverlayButton_Overlay = $StringSplit[2] ; PressedOverlayButton
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "PressedOverlayButton = <" & $PressedOverlayButton_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "1 - PressedOverlayButton_Overlay", $PressedOverlayButton_Overlay)
 		EndIf
 		If $StringSplit[1] = "AppIDLoaded" Then
-			$AppIDLoaded_Overlay = $StringSplit[2] ; PressedOverlayButton
+			$AppIDLoaded_Overlay = $StringSplit[2] ; AppIDLoaded
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "AppIDLoaded = <" & $AppIDLoaded_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "1 - PressedOverlayButton_Overlay", $AppIDLoaded_Overlay)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox1" Then
 			$OverlaySettings_Checkbox1 = $StringSplit[2] ;;; Update Overlay using HomeLoader ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox1 = <" & $OverlaySettings_Checkbox1 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox1", $OverlaySettings_Checkbox1)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox2" Then
 			$OverlaySettings_Checkbox2 = $StringSplit[2] ;;; Use local Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox2 = <" & $OverlaySettings_Checkbox2 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox2", $OverlaySettings_Checkbox2)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox3" Then
 			$OverlaySettings_Checkbox3 = $StringSplit[2] ;;; Scan Steam Library on Home App Start ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox3 = <" & $OverlaySettings_Checkbox3 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox3", $OverlaySettings_Checkbox3)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox4" Then
 			$OverlaySettings_Checkbox4 = $StringSplit[2] ;;; Add number of current Players to the game Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox4 = <" & $OverlaySettings_Checkbox4 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox4", $OverlaySettings_Checkbox4)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox5" Then
 			$OverlaySettings_Checkbox5 = $StringSplit[2] ;;; Add saved Supersampling settings to the game Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox5 = <" & $OverlaySettings_Checkbox5 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox6" Then
 			$OverlaySettings_Checkbox6 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox6 = <" & $OverlaySettings_Checkbox6 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "RenderTargetMultiplier" Then
 			$OverlaySettings_RenderTargetMultiplier = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "RenderTargetMultiplier = <" & $OverlaySettings_RenderTargetMultiplier & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "SupersampleScale" Then
 			$OverlaySettings_SupersampleScale = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SupersampleScale = <" & $OverlaySettings_SupersampleScale & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "AllowSupersampleFiltering" Then
 			$OverlaySettings_AllowSupersampleFiltering = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "AllowSupersampleFiltering = <" & $OverlaySettings_AllowSupersampleFiltering & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 
 		If $StringSplit[1] = "LabelCustomPage3" Then
 			$OverlaySettings_LabelCustomPage3 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage3 = <" & $OverlaySettings_LabelCustomPage3 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage3", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage4" Then
 			$OverlaySettings_LabelCustomPage4 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage4 = <" & $OverlaySettings_LabelCustomPage4 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage4", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage5" Then
 			$OverlaySettings_LabelCustomPage5 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage5 = <" & $OverlaySettings_LabelCustomPage5 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage6" Then
 			$OverlaySettings_LabelCustomPage6 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage6 = <" & $OverlaySettings_LabelCustomPage6 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage6", $OverlaySettings_Checkbox5)
 		EndIf
 
     Next
@@ -427,15 +380,12 @@ Func _Read_from_VRUB_PersistentStore_File()
 
 	If $HomeApp_Overlay <> "" Then
 		If $HomeApp_Overlay <> $HomeApp Then
-			;MsgBox($MB_SYSTEMMODAL, "Home App", $HomeApp_Overlay)
-			;If $HomeApp_Overlay = "Default SteamVR Home" Then _StartUp_Radio_0()
 			If $HomeApp_Overlay = "SteamVR Home" Then _StartUp_Radio_1()
 			If $HomeApp_Overlay = "Vive Home" Then _StartUp_Radio_2()
 			If $HomeApp_Overlay = "Janus VR" Then _StartUp_Radio_3()
 			If $HomeApp_Overlay = "VR Toolbox" Then _StartUp_Radio_4()
 			If $HomeApp_Overlay = "Other" Then _StartUp_Radio_5()
 			If $HomeApp_Overlay = "Viveport VR" Then _StartUp_Radio_6()
-			;MsgBox($MB_SYSTEMMODAL, "Home App", $HomeApp_Overlay)
 		EndIf
 	EndIf
 
@@ -518,6 +468,7 @@ Func _Read_from_VRUB_PersistentStore_File()
 EndFunc
 
 Func _Start_Home_Loader()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Start_Home_Loader' -----" & _Now() & "]")
 	If FileExists($System_DIR & "HomeLoader.exe") Then
 		ShellExecute($System_DIR & "HomeLoader.exe", "", $System_DIR)
 	Else
@@ -526,6 +477,7 @@ Func _Start_Home_Loader()
 EndFunc
 
 Func _Start_Home_APP()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Start_Home_APP' -----" & _Now() & "]")
 	Local $sOutput
 	$WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 	Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
@@ -541,44 +493,27 @@ Func _Start_Home_APP()
 		Sleep(1000)
 	Until ProcessExists("vrmonitor.exe")
 
-	If $HomeApp <> "Default SteamVR Home" Then
-		If $HomeApp = "Vive Home" Then
-			Local $Vive_Home_Folder_1 = StringInStr($Home_Path, "\", 1, - 1)
-			Local $Vive_Home_Folder_2 = StringLeft($Home_Path, $Vive_Home_Folder_1)
-			;MsgBox(0, "Start Home Path", $Home_Path)
-			ShellExecute($Home_Path, "", $Vive_Home_Folder_2)
-		Else
-			If $HomeAppSteamID = "" Then
-				_Start_Home_APP_File()
-			Else
-				_Start_Home_APP_File()
+	If $Autostart_VRUB = "true" Then
+		_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+		If Not ProcessExists("VRUtilityBelt.exe") Then
+			Sleep(2000)
+			If Not ProcessExists("VRUtilityBelt.exe") Then
+				Sleep(1000)
+				ShellExecute("steam://rungameid/645370")
+				Sleep(5000)
 			EndIf
 		EndIf
 	EndIf
 
-
-	If $Autostart_VRUB = "true" Then
-		If Not ProcessExists("VRUtilityBelt.exe") Then
-			Sleep(10000)
-			If Not ProcessExists("VRUtilityBelt.exe") Then
-				_Write_config_INI_Values_to_VRUB_PersistentStore_File()
-				Sleep(1000)
-				ShellExecute("steam://rungameid/645370")
-				;Sleep(5000)
-				;If $HomeApp_Overlay = "" Then Or $HomeAppSteamID_Overlay = "" Then _Write_config_INI_Values_to_VRUB_PersistentStore_File()
-				;If $HomeApp_Overlay = "" Then _Write_HomeApp_to_VRUB_PersistentStore_File()
-				;If $HomeAppSteamID_Overlay = "" Then _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
-			EndIf
-		EndIf
+	If $HomeApp <> "Default SteamVR Home" Then
+		_Start_Home_APP_File()
 	EndIf
 
 EndFunc
 
 Func _Add_Default_SS_to_SteamVR()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Add_Default_SS_to_SteamVR' -----" & _Now() & "]")
 	If Not FileExists($default_vrsettings_File_BAK) Then FileCopy($default_vrsettings_File, $default_vrsettings_File_BAK, $FC_OVERWRITE)
-
-	;Local $Steam_app_Name = $Application_name
-	;Local $Game_ID = $SteamGameID
 
 	Local $FileLines = _FileCountLines($default_vrsettings_File)
 
@@ -630,27 +565,19 @@ Func _Add_Default_SS_to_SteamVR()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding Default SS to SteamVR:")
 EndFunc
 
+Func _Sync_Config_INI()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Sync_Config_INI' -----" & _Now() & "]")
+	FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
+EndFunc
 #endregion
 
-#Region Set Home App
-Func _StartUp_Radio_0() ; Default [SteamVR Home]
-	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Default SteamVR Home")
-	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/250820")
-	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Default SteamVR Home")
-	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
-
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-	_ADD_2_SteamVR_Home_default()
-	_Create_StartHomeAPP_BAT_File()
-EndFunc
-
+#Region Func Set Home App
 Func _StartUp_Radio_1() ; SteamVR Home
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "SteamVR Home")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 EndFunc
@@ -666,7 +593,6 @@ Func _StartUp_Radio_2() ; Vive Home
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 EndFunc
@@ -684,7 +610,6 @@ Func _StartUp_Radio_3() ; Janus VR
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 EndFunc
@@ -695,7 +620,6 @@ Func _StartUp_Radio_4() ; VR Toolbox
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 	If $HomeApp = "Default SteamVR Home" Then _ADD_2_SteamVR_Home_default()
 	_Create_StartHomeAPP_BAT_File()
 	_Start_HomeLoaderLibrary_UpdateStartPage()
@@ -714,7 +638,6 @@ Func _StartUp_Radio_6() ; Viveport VR
 	FileWriteLine($stats_log_FILE, "- ViveportVR Path = " & $Viveport_Path)
 
 	If FileExists($Viveport_Path) Then
-		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
 		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $Viveport_Path)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Viveport VR")
 	Else
@@ -725,16 +648,13 @@ Func _StartUp_Radio_6() ; Viveport VR
 
 	If FileExists($Viveport_Path) Then
 		IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
-		IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
 		_ADD_2_SteamVR_Home_default()
-		$HomeAppGroup_Label = "Home app:"
+		Local $HomeAppGroup_Label = "Home app:"
 		If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
 		GUICtrlSetData($HomeAppGroup, $HomeAppGroup_Label)
 		MsgBox($MB_OK + $MB_ICONINFORMATION, "Default SteamVR Home", "'Viveport VR' app was set as Home app.")
-		_StartUp_Button_HomeLoader()
 	EndIf
 	_Sync_Config_INI()
-	MsgBox(0, "HomePath", $Viveport_Path)
 EndFunc
 
 Func _ADD_2_SteamVR_Home_default()
@@ -782,39 +702,27 @@ Func _Create_StartHomeAPP_BAT_File()
 									$StartSteamVRHome_x)
 EndFunc
 
-
 Func _Ident_HomeApp_from_ID()
 	$HomeAppSteamID = IniRead($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 	Local $HomeAppNR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $HomeAppSteamID, "NR", "")
 	Local $HomeAppName = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $HomeAppSteamID, "name", "")
 	Local $HomeAppappid = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $HomeAppSteamID, "appid", "")
 
-	;MsgBox($MB_SYSTEMMODAL, "1= " & $HomeAppSteamID, $HomeAppNR & @CRLF & $HomeAppName & @CRLF & $HomeAppappid)
-
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", $HomeAppName)
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 	If $HomeAppappid <> "" Then IniWrite($Config_INI, "Settings_HomeAPP", "Home_Path", "steam://rungameid/" & $HomeAppappid)
 	If $HomeAppappid <> "" Then IniWrite($Config_INI, "Settings_HomeAPP", "WindowName", $HomeAppName)
-
-	IniWrite($config_ini, "Settings", "ChangeDefaultSteamVRHome", "true")
-	;MsgBox($MB_SYSTEMMODAL, "2= " & $HomeAppSteamID, $HomeAppNR & @CRLF & $HomeAppName & @CRLF & $HomeAppappid)
-
-	;ShellExecute("steam://rungameid/" & $HomeAppSteamID)
 EndFunc
-
-
-
 
 #endregion
 
-#Region Overlay Functions
+#Region Func Overlay Functions
 Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
 	Local $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
 	Local $NEW_sText = ""
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-	;Local $filePath2 = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader2.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
-    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
 	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "200")
 	Local $appid_TEMP = ""
@@ -826,73 +734,44 @@ Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
 		 If $Loop_SteamLibrary = 1 Then $SteamLibraryContent = $appid_TEMP
 	Next
 
-    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+    For $i1 = 1 To $aArray[0]
 		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
 		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
 		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
         Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
 
-		;MsgBox($MB_SYSTEMMODAL, $i1, $StringSplit[1] & @CRLF & $StringSplit[2])
+		Local $InsertValue = $StringSplit[2]
+		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then $InsertValue = $HomeLoaderOverlaySteamID
+		If $StringSplit[1] = "HomeApp" Then $InsertValue = $HomeApp
+		If $StringSplit[1] = "SteamLibrary" Then $InsertValue = $SteamLibraryContent
 
-		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then
-			;$HomeApp = $StringSplit[2]
-			If $HomeAppSteamID_Overlay = "" Then
-				If $i1 <> $aArray[0] Then
-					$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeLoaderOverlaySteamID & '",'
-				Else
-					$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $HomeLoaderOverlaySteamID & '"}'
-				EndIf
-			EndIf
+		If $i1 <> $aArray[0] Then
+			$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $InsertValue & '",'
 		Else
-			If $StringSplit[1] = "HomeApp" Then
-				;$HomeApp = $StringSplit[2]
-				If $HomeApp_Overlay = "" Then
-					If $i1 <> $aArray[0] Then
-						$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeApp & '",'
-					Else
-						$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $HomeApp & '"}'
-					EndIf
-				EndIf
-			Else
-				If $StringSplit[1] = "SteamLibrary" Then
-					If $i1 <> $aArray[0] Then
-						$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $SteamLibraryContent & '",'
-					Else
-						$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $SteamLibraryContent & '"}'
-					EndIf
-				Else
-					$NEW_sText = $NEW_sText & $aArray[$i1] & ","
-				EndIf
-			EndIf
+			$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $InsertValue & '"}'
 		EndIf
-		;MsgBox($MB_SYSTEMMODAL, "$NEW_sText", $NEW_sText)
+
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$StringRightCheck", $StringRightCheck)
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$NEW_sText 1", $filePath & @CRLF & @CRLF & $NEW_sText)
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
-EndFunc   ;==>Example
+EndFunc
 
 Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 	Local $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
 	Local $NEW_sText = ""
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-	;Local $filePath2 = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader2.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
-    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
-    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+    For $i1 = 1 To $aArray[0]
 		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
 		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
 		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
         Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
 
-		;MsgBox($MB_SYSTEMMODAL, $i1, $StringSplit[1] & @CRLF & $StringSplit[2])
-
 		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then
-			;$HomeApp = $StringSplit[2]
 			If $i1 <> $aArray[0] Then
 				$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeLoaderOverlaySteamID & '",'
 			Else
@@ -901,34 +780,27 @@ Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 		Else
 			$NEW_sText = $NEW_sText & $aArray[$i1] & ","
 		EndIf
-		;MsgBox($MB_SYSTEMMODAL, "$NEW_sText", $NEW_sText)
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$StringRightCheck", $StringRightCheck)
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$NEW_sText 1", $filePath & @CRLF & @CRLF & $NEW_sText)
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
-EndFunc   ;==>Example
+EndFunc
 
 Func _Write_HomeApp_to_VRUB_PersistentStore_File()
 	Local $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	Local $NEW_sText = ""
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-	;Local $filePath2 = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader2.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
-    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
-    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+    For $i1 = 1 To $aArray[0]
 		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
 		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
 		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
         Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
 
-		;MsgBox($MB_SYSTEMMODAL, $i1, $StringSplit[1] & @CRLF & $StringSplit[2])
-
 		If $StringSplit[1] = "HomeApp" Then
-			;$HomeApp = $StringSplit[2]
 			If $i1 <> $aArray[0] Then
 				$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $HomeApp & '",'
 			Else
@@ -937,32 +809,18 @@ Func _Write_HomeApp_to_VRUB_PersistentStore_File()
 		Else
 			$NEW_sText = $NEW_sText & $aArray[$i1] & ","
 		EndIf
-		;MsgBox($MB_SYSTEMMODAL, "$NEW_sText", $NEW_sText)
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$StringRightCheck", $StringRightCheck)
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
-	;MsgBox($MB_SYSTEMMODAL, "$NEW_sText 2", $filePath & @CRLF & @CRLF & $NEW_sText)
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
-EndFunc   ;==>Example
-
-Func _Copy_2_VRUtilityBelt()
-	Local $OverlayPage_path
-	Local $StartPage_Template_path = $Install_DIR & "WebPage\OverlayStartPage.html"
-
-	;If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
 EndFunc
 
-Func _Sync_Config_INI()
-	FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
-EndFunc
 #endregion
 
-
-#Region Restart/Exit
+#Region Func Restart/Exit
 Func _Start_HomeLoader_UpdateOverlay()
-	;IniWrite($Config_INI, "TEMP", "UpdateOverlay1", "true")
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Start_HomeLoader_UpdateOverlay' -----" & _Now() & "]")
 	If FileExists($System_DIR & "HomeLoader.exe") Then
 		ShellExecute($System_DIR & "HomeLoader.exe", "UpdateOverlay", $System_DIR)
 	Else
@@ -971,6 +829,7 @@ Func _Start_HomeLoader_UpdateOverlay()
 EndFunc
 
 Func _Start_HomeLoaderLibrary_UpdateStartPage()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Start_HomeLoaderLibrary_UpdateStartPage' -----" & _Now() & "]")
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
 		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "UpdateStartPage", $System_DIR)
 	Else
@@ -979,6 +838,7 @@ Func _Start_HomeLoaderLibrary_UpdateStartPage()
 EndFunc
 
 Func _Start_Home_APP_File()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Start_Home_APP_File' -----" & _Now() & "]")
 	If FileExists($System_DIR & "StartHomeApp.exe") Then
 		ShellExecute($System_DIR & "StartHomeApp.exe", "", $System_DIR)
 	Else
@@ -988,6 +848,7 @@ Func _Start_Home_APP_File()
 EndFunc
 
 Func _FirstStart_Restart()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_FirstStart_Restart' -----" & _Now() & "]")
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
 		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
@@ -997,6 +858,7 @@ Func _FirstStart_Restart()
 EndFunc
 
 Func _Restart()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Restart' -----" & _Now() & "]")
 	If FileExists($System_DIR & "StartSteamVRHome.exe") Then
 		ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
 	Else
@@ -1006,6 +868,7 @@ Func _Restart()
 EndFunc
 
 Func _Exit()
+	FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Exit()' -----" & _Now() & "]")
 	Exit
 EndFunc
 

@@ -1,3 +1,3 @@
-- Added HomeLoader Overlay (VRUB)
-- Added new Files "HomeLoaderOverlay.exe" and "StartHomeApp.au3"
-- Changed/Optimized some functions for the new Overlay
+- Added more right click menu entries
+- Optimized code and GUI
+- Cleanup for version 0.64

@@ -1,60 +1,33 @@
 
-#Region Inncludes
-#include <GuiToolbar.au3>
+#Region Includes
 #include <GuiButton.au3>
 #include <FontConstants.au3>
-#include <WinAPI.au3>
 #include <GuiListView.au3>
 #include <GuiImageList.au3>
-#include <GuiTab.au3>
-#include <EventLog.au3>
-#include <GuiEdit.au3>
-#include <buttonconstants.au3>
-#include <ProgressConstants.au3>
-#include <SendMessage.au3>
 #include <File.au3>
 #include <GuiMenu.au3>
 #include <GuiStatusBar.au3>
-#include <GuiHeader.au3>
-#include <GuiTreeView.au3>
-#include <Array.au3>
-#include <GUIConstantsEx.au3>
-#include <WindowsConstants.au3>
-#include <Constants.au3>
-#include <StaticConstants.au3>
-#include <EditConstants.au3>
-#include <ListViewConstants.au3>
-#include <TabConstants.au3>
-#include <ComboConstants.au3>
 #include <GUIConstants.au3>
 #include <GDIPlus.au3>
 #include <Inet.au3>
-#include <IE.au3>
-#include <MsgBoxConstants.au3>
-#include <GuiSlider.au3>
-;#include <SQLite.au3>
-;#include <SQLite.dll.au3>
-;#include "_Zip.au3"
 #endregion
 
 Opt("GUIOnEventMode", 1)
 
 #Region Set Global
-Global $GUI_Loading, $GUI_Loading_2, $AddGame2Library_GUI, $Settings_GUI, $Button_Exit_Settings_GUI, $HTML_GUI, $NR_Applications
+Global $GUI_Loading, $AddGame2Library_GUI, $Settings_GUI, $Button_Exit_Settings_GUI, $HTML_GUI, $NR_Applications
 Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library, $NR_Library_temp
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
-Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group, $Playlist_GUI, $POS_X_PlaylistButton
+Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 Global $TAB_NR, $listview_7, $listview_8, $listview_9, $listview_10, $listview_11, $listview_TEMP
 Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
-Global $Checkbox_Add_break, $Combo_Add_break, $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue
-#endregion
-
+Global $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue
 Global $font = "arial"
 Global $font_arial = "arial"
+#endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.63"
-;Global $config_ini = @ScriptDir & "\config.ini"
+Global $Version = "0.64"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -169,11 +142,10 @@ If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #endregion
 
-
+#region Start Check
 If $Autostart_VRUB = "true" Then
 	Local $Parameter_1 = ""
 	If $CmdLine[0] Then
-		;_ArrayDisplay($CmdLine)
 		$Parameter_1 = $CmdLine[1]
 	EndIf
 
@@ -184,8 +156,6 @@ If $Autostart_VRUB = "true" Then
 		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
 		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
 		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
-		;_Create_Overlay_StartPage()
-		;If $UpdateOverlay_SettingValue = "true" Then _Copy_2_VRUtilityBelt()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating the Overlay:")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Game Pages:")
 		_Create_GamePages()
@@ -195,10 +165,17 @@ If $Autostart_VRUB = "true" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Single Game Pages:")
 		Exit
 	EndIf
+
+	If $Parameter_1 = "UpdateStartPage" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating VRToolBox StartPage:")
+		_Create_VRToolBox_StartPage()
+		_Copy_2_VRToolBox()
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating VRToolBox StartPage:")
+		Exit
+	EndIf
 Else
 	Local $Parameter_1 = ""
 	If $CmdLine[0] Then
-		;_ArrayDisplay($CmdLine)
 		$Parameter_1 = $CmdLine[1]
 	EndIf
 
@@ -229,9 +206,9 @@ Else
 		Exit
 	EndIf
 EndIf
+#endregion
 
 #Region GUI
-
 If $First_Start <> "true" Then
 	#region GUI Erstellen
 	Local $hGUI, $hGraphic, $hPen
@@ -247,36 +224,31 @@ If $First_Start <> "true" Then
 	Local $POS_X_GUI = 4
 	If $Show_Playlist = "true" Then $POS_X_GUI = 10000
 
-	; Erstellen der GUI
 	Global $GUI = GUICreate("Home Loader Library", 800, $DesktopHeight, $POS_X_GUI, 4, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
-
 
 	; PROGRESS
 	Global $Anzeige_Fortschrittbalken_2 = GUICtrlCreateProgress(0, $DesktopHeight - 25, $DesktopWidth, 5)
 	Global $Anzeige_Fortschrittbalken = GUICtrlCreateProgress(0, $DesktopHeight - 121, $DesktopWidth, 5)
 
-	;Status Bar $Anzeige_Fortschrittbalken
 	Global $Statusbar = _GUICtrlStatusBar_Create($GUI)
 	_GUICtrlStatusBar_SetSimple($Statusbar, True)
-
 	_GUICtrlStatusBar_SetText($Statusbar, "Loading, please wait." & @TAB & "" & @TAB & "'Version " & $Version & "'")
-
 	GUISetState()
 
-	; Darstellung Icon Preview Rahmen
+	; Rahmen
 	Global $Linie_oben = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 	Global $Linie_unten = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 87, 177, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 	Global $Linie_rechts = GUICtrlCreatePic($gfx & "Frame.jpg", 786, 4, 3, 84, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 	Global $Linie_links = GUICtrlCreatePic($gfx & "Frame.jpg", 612, 4, 3, 83, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 
-	; Darstellung Icon Preview
+	; Icon Preview
 	Global $Icon_Preview_Image = GUICtrlCreatePic($gfx & "Icon_Preview.jpg", 615, 7, 171, 80)
-
 
 	; Toolbar oben
 	GUICtrlCreateLabel("Home Loader Library", 5, 0, 350, 38)
 	GUICtrlSetFont(-1, 24, 400, 6, "arial")
 
+	; Elemente oben
 	Global $Combo_SteamLibrary = GUICtrlCreateCombo("", 0, 60, 155, 25, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, "ALL|Steam Library 1|Steam Library 2|Steam Library 3|Steam Library 4|Steam Library 5", $Steam_Library)
 	GUICtrlSetFont(-1, 14, 400, 2, "arial")
@@ -285,10 +257,6 @@ If $First_Start <> "true" Then
 	Global $Button_ShowGamePage = GUICtrlCreateButton("Show Game Page", 160, 45, 118, 46, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_ShowGamePage, $gfx & "GamePage.bmp")
 	GuiCtrlSetTip(-1, "Opens the created Game Page for the current selection." & @CRLF)
-
-	;Global $Button_Add2ViveHomeDB = GUICtrlCreateButton("Add to ViveHome DB", 290, 39, 51, 46, $BS_BITMAP)
-	;_GUICtrlButton_SetImage($Button_Add2ViveHomeDB, $gfx & "ViveHomeDB.bmp")
-	;GuiCtrlSetTip(-1, "Synchronizes the HomeLoader database with the Vive Home database." & @CRLF)
 
 	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 345, 5, 100, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
@@ -397,32 +365,37 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State = "5" Then GUICtrlSetState($listview_5, $GUI_SHOW)
 	If $ButtonTAB_State = "6" Then GUICtrlSetState($listview_6, $GUI_SHOW)
 
+
+	; Elemente unten
+	$ElementeUntenGroup = GUICtrlCreateGroup("Create Game Page", 65, $DesktopHeight - 114, 177, 88)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
 	$Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 22, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
 
-	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 100, 166, 32, $BS_BITMAP)
+	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 96, 166, 32, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Create_GamePage, $gfx & "Create_GamePage.bmp")
 	GuiCtrlSetTip(-1, "Create Game Page." & @CRLF & _
 						"This function creates an .html Game Page containing all selected Games." & @CRLF & @CRLF)
 
-	Global $Button_Create_SinglePage = GUICtrlCreateButton("Create Single Page", 70, $DesktopHeight - 67, 166, 32, $BS_BITMAP)
+	Global $Button_Create_SinglePage = GUICtrlCreateButton("Create Single Page", 70, $DesktopHeight - 63, 166, 32, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Create_SinglePage, $gfx & "Create_SinglePage.bmp")
 	GuiCtrlSetTip(-1, "Create Single Page." & @CRLF & _
 						"This function creates an .html Game Page for every selected Games." & @CRLF & @CRLF)
 
-	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 243, $DesktopHeight - 100, 130, 32, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
-	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
-		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
-	Else
-		GUICtrlSetState($Button_Add_to_Custom, $GUI_HIDE)
-	EndIf
-	GuiCtrlSetTip(-1, "Add Entry to Custom TAB.")
 
-	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 244, $DesktopHeight - 66, 128, 18, $CBS_DROPDOWNLIST)
+
+	$ElementeUntenGroup = GUICtrlCreateGroup("Add Game to TAB", 255, $DesktopHeight - 114, 143, 88)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 261, $DesktopHeight - 95, 130, 32, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
 	GUICtrlSetFont(-1, 14, 400, 2, "arial")
 	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
@@ -430,6 +403,18 @@ If $First_Start <> "true" Then
 	Else
 		GUICtrlSetState($Combo_Add_to_Custom, $GUI_HIDE)
 	EndIf
+	GuiCtrlSetTip(-1, "Choose the TAB where you want to add the games.")
+
+	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 260, $DesktopHeight - 63, 133, 32, $BS_BITMAP)
+	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
+	If $ButtonTAB_State = 1 Or $ButtonTAB_State = 2 Then
+		GUICtrlSetState($Button_Add_to_Custom, $GUI_SHOW)
+	Else
+		GUICtrlSetState($Button_Add_to_Custom, $GUI_HIDE)
+	EndIf
+	GuiCtrlSetTip(-1, "Add selected games to chosen TAB.")
+
+
 
 	#endregion
 
@@ -444,7 +429,6 @@ If $First_Start <> "true" Then
 
 	GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
 	GUICtrlSetOnEvent($Button_ShowGamePage, "_Show_HTML_GamePage_GUI")
-	;GUICtrlSetOnEvent($Button_Add2ViveHomeDB, "_Button_Add2ViveHomeDB")
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
 
@@ -492,7 +476,6 @@ EndIf
 
 $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
 If $Show_SS_Menu = "true" Then
-	;GUICtrlSetState($GUI, $GUI_HIDE)
 	_SS_GUI()
 EndIf
 
@@ -511,12 +494,8 @@ WEnd
 #endregion
 
 
-
-#Region Start Funktionen
-
 #Region First Start And Update / Empty Check
 Func _First_Start_Empty_Check_1()
-	_Update_Performed_Check()
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
 
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -629,27 +608,6 @@ Func _First_Start_Empty_Check_1()
 		FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
 	EndIf
 
-EndFunc
-
-Func _Update_Performed_Check()
-	$Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
-	If $Update_Performed_Check = "Updated" Then
-		IniWrite($config_ini, "TEMP", "Update", "")
-		If FileExists($System_DIR & "Update.exe") Then
-			ShellExecuteWait($System_DIR & "Update.exe", "", $Install_DIR)
-		Else
-			;If FileExists($System_DIR & "Update.au3") Then
-				ShellExecuteWait($System_DIR & "Update.au3", "", $Install_DIR)
-			;EndIf
-		EndIf
-		Exit
-	EndIf
-	If $Update_Performed_Check = "Done, delete Update" Then
-		IniWrite($config_ini, "TEMP", "Update", "")
-		If FileExists($System_DIR & "Update.exe") Then FileDelete($System_DIR & "Update.exe")
-		If FileExists($System_DIR & "TEMP.zip") Then FileDelete($System_DIR & "TEMP.zip")
-		If FileExists($System_DIR & "Update\") Then DirRemove($System_DIR & "Update\", $DIR_REMOVE)
-	EndIf
 EndFunc
 
 Func _Detect_SteamVR_Files()
@@ -939,7 +897,7 @@ EndFunc
 Func _AddGame2Library_GUI()
 	$AddGame2Library_GUI = GUICreate("Add Game to Library", 349, 305 , - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
-	; Darstellung Icon Preview Rahmen
+	; Rahmen
 	Global $Frame_up = GUICtrlCreatePic($gfx & "Frame.jpg", 220, 190, 110, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 	Global $Frame_down = GUICtrlCreatePic($gfx & "Frame.jpg", 220, 243, 110, 3, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
 	Global $Frame_right = GUICtrlCreatePic($gfx & "Frame.jpg", 330, 190, 3, 56, BitOR($SS_NOTIFY, $WS_GROUP, $WS_CLIPSIBLINGS))
@@ -1343,11 +1301,14 @@ Func _Get_ADD_PlayersOnline_DATA()
 		Global $PlayersOnline_all_time_peak = StringSplit($aArray[4], '<')
 		$PlayersOnline_all_time_peak = $PlayersOnline_all_time_peak[1]
 
-		;MsgBox(0, "", $PlayersOnline_all_time_peak & @CRLF & @CRLF & $aArray[4])
+		Local $AppIdTemp = IniRead($ApplicationList_INI, "Application_" & $Application_NR, "appid", "")
 
 		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "right_now", $PlayersOnline_right_now)
 		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "24h_peak", $PlayersOnline_24h_peak)
 		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "all_time_peak", $PlayersOnline_all_time_peak)
+		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "right_now", $PlayersOnline_right_now)
+		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "24h_peak", $PlayersOnline_24h_peak)
+		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "all_time_peak", $PlayersOnline_all_time_peak)
 
 		$PlayersOnline_right_now = ""
 		$PlayersOnline_24h_peak = ""
@@ -1464,9 +1425,10 @@ Func _Create_ListView_1()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview, "NR", 60)
 	_GUICtrlListView_AddColumn($listview, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview, "Name", 290)
-	_GUICtrlListView_AddColumn($listview, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview, "Name", 365)
+	_GUICtrlListView_AddColumn($listview, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview, "All time", 82, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
@@ -1502,9 +1464,10 @@ Func _Create_ListView_2()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_2, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_2, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_2, "Name", 290)
-	_GUICtrlListView_AddColumn($listview_2, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview_2, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview_2, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_2, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_2, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview_2, "All time", 82, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_2)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
@@ -1540,9 +1503,10 @@ Func _Create_ListView_3()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_3, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_3, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_3, "Name", 290)
-	_GUICtrlListView_AddColumn($listview_3, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview_3, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview_3, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_3, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_3, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview_3, "All time", 82, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_3)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
@@ -1578,9 +1542,10 @@ Func _Create_ListView_4()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_4, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_4, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_4, "Name", 290)
-	_GUICtrlListView_AddColumn($listview_4, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview_4, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview_4, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_4, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_4, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview_4, "All time", 82, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_4)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
@@ -1616,9 +1581,10 @@ Func _Create_ListView_5()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_5, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_5, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_5, "Name", 290)
-	_GUICtrlListView_AddColumn($listview_5, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview_5, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview_5, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_5, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_5, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview_5, "All time", 82, 2)
 	GUICtrlSetState($listview_5, $GUI_HIDE)
 	$contextmenu = GUICtrlCreateContextMenu($listview_5)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
@@ -1655,9 +1621,10 @@ Func _Create_ListView_6()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_6, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_6, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_6, "Name", 290)
-	_GUICtrlListView_AddColumn($listview_6, "Install dir", 240)
-	_GUICtrlListView_AddColumn($listview_6, "Online", 95, 2)
+	_GUICtrlListView_AddColumn($listview_6, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_6, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_6, "24h peak", 100, 2)
+	_GUICtrlListView_AddColumn($listview_6, "All time", 82, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_6)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
@@ -1749,8 +1716,9 @@ Func _Read_from_INI_ADD_2_ListView()
 			_GUICtrlListView_AddItem($listview_Temp, "", $Application_NR)
 			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_appid, 1)
 			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_name, 2)
-			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_installdir, 3)
-			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_right_now, 4)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_right_now, 3)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_24h_peak, 4)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_all_time_peak, 5)
 		EndIf
 	Next
 	_GUICtrlListView_EndUpdate($listview_Temp)
@@ -1812,8 +1780,6 @@ Func _Update_ListView_Icons()
 	If $ButtonTAB_State = "6" Then $ListView_ImageList_Temp = $ListView_Favorite_Image_6
 
 	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
-
-	;MsgBox(0, $NR_Applications, $ApplicationList_TEMP & @CRLF & @CRLF & $listview_Temp)
 
 	_GUICtrlListView_BeginUpdate($listview_Temp)
 	_GUICtrlListView_DeleteAllItems($listview_Temp)
@@ -2166,7 +2132,6 @@ Func _RM_Menu_Item11() ; Delete ListView item
 	Next
 	_Update_ListView_Icons()
 	_Read_from_INI_ADD_2_ListView()
-	;_Restart()
 EndFunc
 
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
@@ -2193,7 +2158,6 @@ EndFunc
 
 Func _DB_Click_Listview()
 	Sleep(200)
-	;_Create_HTMLView_GUI()
 	_Start_ListView_Selected()
 	Sleep(200)
 EndFunc
@@ -2369,10 +2333,6 @@ Func _Checkbox_CheckUncheck()
 			_GUICtrlListView_SetItemChecked($listview_Temp, $LOOP_Checkbox, false)
 		Next
 	EndIf
-EndFunc
-
-Func _Checkbox_USE_PHP_GamePage()
-
 EndFunc
 
 Func _Button_Create_GamePage_all()
@@ -2563,7 +2523,6 @@ Func _Button_Create_GamePage_selected()
 			Else
 
 			EndIf
-			;GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
 		Next
 		Sleep(100)
 		FileWriteLine($GamePage_path, ' </div>')
@@ -2697,7 +2656,6 @@ Func _Button_Create_SinglePage_selected()
 			Else
 
 			EndIf
-			;GUICtrlSetData($Anzeige_Fortschrittbalken, $NR * 100 / $NR_Applications)
 		Next
 		Sleep(100)
 		FileWriteLine($GamePage_path, ' </div>')
@@ -3755,8 +3713,6 @@ Func _Overlay_ReScan_Steam_Library()
 			Sleep(500)
 		Next
 		$NR_Library_temp = ""
-		;$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
-		;FileCopy($ApplicationList_INI, $ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini", $FC_OVERWRITE + $FC_CREATEPATH)
 		Sleep(500)
 	EndIf
 EndFunc
@@ -3942,8 +3898,6 @@ Func _Create_Overlay_StartPage()
 		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR1])
 	Next
 
-	;MsgBox(0, "$Array_StartPageTemplate_Value", $Array_StartPageTemplate_Value[0] - 26)
-
 	For $Loop_NR2 = 1 To $NR_Applications
 		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "NR", "")
 		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "appid", "")
@@ -3981,15 +3935,7 @@ Func _Create_Overlay_StartPage()
 	Next
 EndFunc
 
-Func _Copy_2_VRUtilityBelt()
-	Local $OverlayPage_path
-	Local $StartPage_Template_path = $Install_DIR & "WebPage\OverlayStartPage.html"
-
-	;If FileExists($StartPage_Template_path) Then FileCopy($StartPage_Template_path, $HomeLoader_Overlay_Folder & "index.html", $FC_OVERWRITE + $FC_CREATEPATH)
-EndFunc
-
 #endregion
-
 
 #Region Func VR ToolBox
 
@@ -4007,8 +3953,6 @@ Func _Create_VRToolBox_StartPage()
 	For $Loop_NR3 = 1 To $Array_StartPageTemplate_Value[0] - $StartPage_NR_3
 		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR3])
 	Next
-
-	;MsgBox(0, "$Array_StartPageTemplate_Value", $Array_StartPageTemplate_Value[0] - 26)
 
 	$Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
 
@@ -4055,7 +3999,6 @@ Func _Copy_2_VRToolBox()
 EndFunc
 
 #endregion
-
 
 #Region Func Create Game Pages
 
@@ -4229,5 +4172,4 @@ EndFunc
 
 #endregion
 
-#endregion
 

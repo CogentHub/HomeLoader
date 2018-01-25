@@ -1,34 +1,21 @@
-#cs ----------------------------------------------------------------------------
-
- AutoIt Version: 3.3.14.2
- Author:         Cogent
-
- Script Function:
-	Home Loader.
-
-#ce ----------------------------------------------------------------------------
 
 #Region Includes
 #include <GuiButton.au3>
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
-#include <StaticConstants.au3>
 #include <ColorConstants.au3>
-#include <InetConstants.au3>
 #include <File.au3>
 #endregion
 
 Opt("GUIOnEventMode", 1)
 
 #Region Declare Variables/Const 1
-Global $Version = "0.63"
 Global $Install_DIR = @ScriptDir & "\"
-Global $System_DIR = $Install_DIR & "System\"
-;Global $config_ini = $System_DIR & "\config.ini"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
+Global $Version = IniRead($Config_INI, "Settings", "Version", "")
+Global $System_DIR = $Install_DIR & "System\"
 If Not FileExists($Config_INI) Then FileCopy($System_DIR & "config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $HomeLoader_StartBat = $System_DIR & "StartHomeAPP.bat"
-Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"
@@ -36,9 +23,12 @@ Global $Skin = IniRead($Config_INI, "Settings", "Skin", "1")
 Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 
-Global $Home_Loader_GUI, $contextmenu, $RM_Item0,  $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
+Global $Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
+Global $Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
+Global $Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
 
-IniWrite($config_ini, "Settings", "Version", $Version)
+Global $Home_Loader_GUI, $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
+Global $font = "arial"
 #endregion
 
 #Region First Start Check
@@ -48,12 +38,10 @@ If $First_Start = "true" Then
 EndIf
 #endregion
 
-Global $font = "arial"
 
 If $Skin = "1" Then _Home_Loader_GUI_1()
 If $Skin = "2" Then _Home_Loader_GUI_2()
 
-If $Auto_CheckUpdates = "true" Then _Check_for_Updates()
 
 #Region While 1
 While 1
@@ -68,7 +56,7 @@ While 1
 WEnd
 #endregion
 
-
+#Region Main
 Func _Home_Loader_GUI_1()
 	Global $Home_Loader_GUI = GUICreate("HomeLoader GUI", 465, 315, - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
@@ -77,9 +65,9 @@ Func _Home_Loader_GUI_1()
 	GuiCtrlSetTip(-1, "Opens Home Loader Library.")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
 
-	;Global $Button_2 = GUICtrlCreateButton("Home Loader Playlist", 165, 15, 136, 136, $BS_BITMAP)
-	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
-	;GuiCtrlSetTip(-1, "Opens Home Loader Playlist.")
+	;Global $Button_2 = GUICtrlCreateButton("Placeholder", 165, 15, 136, 136, $BS_BITMAP)
+	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
+	;GuiCtrlSetTip(-1, "Placeholder")
 	;GUICtrlSetOnEvent(- 1, "_Button_2")
 
 	Global $Button_3 = GUICtrlCreateButton("Supersampling menus", 165, 15, 136, 136, $BS_BITMAP)
@@ -111,15 +99,27 @@ Func _Home_Loader_GUI_1()
 		If $Loop = 5 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
 		;If $Loop = 6 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
 		$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu)
+		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu, -1, 1)
+			If $Skin = "1" Then GUICtrlSetState(-1, $GUI_CHECKED)
 			GUICtrlSetOnEvent(- 1, "_RM_Item1")
-		$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item3 = GUICtrlCreateMenuItem("Skin 2", $contextmenu)
-			GUICtrlSetOnEvent(- 1, "_RM_Item3")
-		$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item5 = GUICtrlCreateMenuItem("Info", $contextmenu)
+		$RM_Item2 = GUICtrlCreateMenuItem("Skin 2", $contextmenu, -1, 1)
+			If $Skin = "2" Then GUICtrlSetState(-1, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item2")
+		$RM_Item3 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item4 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
+			If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState($RM_Item4, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item4")
+		$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
+			If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState($RM_Item5, $GUI_CHECKED)
 			GUICtrlSetOnEvent(- 1, "_RM_Item5")
-		$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item6 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
+			If $Start_Settings = "true" Then GUICtrlSetState($RM_Item6, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item6")
+		$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item9 = GUICtrlCreateMenuItem("Info", $contextmenu)
+			GUICtrlSetOnEvent(- 1, "_RM_Item9")
+		$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	Next
 
 	GUISetState()
@@ -133,7 +133,7 @@ Func _Home_Loader_GUI_2()
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
 	;$aButton[1] = GUICtrlCreateButton("Button 2", 10, 155, 136, 136, $BS_BITMAP)
-	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderPlaylist.bmp")
+	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
 	;GUICtrlSetOnEvent(- 1, "_Button_2")
 	$aButton[1] = GUICtrlCreateButton("Button 3", 10, 155, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
@@ -160,16 +160,28 @@ Func _Home_Loader_GUI_2()
 
 	For $Loop = 0 To 12
 		Global $contextmenu = GUICtrlCreateContextMenu($Loop)
-		Global $RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-		Global $RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu)
+		$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu, -1, 1)
+			If $Skin = "1" Then GUICtrlSetState(-1, $GUI_CHECKED)
 			GUICtrlSetOnEvent(- 1, "_RM_Item1")
-		Global $RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
-		Global $RM_Item3 = GUICtrlCreateMenuItem("Skin 2", $contextmenu)
-			GUICtrlSetOnEvent(- 1, "_RM_Item3")
-		Global $RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-		Global $RM_Item5 = GUICtrlCreateMenuItem("Info", $contextmenu)
+		$RM_Item2 = GUICtrlCreateMenuItem("Skin 2", $contextmenu, -1, 1)
+			If $Skin = "2" Then GUICtrlSetState(-1, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item2")
+		$RM_Item3 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item4 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
+			If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item4")
+		$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
+			If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
 			GUICtrlSetOnEvent(- 1, "_RM_Item5")
-		Global $RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item6 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
+			If $Start_Settings = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
+			GUICtrlSetOnEvent(- 1, "_RM_Item6")
+		$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
+		$RM_Item9 = GUICtrlCreateMenuItem("Info", $contextmenu)
+			GUICtrlSetOnEvent(- 1, "_RM_Item9")
+		$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
 	Next
 
 	GUISetState(@SW_SHOW)
@@ -184,7 +196,7 @@ Func _GuiHole($h_win, $i_x, $i_y, $i_sizew, $i_sizeh)
 	_WinAPI_DeleteObject($inner_rgn)
 	_AddCtrlRegion($combined_rgn, $aButton)
 	_WinAPI_SetWindowRgn($h_win, $combined_rgn)
-EndFunc   ;==>_GuiHole
+EndFunc
 
 Func _AddCtrlRegion($full_rgn, $ctrl_id)
 	Local $ctrl_pos, $ctrl_rgn
@@ -201,10 +213,10 @@ Func _AddCtrlRegion($full_rgn, $ctrl_id)
 		_WinAPI_CombineRgn($full_rgn, $full_rgn, $ctrl_rgn, $RGN_OR)
 		_WinAPI_DeleteObject($ctrl_rgn)
 	EndIf
-EndFunc   ;==>_AddCtrlRegion
+EndFunc
+#endregion
 
-
-
+#Region Buttons
 Func _Button_1()
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 	IniWrite($Config_INI, "TEMP", "Show_Playlist", "")
@@ -275,33 +287,58 @@ Func _Button_6()
 	_Button_Exit_GUI()
 	;Exit
 EndFunc
+#endregion
 
-
+#Region RM Klick
 Func _RM_Item1()
 	IniWrite($Config_INI, "Settings", "Skin", "1")
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item3()
+Func _RM_Item2()
 	IniWrite($Config_INI, "Settings", "Skin", "2")
 	_Button_Restart_GUI()
 EndFunc
 
+
+
+Func _RM_Item4()
+	$Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
+	If $Start_HomeLoaderGUI = "true" Then
+		IniWrite($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
+	Else
+		IniWrite($Config_INI, "Settings", "Start_HomeLoaderGUI", "true")
+	EndIf
+	_Button_Restart_GUI()
+EndFunc
+
 Func _RM_Item5()
+	$Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
+	If $Start_HomeLoaderLibrary = "true" Then
+		IniWrite($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
+	Else
+		IniWrite($Config_INI, "Settings", "Start_HomeLoaderLibrary", "true")
+	EndIf
+	_Button_Restart_GUI()
+EndFunc
+
+Func _RM_Item6()
+	$Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
+	If $Start_Settings = "true" Then
+		IniWrite($Config_INI, "Settings", "Start_Settings", "false")
+	Else
+		IniWrite($Config_INI, "Settings", "Start_Settings", "true")
+	EndIf
+	_Button_Restart_GUI()
+EndFunc
+
+
+Func _RM_Item9()
 	MsgBox(0, "Home Loader by CogentRifter", "Home Loader by CogentRifter")
 EndFunc
+#endregion
 
-
-Func _Check_for_Updates()
-	IniWrite($Config_INI, "TEMP", "Update_Check", "true")
-	If FileExists($System_DIR & "UpdateCheck.exe") Then
-		ShellExecute($System_DIR & "UpdateCheck.exe")
-	Else
-		ShellExecute($System_DIR & "UpdateCheck.au3")
-	EndIf
-EndFunc
-
-
+#Region Func Restart / Exit / Reload
 Func _Button_Restart_GUI()
 	If FileExists($Install_DIR & "Home Loader GUI.exe") Then
 		ShellExecute($Install_DIR & "Home Loader GUI.exe")
@@ -316,4 +353,5 @@ Func _Button_Exit_GUI()
 	GUIDelete($Home_Loader_GUI)
 	Exit
 EndFunc
+#endregion
 
