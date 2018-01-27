@@ -105,6 +105,9 @@ If $First_Start = "Settings" Then
 							'Click "Advanced Settings" to access additional features.')
 	IniWrite($Config_INI, "Settings", "First_Start", "false")
 EndIf
+
+If Not FileExists($Steam_tools_vrmanifest_File) Then _Detect_SteamVR_Files()
+If Not FileExists($default_vrsettings_File) Then _Detect_SteamVR_Files()
 #endregion
 
 _Settings_GUI()
@@ -136,7 +139,7 @@ Func _First_Start_Empty_Check_1()
 		$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 	EndIf
 
-	If $default_vrsettings_File = "" Then
+	If $default_vrsettings_File = "" Or Not FileExists($default_vrsettings_File) Then
 		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
 		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
 		If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
@@ -145,6 +148,7 @@ Func _First_Start_Empty_Check_1()
 
 		$default_vrsettings_File = $SteamVR_Path & "resources\settings\default.vrsettings"
 		If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+		If Not FileExists($default_vrsettings_File) Then _Detect_SteamVR_Files()
 		$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
 
 		If Not FileExists($default_vrsettings_File) Then
@@ -157,6 +161,33 @@ Func _First_Start_Empty_Check_1()
 			Else
 				MsgBox($MB_ICONWARNING, "Attention!", "Default.vrsettings File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
 				IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
+				_Restart()
+			EndIf
+		EndIf
+	EndIf
+
+	If $Steam_tools_vrmanifest_File = "" Or Not FileExists($Steam_tools_vrmanifest_File) Then
+		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
+		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
+		If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
+		If FileExists($Install_Folder_Steam_4 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\"
+		If FileExists($Install_Folder_Steam_5 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\"
+
+		$Steam_tools_vrmanifest_File = $SteamVR_Path & "tools\tools.vrmanifest"
+		If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+		If Not FileExists($Steam_tools_vrmanifest_File) Then _Detect_SteamVR_Files()
+		$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+
+		If Not FileExists($Steam_tools_vrmanifest_File) Then
+			MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
+				"Choose the File before continue." & @CRLF)
+
+			Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
+			If $FileSelect <> "" Then
+				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
+			Else
+				MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
+				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 				_Restart()
 			EndIf
 		EndIf
@@ -184,34 +215,6 @@ Func _First_Start_Empty_Check_1()
 		If FileExists($HomeLoader_Overlay_Folder & "images\") Then
 			$Icon_Folder_3 = $HomeLoader_Overlay_Folder & "images\"
 			IniWrite($Config_INI, "Folders", "Icon_Folder_3", $Icon_Folder_3)
-		EndIf
-	EndIf
-
-
-
-	If $Steam_tools_vrmanifest_File = "" Then
-		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_4 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\"
-		If FileExists($Install_Folder_Steam_5 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\"
-
-		$Steam_tools_vrmanifest_File = $SteamVR_Path & "tools\tools.vrmanifest"
-		If FileExists($Steam_tools_vrmanifest_File) Then _Detect_SteamVR_Files()
-		$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
-
-		If Not FileExists($Steam_tools_vrmanifest_File) Then
-			MsgBox($MB_ICONINFORMATION, "Tools.vrmanifest File", "Tools.vrmanifest File not found." & @CRLF & _
-				"Choose the File before continue." & @CRLF)
-
-			Local $FileSelect = FileOpenDialog("Tools.vrmanifest File", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
-			If $FileSelect <> "" Then
-				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $FileSelect)
-			Else
-				MsgBox($MB_ICONWARNING, "Attention!", "Tools.vrmanifest File" & @CRLF & @CRLF & "Search the File and write the path manually to the config.igi File or try again.")
-				IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
-				_Restart()
-			EndIf
 		EndIf
 	EndIf
 
@@ -249,6 +252,8 @@ Func _Detect_SteamVR_Files()
 		$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
 	EndIf
 
+	MsgBox(0, "$default_vrsettings_File", $default_vrsettings_File)
+
 	If Not FileExists($SteamVR_Path & "tools\tools.vrmanifest") Then
 		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
 		If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
@@ -260,6 +265,8 @@ Func _Detect_SteamVR_Files()
 		If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
 		$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 	EndIf
+
+	MsgBox(0, "$Steam_tools_vrmanifest_File", $Steam_tools_vrmanifest_File)
 EndFunc
 #endregion
 
