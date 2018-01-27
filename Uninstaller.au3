@@ -29,23 +29,9 @@ Func _Uninstal_HomeLoader() ; SteamVR Home
 EndFunc
 
 Func _Restore_default_SteamVR_Home_app()
-	_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
-
-	FileDelete($Steam_tools_vrmanifest_File)
-
-    For $LOOP_vrmanifest = 1 To $Array_tools_vrmanifest_File[0]
-		$ReadLine_tools_vrmanifest = $Array_tools_vrmanifest_File[$LOOP_vrmanifest]
-		If $ReadLine_tools_vrmanifest = '			"app_key": "openvr.tool.steamvr_environments",' Then
-			Local $Line_NR_binary_path_windows = $LOOP_vrmanifest + 3
-		EndIf
-
-		If $LOOP_vrmanifest = $Line_NR_binary_path_windows Then
-			$NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
-			FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
-		Else
-			FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])
-		EndIf
-    Next
+	If FileExists($Steam_tools_vrmanifest_File & ".bak") Then
+		FileCopy($Steam_tools_vrmanifest_File & ".bak", $Steam_tools_vrmanifest_File, $FC_CREATEPATH + $FC_OVERWRITE)
+	EndIf
 EndFunc
 
 Func _Start_Uninstal()
