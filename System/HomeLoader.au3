@@ -201,13 +201,18 @@ Func _Get_ADD_PlayersOnline_DATA()
 			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
 			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
 
-			Local $sHTML = _INetGetSource('https://steamdb.info/app/' & $Check_AppId & '/graphs/')
+			Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
+			_INetGetSource($URL)
+			$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+			$WinHttpReq.Open("GET", $URL, false)
+			$WinHttpReq.Send()
+			Local $Data = $WinHttpReq.ResponseText
 
-			Local $iPosition_1 = StringInStr($sHTML, '<li><strong>')
-			Local $iPosition_2 = StringInStr($sHTML, '</strong><em>all-time peak')
+			Local $iPosition_1 = StringInStr($Data, '<li><strong>')
+			Local $iPosition_2 = StringInStr($Data, '</strong><em>all-time peak')
 			Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
-			Local $sString = StringMid($sHTML, $iPosition_1, $iPosition_3)
+			Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
 			Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
 
 			If $aArray[0] > 1 Then
@@ -223,14 +228,14 @@ Func _Get_ADD_PlayersOnline_DATA()
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "right_now", $PlayersOnline_right_now)
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "24h_peak", $PlayersOnline_24h_peak)
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "all_time_peak", $PlayersOnline_all_time_peak)
-
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Apps, "right_now", $PlayersOnline_right_now)
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Apps, "24h_peak", $PlayersOnline_24h_peak)
 				IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Apps, "all_time_peak", $PlayersOnline_all_time_peak)
 
-				_Write_PO_TEXT_2_Image()
-				_Write_PO_Image_2_Image()
-				_Copy_Icon_2_Icon_Folder()
+				If $Add_PlayersOnline_to_Icons = "true" Then
+					_Write_PO_TEXT_2_Image()
+					_Write_PO_Image_2_Image()
+				EndIf
 
 				$PlayersOnline_right_now = ""
 				$PlayersOnline_24h_peak = ""
@@ -295,6 +300,31 @@ Func _Write_PO_Image_2_Image()
 
 	_GDIPlus_ImageSaveToFile($hBMPBuff, $NewIcon_Path)
 
+	If $Icon_Folder_1 <> "" Then
+		If FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_1 & $Check_AppId & "_header" & ".jpg")
+		If FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_2 <> "" Then
+		If FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_3 <> "" Then
+		If FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_4 <> "" Then
+		If FileExists($Icon_Folder_4 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_5 <> "" Then
+		If FileExists($Icon_Folder_5 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
 	_GDIPlus_ImageDispose($hImage2)
@@ -317,53 +347,6 @@ Func _Quit_PO_Image_2_Image()
 	_GDIPlus_GraphicsDispose($hGraphic)
 	_WinAPI_DeleteObject($hBMPBuff)
 	_GDIPlus_Shutdown()
-EndFunc
-
-Func _Copy_Icon_2_Icon_Folder()
-	If $Icon_Folder_3 <> "" Then
-		If FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_3 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_1 <> "" Then
-		If FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_1 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_2 <> "" Then
-		If FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_2 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_4 <> "" Then
-		If FileExists($Icon_Folder_4 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_4 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_4 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_5 <> "" Then
-		If FileExists($Icon_Folder_5 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_5 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_5 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
 EndFunc
 
 Func _Add_SS_to_SteamVR()
@@ -443,7 +426,6 @@ Func _Get_AD_SS_Values_to_Icons()
 			If $SS_Value_Check <> "" Then
 				_Write_SS_TEXT_2_Image()
 				_Write_SS_Image_2_Image()
-				_Copy_SS_Icon_2_Icon_Folder()
 			EndIf
 
 			$renderTargetMultiplier_value = ""
@@ -507,6 +489,31 @@ Func _Write_SS_Image_2_Image()
 	$NewIcon_Path = $sNewName
 	_GDIPlus_ImageSaveToFile($hBMPBuff, $NewIcon_Path)
 
+	If $Icon_Folder_1 <> "" Then
+		If FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_1 & $Check_AppId & "_header" & ".jpg")
+		If FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_2 <> "" Then
+		If FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_3 <> "" Then
+		If FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_4 <> "" Then
+		If FileExists($Icon_Folder_4 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_4 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
+	If $Icon_Folder_5 <> "" Then
+		If FileExists($Icon_Folder_5 & $Check_AppId & "_header" & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg")
+		If FileExists($Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg") Then _GDIPlus_ImageSaveToFile($hBMPBuff, $Icon_Folder_5 & "steam.app." & $Check_AppId & ".jpg")
+	EndIf
+
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
 	_GDIPlus_ImageDispose($hImage2)
@@ -526,39 +533,6 @@ Func _Quit_SS_Image_2_Image()
 	_GDIPlus_GraphicsDispose($hGraphic)
 	_WinAPI_DeleteObject($hBMPBuff)
 	_GDIPlus_Shutdown()
-EndFunc
-
-Func _Copy_SS_Icon_2_Icon_Folder()
-	If $Icon_Folder_1 <> "" Then
-		If FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_1 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_1 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_1 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_2 <> "" Then
-		If FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_2 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_2 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_2 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_3 <> "" Then
-		If FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_3 & $Check_AppId & "_header" & ".jpg", $FC_OVERWRITE)
-		If FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then FileCopy($NewIcon_Path, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-
-		If Not FileExists($Icon_Folder_3 & $Check_AppId & "_header" & ".jpg") And Not FileExists($Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg") Then
-			FileCopy($NewIcon_Path, $Icon_Folder_3 & "steam.app." & $Check_AppId & ".jpg", $FC_OVERWRITE)
-		EndIf
-	EndIf
-
-	If $Icon_Folder_1 = "" And $Icon_Folder_2 = "" And $Icon_Folder_3 = "" Then
-		MsgBox($MB_ICONWARNING, "", "You need at least one Icon Folder path." & @CRLF & "Go to settings menu and enter an Icon path." & @CRLF & "Or disable the 'Add PlayersOnline to Icons function'.")
-	EndIf
 EndFunc
 
 Func _Check_SteamVR_Exit()

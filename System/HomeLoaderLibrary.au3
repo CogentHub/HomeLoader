@@ -44,6 +44,7 @@ Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $Show_Playlist = IniRead($Config_INI, "TEMP", "Show_Playlist", "")
 Global $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
 Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
+Global $DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Icons = $Install_DIR & "Icons\"
@@ -262,10 +263,19 @@ If $First_Start <> "true" Then
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
 	GuiCtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF)
 
-	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 80, $BS_BITMAP)
+	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 60, $BS_BITMAP) ; 155, 80 --> 174, 71
 	_GUICtrlButton_SetImage($Button_ReScan_Steam_Library, $gfx & "ReScan_SteamLibrary.bmp")
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
+
+	$Checkbox_DeleteData_Value = ""
+	If $DeleteHomeLoaderLibraryData = "true" Then $Checkbox_DeleteData_Value = "a"
+	$Checkbox_DeleteData = GUICtrlCreateLabel($Checkbox_DeleteData_Value, 452, 67, 18, 18, 0x1201)
+	GUICtrlSetFont(-1, 20, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("Delete Library Data", 475, 69, 135, 20)
+	GUICtrlSetFont(-1, 11, 400, 1, "arial")
+
 
 	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
@@ -431,6 +441,7 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($Button_ShowGamePage, "_Show_HTML_GamePage_GUI")
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
+	GUICtrlSetOnEvent($Checkbox_DeleteData, "_Checkbox_DeleteData")
 
 	GUICtrlSetOnEvent($ButtonTAB_Steam_Library, "_ButtonTAB_Steam_Library")
 	GUICtrlSetOnEvent($ButtonTAB_Non_Steam_Appl, "_ButtonTAB_Non_Steam_Appl")
@@ -464,7 +475,6 @@ If $First_Start <> "true" Then
 	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 
 	GUIRegisterMsg($WM_notify, "_ClickOnListView")
-	;_Tab()
 	GUIDelete($GUI_Loading)
 
 	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
@@ -1070,7 +1080,6 @@ Func _SS_GUI()
 	GUISetState()
 EndFunc
 
-
 Func _Update_StatusBar()
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -1267,7 +1276,6 @@ Func _ApplicationList_Update()
 
 			_Download_Icon_for_SteamGameID()
 
-
 			If Not FileExists($Icons & "32x32\" & "steam.app." & $appid & ".bmp") Then
 				_Get_SteamGame_Icon_32x32()
 			EndIf
@@ -1284,13 +1292,18 @@ EndFunc
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Global $Check_AppId = $appid
-	Global $sHTML = _INetGetSource('https://steamdb.info/app/' & $Check_AppId & '/graphs/')
+	Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
+	_INetGetSource($URL)
+	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	$WinHttpReq.Open("GET", $URL, false)
+	$WinHttpReq.Send()
+	Local $Data = $WinHttpReq.ResponseText
 
-	Local $iPosition_1 = StringInStr($sHTML, '<li><strong>')
-	Local $iPosition_2 = StringInStr($sHTML, '</strong><em>all-time peak')
+	Local $iPosition_1 = StringInStr($Data, '<li><strong>')
+	Local $iPosition_2 = StringInStr($Data, '</strong><em>all-time peak')
 	Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
-	Local $sString = StringMid($sHTML, $iPosition_1, $iPosition_3)
+	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
 	Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
 
 	If $aArray[0] > 1 Then
@@ -1318,13 +1331,17 @@ EndFunc
 
 Func _Get_SteamGame_Icon_32x32()
 	Global $Steam_AppId = $appid
+	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
+	_INetGetSource($URL)
+	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	$WinHttpReq.Open("GET", $URL, false)
+	$WinHttpReq.Send()
+	Local $Data = $WinHttpReq.ResponseText
 
-	Global $sHTML = _INetGetSource('https://steamdb.info/app/' & $appid & '/info/')
-
-	Local $iPosition_1 = StringInStr($sHTML, 'clienttga</td>', $STR_CASESENSE, 1, 1000)
-	Local $iPosition_2 = StringInStr($sHTML, '.jpg" rel="nofollow">', $STR_CASESENSE, 1, 1000)
+	Local $iPosition_1 = StringInStr($Data, 'clienttga</td>', $STR_CASESENSE, 1, 1000)
+	Local $iPosition_2 = StringInStr($Data, '.jpg" rel="nofollow">', $STR_CASESENSE, 1, 1000)
 	Local $iPosition_3 = $iPosition_2 - $iPosition_1
-	Local $sString = StringMid($sHTML, $iPosition_1, $iPosition_3)
+	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
 
 	Local $iPosition_1_2 = StringInStr($sString, '<td class="span3">icon</td>', $STR_CASESENSE, 1, 1)
 	Local $iPosition_2_2 = StringLen($sString) + 1
@@ -1350,14 +1367,18 @@ EndFunc
 
 Func _Get_SteamGame_Icon_256x256()
 	Global $Steam_AppId = $appid
+	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
+	_INetGetSource($URL)
+	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	$WinHttpReq.Open("GET", $URL, false)
+	$WinHttpReq.Send()
+	Local $Data = $WinHttpReq.ResponseText
 
-	Global $sHTML = _INetGetSource('https://steamdb.info/app/' & $Steam_AppId & '/info/')
-
-	Local $iPosition_1 = StringInStr($sHTML, 'clienticon</td>')
-	Local $iPosition_2 = StringInStr($sHTML, '.ico" rel="nofollow')
+	Local $iPosition_1 = StringInStr($Data, 'clienticon</td>')
+	Local $iPosition_2 = StringInStr($Data, '.ico" rel="nofollow')
 	Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
-	Local $sString = StringMid($sHTML, $iPosition_1, $iPosition_3)
+	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
 
 	Global $HTML_IconLink = StringReplace($sString, 'clienticon</td>', '')
 	$HTML_IconLink = StringReplace($HTML_IconLink, '<td><a href="', '')
@@ -1370,20 +1391,14 @@ EndFunc
 
 Func _Convert_Icon_32x32()
 	_GDIPlus_Startup()
-
 	Local $sFile = $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".jpg"
     If @error Or Not FileExists($sFile) Then Return
-
     Local $hImage = _GDIPlus_ImageLoadFromFile($sFile)
-
     Local $iWidth = 600
     Local $iHeight = _GDIPlus_ImageGetHeight($hImage) * 600 / _GDIPlus_ImageGetWidth($hImage)
-
     Local $tPalette = _GDIPlus_PaletteInitialize(16, $GDIP_PaletteTypeFixedHalftone27, 16, False, $hImage)
     _GDIPlus_BitmapConvertFormat($hImage, "", $GDIP_DitherTypeDualSpiral8x8, $GDIP_PaletteTypeFixedHalftone27, $tPalette)
-
 	_GDIPlus_ImageSaveToFile($hImage, $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".bmp")
-
     _GDIPlus_ImageDispose($hImage)
     _GDIPlus_Shutdown()
 EndFunc
@@ -1395,19 +1410,24 @@ Func _Download_Icon_for_SteamGameID()
 	Local $Download_Icon_path_3_jpg = $Icon_Folder_1 & "steam.app." & $Application_appid & ".jpg"
 	Local $Download_Icon_path_4_jpg = $Icon_Folder_2 & "steam.app." & $Application_appid & ".jpg"
 	Local $Download_Icon_path_5_jpg = $Icon_Folder_3 & "steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_6_jpg = $Icon_Folder_4 & "steam.app." & $Application_appid & ".jpg"
+	Local $Download_Icon_path_7_jpg = $Icon_Folder_5 & "steam.app." & $Application_appid & ".jpg"
 
 	Local $URL = "http://cdn.akamai.steamstatic.com/steam/apps/" & $Application_appid & "/header.jpg"
-	If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
-	If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
 
-	If $Icon_Folder_1 <> "" Then
-		If Not FileExists($Download_Icon_path_3_jpg) Then InetGet($URL, $Download_Icon_path_3_jpg, 16, 0)
-	EndIf
-	If $Icon_Folder_2 <> "" Then
-		If Not FileExists($Download_Icon_path_4_jpg) Then InetGet($URL, $Download_Icon_path_4_jpg, 16, 0)
-	EndIf
-	If $Icon_Folder_3 <> "" Then
-		If Not FileExists($Download_Icon_path_5_jpg) Then InetGet($URL, $Download_Icon_path_5_jpg, 16, 0)
+	If $Application_appid <> "" Then
+		If $DeleteHomeLoaderLibraryData = "true" Then
+			If FileExists($Download_Icon_path_1_jpg) Then FileDelete($Download_Icon_path_1_jpg)
+			If FileExists($Download_Icon_path_2_jpg) Then FileDelete($Download_Icon_path_2_jpg)
+			If FileExists($Download_Icon_path_3_jpg) Then FileDelete($Download_Icon_path_3_jpg)
+			If FileExists($Download_Icon_path_4_jpg) Then FileDelete($Download_Icon_path_4_jpg)
+			If FileExists($Download_Icon_path_5_jpg) Then FileDelete($Download_Icon_path_5_jpg)
+			If FileExists($Download_Icon_path_6_jpg) Then FileDelete($Download_Icon_path_6_jpg)
+			If FileExists($Download_Icon_path_7_jpg) Then FileDelete($Download_Icon_path_7_jpg)
+		EndIf
+
+		If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
+		If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
 	EndIf
 EndFunc
 #endregion
@@ -2995,6 +3015,7 @@ Func _Button_ReScan_Steam_Library()
 		$NR_Library_temp = ""
 		_GUICtrlListView_DeleteAllItems($listview)
 		$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
+		If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini")
 		FileCopy($ApplicationList_INI, $ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini", $FC_OVERWRITE + $FC_CREATEPATH)
 		Sleep(500)
 		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
@@ -3005,6 +3026,7 @@ Func _Button_ReScan_Steam_Library()
 		_Search_Files()
 		_GUICtrlListView_DeleteAllItems($listview)
 		$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
+		If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini")
 		FileCopy($ApplicationList_INI, $ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini", $FC_OVERWRITE + $FC_CREATEPATH)
 		Sleep(500)
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
@@ -3012,6 +3034,18 @@ Func _Button_ReScan_Steam_Library()
 	_Read_from_INI_ADD_2_ListView()
 	_GUICtrlStatusBar_SetText($Statusbar, "Rescan of Steam Library finished." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
+
+Func _Checkbox_DeleteData()
+	$CheckBox = GUICtrlRead($Checkbox_DeleteData)
+	If $CheckBox = "" Then
+		GUICtrlSetData($Checkbox_DeleteData, "a")
+		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "true")
+	Else
+		GUICtrlSetData($Checkbox_DeleteData, "")
+		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "false")
+	EndIf
+EndFunc
+
 #endregion
 
 #Region Func Add to Library GUI
@@ -3878,61 +3912,6 @@ Func _Overlay_ApplicationList_Update()
 				_Get_ADD_PlayersOnline_DATA()
 			EndIf
 	EndIf
-EndFunc
-
-
-Func _Create_Overlay_StartPage()
-	Local $Array_StartPageTemplate_Value
-	$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
-	Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
-	$Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
-	Local $StartPage_path = $Install_DIR & "WebPage\OverlayStartPage.html"
-	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
-	Local $StartPageTemplate = $Install_DIR & "WebPage\Overlay.html"
-	_FileReadToArray($StartPageTemplate, $Array_StartPageTemplate_Value, $FRTA_COUNT)
-
-	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
-
-	$StartPage_NR_1 = IniRead($Config_INI, "TEMP", "StartPage_NR_1", "26")
-	For $Loop_NR1 = 1 To $Array_StartPageTemplate_Value[0] - $StartPage_NR_1
-		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR1])
-	Next
-
-	For $Loop_NR2 = 1 To $NR_Applications
-		Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "NR", "")
-		Global $Application_appid = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "appid", "")
-		Global $Application_name = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "name", "")
-		Global $Application_installdir = IniRead($ApplicationList_TEMP, "Application_" & $Loop_NR2, "installdir", "")
-		Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
-		Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
-
-		If Not FileExists($WebPage_IconPath) Then
-			FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
-		EndIf
-
-		If Not FileExists($WebPage_IconPath) Then
-			FileCopy($Application_IconPath, $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
-		EndIf
-
-		If Not FileExists($WebPage_IconPath) Then
-			FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
-		EndIf
-
-		If $Use_Local_Icons = "false" Then
-			FileWriteLine($StartPage_path, '            <a href="#"' & '><img src="http://cdn.edgecast.steamstatic.com/steam/apps/' & $Application_appid & '/header.jpg?t=1503264891" id="' & $Application_appid & '" name="steam://launch/" onclick="updateLink(this);" style="width: 216px"></a>')
-		Else
-			Local $Icons_Path_html = $HomeLoader_Overlay_Folder & "images\" & "steam.app." & $Application_appid & ".jpg"
-			If Not FileExists($Icons_Path_html) Then FileCopy($Icons & "460x215\steam.app." & $Application_appid & ".jpg", $Icons_Path_html, $FC_OVERWRITE + $FC_CREATEPATH)
-			If Not FileExists($Icons & "460x215\steam.app." & $Application_appid & ".jpg") Then FileCopy($gfx & "Icon_Preview2.jpg", $Icons_Path_html, $FC_OVERWRITE + $FC_CREATEPATH)
-			$Icons_Path_html = "images/" & "steam.app." & $Application_appid & ".jpg"
-			FileWriteLine($StartPage_path, '            <a href="#"' & '><img src="' & $Icons_Path_html & '" id="' & $Application_appid & '" name="steam://launch/" onclick="updateLink(this);" style="width: 216px"></a>')
-		EndIf
-	Next
-
-	$StartPage_NR_2 = IniRead($Config_INI, "TEMP", "StartPage_NR_2", "113")
-	For $Loop_NR3 = $StartPage_NR_2 To $Array_StartPageTemplate_Value[0]
-		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR3])
-	Next
 EndFunc
 
 #endregion
