@@ -27,6 +27,14 @@ Global $Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoader
 Global $Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
 Global $Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
 
+Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
+Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
+
+
+Global $default_vrsettings_File = IniRead($Config_INI, "Folders", "Steam_default_vrsettings", "")
+Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
+
 Global $Home_Loader_GUI, $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6
 Global $font = "arial"
 #endregion
@@ -38,6 +46,8 @@ If $First_Start = "true" Then
 EndIf
 #endregion
 
+If Not FileExists($Steam_tools_vrmanifest_File) Then _Detect_SteamVR_Files()
+If Not FileExists($default_vrsettings_File) Then _Detect_SteamVR_Files()
 
 If $Skin = "1" Then _Home_Loader_GUI_1()
 If $Skin = "2" Then _Home_Loader_GUI_2()
@@ -64,11 +74,6 @@ Func _Home_Loader_GUI_1()
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
 	GuiCtrlSetTip(-1, "Opens Home Loader Library.")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
-
-	;Global $Button_2 = GUICtrlCreateButton("Placeholder", 165, 15, 136, 136, $BS_BITMAP)
-	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
-	;GuiCtrlSetTip(-1, "Placeholder")
-	;GUICtrlSetOnEvent(- 1, "_Button_2")
 
 	Global $Button_3 = GUICtrlCreateButton("Supersampling menus", 165, 15, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
@@ -97,29 +102,7 @@ Func _Home_Loader_GUI_1()
 		If $Loop = 3 Then $contextmenu = GUICtrlCreateContextMenu($Button_4)
 		If $Loop = 4 Then $contextmenu = GUICtrlCreateContextMenu($Button_5)
 		If $Loop = 5 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
-		;If $Loop = 6 Then $contextmenu = GUICtrlCreateContextMenu($Button_6)
-		$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu, -1, 1)
-			If $Skin = "1" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item1")
-		$RM_Item2 = GUICtrlCreateMenuItem("Skin 2", $contextmenu, -1, 1)
-			If $Skin = "2" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item2")
-		$RM_Item3 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item4 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
-			If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState($RM_Item4, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item4")
-		$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
-			If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState($RM_Item5, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item5")
-		$RM_Item6 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
-			If $Start_Settings = "true" Then GUICtrlSetState($RM_Item6, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item6")
-		$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item9 = GUICtrlCreateMenuItem("Info", $contextmenu)
-			GUICtrlSetOnEvent(- 1, "_RM_Item9")
-		$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+		_RM_Menu()
 	Next
 
 	GUISetState()
@@ -132,9 +115,6 @@ Func _Home_Loader_GUI_2()
 	$aButton[0] = GUICtrlCreateButton("Button 1", 10, 10, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_1")
-	;$aButton[1] = GUICtrlCreateButton("Button 2", 10, 155, 136, 136, $BS_BITMAP)
-	;_GUICtrlButton_SetImage(- 1, $gfx & "Button_HomeLoaderLibrary.bmp")
-	;GUICtrlSetOnEvent(- 1, "_Button_2")
 	$aButton[1] = GUICtrlCreateButton("Button 3", 10, 155, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
 	GUICtrlSetOnEvent(- 1, "_Button_3")
@@ -160,34 +140,42 @@ Func _Home_Loader_GUI_2()
 
 	For $Loop = 0 To 12
 		Global $contextmenu = GUICtrlCreateContextMenu($Loop)
-		$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu, -1, 1)
-			If $Skin = "1" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item1")
-		$RM_Item2 = GUICtrlCreateMenuItem("Skin 2", $contextmenu, -1, 1)
-			If $Skin = "2" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item2")
-		$RM_Item3 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item4 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
-			If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item4")
-		$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
-			If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item5")
-		$RM_Item6 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
-			If $Start_Settings = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
-			GUICtrlSetOnEvent(- 1, "_RM_Item6")
-		$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
-		$RM_Item9 = GUICtrlCreateMenuItem("Info", $contextmenu)
-			GUICtrlSetOnEvent(- 1, "_RM_Item9")
-		$RM_Item10 = GUICtrlCreateMenuItem("", $contextmenu)
+		_RM_Menu()
 	Next
 
 	GUISetState(@SW_SHOW)
 	$pos = WinGetPos($Home_Loader_GUI)
 	_GuiHole($Home_Loader_GUI, 0, 0, 150, 150)
 EndFunc
+
+Func _RM_Menu()
+	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item1 = GUICtrlCreateMenuItem("Skin 1", $contextmenu, -1, 1)
+		If $Skin = "1" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item1")
+	$RM_Item2 = GUICtrlCreateMenuItem("Skin 2", $contextmenu, -1, 1)
+		If $Skin = "2" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item2")
+	$RM_Item3 = GUICtrlCreateMenuItem("Close HomeLoader GUI after selection", $contextmenu)
+		If $Close_MainGUI_after_selection = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item3")
+	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
+		If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState($RM_Item4, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item5")
+	$RM_Item6 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
+		If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState($RM_Item5, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item6")
+	$RM_Item7 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
+		If $Start_Settings = "true" Then GUICtrlSetState($RM_Item6, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item7")
+	$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item9 = GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item10 = GUICtrlCreateMenuItem("Info", $contextmenu)
+		GUICtrlSetOnEvent(- 1, "_RM_Item10")
+	$RM_Item11 = GUICtrlCreateMenuItem("", $contextmenu)
+EndFunc
+
 
 Func _GuiHole($h_win, $i_x, $i_y, $i_sizew, $i_sizeh)
 	Local $outer_rgn, $inner_rgn, $combined_rgn
@@ -213,6 +201,31 @@ Func _AddCtrlRegion($full_rgn, $ctrl_id)
 		_WinAPI_CombineRgn($full_rgn, $full_rgn, $ctrl_rgn, $RGN_OR)
 		_WinAPI_DeleteObject($ctrl_rgn)
 	EndIf
+EndFunc
+
+Func _Detect_SteamVR_Files()
+	IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
+	IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
+
+	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	$Install_Folder_Steam_2 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_2", "")
+	$Install_Folder_Steam_3 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_3", "")
+	$Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
+	$Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
+
+	If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
+	If FileExists($Install_Folder_Steam_2 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_2 & "SteamApps\common\SteamVR\"
+	If FileExists($Install_Folder_Steam_3 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_3 & "SteamApps\common\SteamVR\"
+	If FileExists($Install_Folder_Steam_4 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_4 & "SteamApps\common\SteamVR\"
+	If FileExists($Install_Folder_Steam_5 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_5 & "SteamApps\common\SteamVR\"
+
+	$default_vrsettings_File = $SteamVR_Path & "resources\settings\default.vrsettings"
+	If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
+	$default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
+
+	$Steam_tools_vrmanifest_File = $SteamVR_Path & "tools\tools.vrmanifest"
+	If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", $Steam_tools_vrmanifest_File)
+	$Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 EndFunc
 #endregion
 
@@ -300,9 +313,17 @@ Func _RM_Item2()
 	_Button_Restart_GUI()
 EndFunc
 
+Func _RM_Item3()
+	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	If $Close_MainGUI_after_selection = "true" Then
+		IniWrite($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
+	Else
+		IniWrite($Config_INI, "Settings", "Close_MainGUI_after_selection", "true")
+	EndIf
+	_Button_Restart_GUI()
+EndFunc
 
-
-Func _RM_Item4()
+Func _RM_Item5()
 	$Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
 	If $Start_HomeLoaderGUI = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
@@ -312,7 +333,7 @@ Func _RM_Item4()
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item5()
+Func _RM_Item6()
 	$Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
 	If $Start_HomeLoaderLibrary = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
@@ -322,7 +343,7 @@ Func _RM_Item5()
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item6()
+Func _RM_Item7()
 	$Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
 	If $Start_Settings = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_Settings", "false")
@@ -333,7 +354,7 @@ Func _RM_Item6()
 EndFunc
 
 
-Func _RM_Item9()
+Func _RM_Item10()
 	MsgBox(0, "Home Loader by CogentRifter", "Home Loader by CogentRifter")
 EndFunc
 #endregion
