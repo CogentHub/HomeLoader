@@ -504,12 +504,14 @@ Func _Create_StartHomeAPP_BAT_File()
 EndFunc
 
 Func _Create_Uninstaller()
-	If FileExists($Install_DIR & "Uninstall.exe") Then
-		FileMove($Install_DIR & "Uninstall.exe", $Install_DIR & "Uninstall Files.exe", $FC_CREATEPATH + $FC_OVERWRITE)
-	EndIf
-	Sleep(500)
-	If FileExists($Install_DIR & "Uninstaller.exe") Then
-		FileMove($Install_DIR & "Uninstaller.exe", $Install_DIR & "Uninstall.exe", $FC_CREATEPATH + $FC_OVERWRITE)
+	If Not FileExists($Install_DIR & "Uninstall Files.exe") Then
+		If FileExists($Install_DIR & "Uninstall.exe") Then
+			FileMove($Install_DIR & "Uninstall.exe", $Install_DIR & "Uninstall Files.exe", $FC_CREATEPATH + $FC_OVERWRITE)
+		EndIf
+		Sleep(500)
+		If FileExists($Install_DIR & "Uninstaller.exe") Then
+			FileMove($Install_DIR & "Uninstaller.exe", $Install_DIR & "Uninstall.exe", $FC_CREATEPATH + $FC_OVERWRITE)
+		EndIf
 	EndIf
 EndFunc
 
