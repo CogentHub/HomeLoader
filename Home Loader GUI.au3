@@ -355,7 +355,16 @@ EndFunc
 
 
 Func _RM_Item10()
-	MsgBox(0, "Home Loader by CogentRifter", "Home Loader by CogentRifter")
+	MsgBox(0, "HomeLoader" & " [" & $Version & "] by Cogent", "Home Loader is a program that allows you to change the default" & @CRLF & _
+																"SteamVR Home App. When starting SteamVR then the new app will be started" & @CRLF & _
+																"instead of the default Steam VR Home app." & @CRLF & _
+																"Additional to that it provides more features like number of current Players" & @CRLF & _
+																"and Supersampling values on the icons or automatically applying the saved" & @CRLF & _
+																"Supersampling settings to the games. HomeLoader provides also an Overlay" & @CRLF & _
+																"[VRUtilityBelt] that be can used by installing VRUtilityBelt." & @CRLF & @CRLF & _
+																"GitHub Page:   " & "https://github.com/CogentHub/HomeLoader"& @CRLF & _
+																"E-Mail:   " & "cogenthub@web.de" & @CRLF & @CRLF & _
+																"HomeLoader" & " [" & $Version & "] made by Cogent [reddit: 'CogentRifter']")
 EndFunc
 #endregion
 
