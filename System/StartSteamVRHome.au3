@@ -139,6 +139,8 @@ EndIf
 
 #endregion
 
+;_Start_Home_APP()
+
 #region Start Check
 If $Autostart_VRUB = "true" Then
 	_Read_from_VRUB_PersistentStore_File()
@@ -494,15 +496,17 @@ Func _Start_Home_APP()
 	Until ProcessExists("vrmonitor.exe")
 
 	If $Autostart_VRUB = "true" Then
+		;ProcessClose("VRUtilityBelt.exe")
+		;Sleep(500)
+		;If Not ProcessExists("VRUtilityBelt.exe") Then
+			;Sleep(2000)
+			;If Not ProcessExists("VRUtilityBelt.exe") Then
+				;Sleep(1000)
+				;ShellExecute("steam://rungameid/645370")
+				;Sleep(5000)
+			;EndIf
+		;EndIf
 		_Write_config_INI_Values_to_VRUB_PersistentStore_File()
-		If Not ProcessExists("VRUtilityBelt.exe") Then
-			Sleep(2000)
-			If Not ProcessExists("VRUtilityBelt.exe") Then
-				Sleep(1000)
-				ShellExecute("steam://rungameid/645370")
-				Sleep(5000)
-			EndIf
-		EndIf
 	EndIf
 
 	If $HomeApp <> "Default SteamVR Home" Then

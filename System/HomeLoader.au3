@@ -201,9 +201,9 @@ Func _Get_ADD_PlayersOnline_DATA()
 			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
 			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
 
-			Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
+			Local $URL = "https://steamdb.info/app/" & $Check_AppId & "/graphs/"
 			_INetGetSource($URL)
-			$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+			Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 			$WinHttpReq.Open("GET", $URL, false)
 			$WinHttpReq.Send()
 			Local $Data = $WinHttpReq.ResponseText

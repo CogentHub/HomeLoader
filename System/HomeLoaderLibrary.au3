@@ -27,7 +27,7 @@ Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.64"
+Global $Version = "0.65"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -1294,7 +1294,7 @@ Func _Get_ADD_PlayersOnline_DATA()
 	Global $Check_AppId = $appid
 	Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
 	_INetGetSource($URL)
-	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 	$WinHttpReq.Open("GET", $URL, false)
 	$WinHttpReq.Send()
 	Local $Data = $WinHttpReq.ResponseText
@@ -1333,7 +1333,7 @@ Func _Get_SteamGame_Icon_32x32()
 	Global $Steam_AppId = $appid
 	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
 	_INetGetSource($URL)
-	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 	$WinHttpReq.Open("GET", $URL, false)
 	$WinHttpReq.Send()
 	Local $Data = $WinHttpReq.ResponseText
@@ -1369,7 +1369,7 @@ Func _Get_SteamGame_Icon_256x256()
 	Global $Steam_AppId = $appid
 	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
 	_INetGetSource($URL)
-	$WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 	$WinHttpReq.Open("GET", $URL, false)
 	$WinHttpReq.Send()
 	Local $Data = $WinHttpReq.ResponseText
