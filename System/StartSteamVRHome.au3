@@ -139,8 +139,6 @@ EndIf
 
 #endregion
 
-;_Start_Home_APP()
-
 #region Start Check
 If $Autostart_VRUB = "true" Then
 	_Read_from_VRUB_PersistentStore_File()
@@ -162,7 +160,6 @@ _Exit()
 
 #Region Func First Start And Empty Check
 Func _First_Start_Empty_Check_1()
-	;_Update_Performed_Check()
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
 
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -270,7 +267,6 @@ Func _First_Start_Empty_Check_1()
 		Local $StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
 		Local $HomeLoaderOverlaySteamID = StringReplace($StringReplace_SteamID, '"', '')
 		IniWrite($Config_INI, "Settings", "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID)
-		;FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
 		_Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 	EndIf
 
@@ -372,13 +368,6 @@ Func _Read_from_VRUB_PersistentStore_File()
 		EndIf
 
     Next
-
-
-	If $FirstStart_Overlay <> "" Then
-		If $FirstStart_Overlay <> $First_Start Then
-			IniWrite($Config_INI, "Settings", "First_Start", $FirstStart_Overlay)
-		EndIf
-	EndIf
 
 	If $HomeApp_Overlay <> "" Then
 		If $HomeApp_Overlay <> $HomeApp Then
@@ -495,17 +484,8 @@ Func _Start_Home_APP()
 		Sleep(1000)
 	Until ProcessExists("vrmonitor.exe")
 
+
 	If $Autostart_VRUB = "true" Then
-		;ProcessClose("VRUtilityBelt.exe")
-		;Sleep(500)
-		;If Not ProcessExists("VRUtilityBelt.exe") Then
-			;Sleep(2000)
-			;If Not ProcessExists("VRUtilityBelt.exe") Then
-				;Sleep(1000)
-				;ShellExecute("steam://rungameid/645370")
-				;Sleep(5000)
-			;EndIf
-		;EndIf
 		_Write_config_INI_Values_to_VRUB_PersistentStore_File()
 	EndIf
 
@@ -758,6 +738,8 @@ Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
+	Local $StringLeftCheck = StringLeft($NEW_sText, '1')
+	If $StringLeftCheck <> "{" Then $NEW_sText = "{" & $NEW_sText
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
 EndFunc
@@ -787,6 +769,8 @@ Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
+	Local $StringLeftCheck = StringLeft($NEW_sText, '1')
+	If $StringLeftCheck <> "{" Then $NEW_sText = "{" & $NEW_sText
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
 EndFunc
@@ -816,6 +800,8 @@ Func _Write_HomeApp_to_VRUB_PersistentStore_File()
     Next
 	Local $StringRightCheck = StringRight($NEW_sText, '1')
 	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
+	Local $StringLeftCheck = StringLeft($NEW_sText, '1')
+	If $StringLeftCheck <> "{" Then $NEW_sText = "{" & $NEW_sText
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
 EndFunc

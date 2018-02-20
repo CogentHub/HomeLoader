@@ -3,7 +3,6 @@
 #include <File.au3>
 #include <Date.au3>
 
-;Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -72,7 +71,6 @@ If $CmdLine[0] Then
 	MsgBox(0, "$Parameter_1", $Parameter_1)
 EndIf
 
-
 If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
 	Local $HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
 	Local $StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
@@ -82,7 +80,6 @@ If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
 EndIf
 
 _Read_PersistentStore_Settings()
-
 
 If $PressedOverlayButton_Overlay = "StartHomeLoader" Then
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PressedOverlayButton: " & "<StartHomeLoader>")
@@ -101,11 +98,8 @@ If $PressedOverlayButton_Overlay = "StartGame" Then
 	_Start_Game()
 EndIf
 
-
-
 _Empty_PressedOverlayButton()
 Exit
-
 
 
 Func _Read_PersistentStore_Settings()
@@ -113,10 +107,10 @@ Func _Read_PersistentStore_Settings()
 	$HomeLoaderOverlaySteamID_Overlay = ""
 
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
-    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT) ; Pass the variable to StringSplit and using the delimiter "\n".
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
-    For $i1 = 1 To $aArray[0] ; Loop through the array returned by StringSplit to display the individual values.
+    For $i1 = 1 To $aArray[0]
 		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
 		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
 		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
@@ -125,133 +119,89 @@ Func _Read_PersistentStore_Settings()
 		If $StringSplit[1] = "HomeApp" Then
 			$HomeApp_Overlay = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeApp = <" & $HomeApp_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $HomeApp_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeAppSteamID" Then
 			$HomeAppSteamID_Overlay = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeAppSteamID = <" & $HomeAppSteamID_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeApp", $HomeAppSteamID_Overlay)
 		EndIf
 		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then
 			$HomeLoaderOverlaySteamID_Overlay = $StringSplit[2] ; HomeLoaderOverlaySteamID
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "HomeLoaderOverlaySteamID = <" & $HomeLoaderOverlaySteamID_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID_Overlay)
 		EndIf
 		If $StringSplit[1] = "PressedOverlayButton" Then
 			$PressedOverlayButton_Overlay = $StringSplit[2] ; PressedOverlayButton
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "PressedOverlayButton = <" & $PressedOverlayButton_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "1 - PressedOverlayButton_Overlay", $PressedOverlayButton_Overlay)
 		EndIf
 		If $StringSplit[1] = "AppIDLoaded" Then
 			$AppIDLoaded_Overlay = $StringSplit[2] ; PressedOverlayButton
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "AppIDLoaded = <" & $AppIDLoaded_Overlay & ">")
-			;MsgBox($MB_SYSTEMMODAL, "1 - PressedOverlayButton_Overlay", $AppIDLoaded_Overlay)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox1" Then
 			$OverlaySettings_Checkbox1 = $StringSplit[2] ;;; Update Overlay using HomeLoader ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox1 = <" & $OverlaySettings_Checkbox1 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox1", $OverlaySettings_Checkbox1)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox2" Then
 			$OverlaySettings_Checkbox2 = $StringSplit[2] ;;; Use local Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox2 = <" & $OverlaySettings_Checkbox2 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox2", $OverlaySettings_Checkbox2)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox3" Then
 			$OverlaySettings_Checkbox3 = $StringSplit[2] ;;; Scan Steam Library on Home App Start ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox3 = <" & $OverlaySettings_Checkbox3 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox3", $OverlaySettings_Checkbox3)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox4" Then
 			$OverlaySettings_Checkbox4 = $StringSplit[2] ;;; Add number of current Players to the game Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox4 = <" & $OverlaySettings_Checkbox4 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox4", $OverlaySettings_Checkbox4)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox5" Then
 			$OverlaySettings_Checkbox5 = $StringSplit[2] ;;; Add saved Supersampling settings to the game Icons ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox5 = <" & $OverlaySettings_Checkbox5 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "OverlaySettings_Checkbox6" Then
 			$OverlaySettings_Checkbox6 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox6 = <" & $OverlaySettings_Checkbox6 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox6)
 		EndIf
 		If $StringSplit[1] = "RenderTargetMultiplier" Then
 			$OverlaySettings_RenderTargetMultiplier = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "RenderTargetMultiplier = <" & $OverlaySettings_RenderTargetMultiplier & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "SupersampleScale" Then
 			$OverlaySettings_SupersampleScale = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SupersampleScale = <" & $OverlaySettings_SupersampleScale & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "AllowSupersampleFiltering" Then
 			$OverlaySettings_AllowSupersampleFiltering = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "AllowSupersampleFiltering = <" & $OverlaySettings_AllowSupersampleFiltering & ">")
-			;MsgBox($MB_SYSTEMMODAL, "OverlaySettings_Checkbox5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage3" Then
 			$OverlaySettings_LabelCustomPage3 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage3 = <" & $OverlaySettings_LabelCustomPage3 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage3", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage4" Then
 			$OverlaySettings_LabelCustomPage4 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage4 = <" & $OverlaySettings_LabelCustomPage4 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage4", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage5" Then
 			$OverlaySettings_LabelCustomPage5 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage5 = <" & $OverlaySettings_LabelCustomPage5 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage5", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage6" Then
 			$OverlaySettings_LabelCustomPage6 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage6 = <" & $OverlaySettings_LabelCustomPage6 & ">")
-			;MsgBox($MB_SYSTEMMODAL, "$OverlaySettings_LabelCustomPage6", $OverlaySettings_Checkbox5)
 		EndIf
 		If $StringSplit[1] = $AppIDLoaded_Overlay & "_RenderTargetMultiplier" Then
 			$OverlayGameRenderTargetMultiplier = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SS_RenderTargetMultiplier = <" & $OverlayGameRenderTargetMultiplier & ">")
-			;MsgBox($MB_SYSTEMMODAL, "SS_RenderTargetMultiplier", $OverlayGameRenderTargetMultiplier)
 		EndIf
 		If $StringSplit[1] = $AppIDLoaded_Overlay & "_SupersampleScale" Then
 			$OverlayGameSupersampleScale = $StringSplit[2] ; Home App
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SS_SupersampleScale = <" & $OverlayGameSupersampleScale & ">")
-			;MsgBox($MB_SYSTEMMODAL, "SS_SupersampleScale", $OverlayGameSupersampleScale)
 		EndIf
 		If $StringSplit[1] = $AppIDLoaded_Overlay & "_AllowSupersampleFiltering" Then
 			$OverlayGameAllowSupersampleFiltering = $StringSplit[2] ; HomeLoaderOverlaySteamID
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SS_AllowSupersampleFiltering = <" & $OverlayGameAllowSupersampleFiltering & ">")
-			;MsgBox($MB_SYSTEMMODAL, "SS_AllowSupersampleFiltering", $OverlayGameAllowSupersampleFiltering)
 		EndIf
     Next
-
-	;MsgBox($MB_SYSTEMMODAL, "Values 1", "HomeApp: " & $HomeApp_Overlay & @CRLF & _
-	;									"HomeAppSteamID_Overlay: " & $HomeAppSteamID_Overlay & @CRLF & _
-	;									"HomeLoaderOverlaySteamID: " & $HomeLoaderOverlaySteamID_Overlay & @CRLF & _
-	;									"PressedOverlayButton: " & $PressedOverlayButton_Overlay & @CRLF & _
-	;									"AppIDLoaded: " & $AppIDLoaded_Overlay & @CRLF & _
-	;									"OverlaySettings_Checkbox1: " & $OverlaySettings_Checkbox1 & @CRLF & _
-	;									"OverlaySettings_Checkbox2: " & $OverlaySettings_Checkbox2 & @CRLF & _
-	;									"OverlaySettings_Checkbox3: " & $OverlaySettings_Checkbox3 & @CRLF & _
-	;									"OverlaySettings_Checkbox4: " & $OverlaySettings_Checkbox4 & @CRLF & _
-	;									"OverlaySettings_Checkbox5: " & $OverlaySettings_Checkbox5 & @CRLF & _
-	;									"OverlaySettings_Checkbox6: " & $OverlaySettings_Checkbox6 & @CRLF & _
-	;									"Default_renderTargetMultiplier: " & $OverlaySettings_RenderTargetMultiplier & @CRLF & _
-	;									"Default_supersampleScale: " & $OverlaySettings_SupersampleScale & @CRLF & _
-	;									"Default_allowSupersampleFiltering: " & $OverlaySettings_AllowSupersampleFiltering & @CRLF & _
-	;									"TAB3_Name: " & $OverlaySettings_LabelCustomPage3 & @CRLF & _
-	;									"TAB4_Name: " & $OverlaySettings_LabelCustomPage4 & @CRLF & _
-	;									"TAB5_Name: " & $OverlaySettings_LabelCustomPage5 & @CRLF & _
-	;									"TAB6_Name: " & $OverlaySettings_LabelCustomPage6 & @CRLF & _
-	;									"SS_RenderTargetMultiplier: " & $OverlayGameRenderTargetMultiplier & @CRLF & _
-	;									"SS_SupersampleScale: " & $OverlayGameSupersampleScale & @CRLF & _
-	;									"SS_AllowSupersampleFiltering: " & $OverlayGameAllowSupersampleFiltering & @CRLF)
 EndFunc
-
 
 Func _Write_Save_Settings_to_HomeLoader_INI()
 	If $HomeApp_Overlay <> "" Then
@@ -281,10 +231,8 @@ Func _Write_Save_Settings_to_HomeLoader_INI()
 	IniWrite($Config_INI, "Settings", "TAB5_Name", $OverlaySettings_LabelCustomPage5)
 	IniWrite($Config_INI, "Settings", "TAB6_Name", $OverlaySettings_LabelCustomPage6)
 
-	;MsgBox(0, "_Write_Save_Settings_to_HomeLoader_INI", "Application_" & $AppIDLoaded_Overlay & @CRLF & @CRLF & $OverlayGameRenderTargetMultiplier & @CRLF & $OverlayGameSupersampleScale & @CRLF & $OverlayGameAllowSupersampleFiltering)
 	If $OverlayGameRenderTargetMultiplier <> "" And $OverlayGameSupersampleScale <> "" And $OverlayGameAllowSupersampleFiltering <> "" Then
 		$AppNR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $AppIDLoaded_Overlay, "NR", "")
-		;MsgBox(0, $AppNR, "Application_" & $AppIDLoaded_Overlay & @CRLF & @CRLF & $OverlayGameRenderTargetMultiplier & @CRLF & $OverlayGameSupersampleScale & @CRLF & $OverlayGameAllowSupersampleFiltering)
 		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $AppIDLoaded_Overlay, "renderTargetMultiplier", $OverlayGameRenderTargetMultiplier)
 		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $AppIDLoaded_Overlay, "supersampleScale", $OverlayGameSupersampleScale)
 		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $AppIDLoaded_Overlay, "allowSupersampleFiltering", $OverlayGameAllowSupersampleFiltering)
@@ -302,7 +250,7 @@ Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 	Local $NEW_sText
 	Local $NEW_HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
+    Local $sText = FileRead($filePath)
 	Local $iPosition_1 = StringInStr($sText, "HomeLoaderOverlaySteamID")
 	Local $iPosition_2 = StringInStr($sText, ",", 0, 1, $iPosition_1)
 
@@ -317,7 +265,6 @@ Func _Write_HomeLoaderOverlaySteamID_to_VRUB_PersistentStore_File()
 EndFunc
 
 Func _Start_HomeApp()
-	;MsgBox(0, "StartHomeApp", "StartHomeApp")
 	If FileExists($System_DIR & "StartHomeApp.exe") Then
 		ShellExecute($System_DIR & "StartHomeApp.exe", "", $System_DIR)
 	Else
@@ -325,18 +272,15 @@ Func _Start_HomeApp()
 	EndIf
 EndFunc
 
-
 Func _Start_Game()
 	_StartGame_Check()
 	Exit
 EndFunc
 
-
-
 Func _Empty_PressedOverlayButton()
 	Local $NEW_sText
 	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-    Local $sText = FileRead($filePath) ; Define a variable with a string of text.
+    Local $sText = FileRead($filePath)
 	Local $iPosition_1 = StringInStr($sText, "PressedOverlayButton")
 	Local $iPosition_2 = StringInStr($sText, ",", 0, 1, $iPosition_1)
 
@@ -349,7 +293,6 @@ Func _Empty_PressedOverlayButton()
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
 EndFunc
-
 
 
 Func _StartUp_Radio_0() ; Default [SteamVR Home]
@@ -418,7 +361,6 @@ EndFunc
 
 Func _StartUp_Radio_5() ; Other
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Other")
-	;_StartUp_Add_Other_GUI()
 	_Sync_Config_INI()
 EndFunc
 
@@ -448,7 +390,6 @@ Func _StartGame_Check()
 		If Not ProcessExists("VRUtilityBelt.exe") Then
 			Sleep(10000)
 			ShellExecute("steam://rungameid/645370")
-			;Sleep(5000)
 		EndIf
 	EndIf
 
@@ -511,8 +452,6 @@ Func _Add_SS_to_SteamVR()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS to SteamVR: " & "<App ID: " & $Game_ID & ">" & " - " & "<App Name: " & $Steam_app_Name & ">")
 EndFunc
 
-
-
 Func _ADD_2_SteamVR_Home_default()
 	Local $Line_NR_binary_path_windows
 	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
@@ -558,8 +497,6 @@ Func _Create_StartHomeAPP_BAT_File()
 									$StartSteamVRHome_x)
 EndFunc
 
-
 Func _Sync_Config_INI()
 	FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
 EndFunc
-

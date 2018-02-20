@@ -387,7 +387,6 @@ Func _Settings_GUI()
 		GUICtrlSetFont(-1, 13, 600, 2, $font_StartUp_arial)
 	EndIf
 
-
 	GuiCtrlSetTip(-1, "Starts Home Loader Library.")
 	GUICtrlSetOnEvent($Button_Start_HomeLoaderLibrary, "_Button_Start_HomeLoaderLibrary")
 
@@ -615,7 +614,6 @@ Func _StartUp_Radio_2() ; Vive Home
 	FileWriteLine($stats_log_FILE, "- Vive Home Path = " & $ViveHome_Path)
 
 	If FileExists($ViveHome_Path) Then
-		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
 		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $ViveHome_Path)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Vive Home")
 	Else
@@ -751,7 +749,6 @@ Func _StartUp_Radio_6() ; Viveport VR
 	FileWriteLine($stats_log_FILE, "- ViveportVR Path = " & $Viveport_Path)
 
 	If FileExists($Viveport_Path) Then
-		;ConsoleWrite($HTCVive_Path & "ViveSetup\Updater\App\Home\win32\ViveHome.exe" & @CRLF)
 		IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $Viveport_Path)
 		IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Viveport VR")
 	Else

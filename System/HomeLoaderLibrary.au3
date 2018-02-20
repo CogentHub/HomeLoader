@@ -1428,6 +1428,21 @@ Func _Download_Icon_for_SteamGameID()
 
 		If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
 		If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
+		If $Icon_Folder_1 <> "" Then
+			If Not FileExists($Download_Icon_path_3_jpg) Then InetGet($URL, $Download_Icon_path_3_jpg, 16, 0)
+		EndIf
+		If $Icon_Folder_2 <> "" Then
+			If Not FileExists($Download_Icon_path_4_jpg) Then InetGet($URL, $Download_Icon_path_4_jpg, 16, 0)
+		EndIf
+		If $Icon_Folder_3 <> "" Then
+			If Not FileExists($Download_Icon_path_5_jpg) Then InetGet($URL, $Download_Icon_path_5_jpg, 16, 0)
+		EndIf
+		If $Icon_Folder_4 <> "" Then
+			If Not FileExists($Download_Icon_path_6_jpg) Then InetGet($URL, $Download_Icon_path_6_jpg, 16, 0)
+		EndIf
+		If $Icon_Folder_5 <> "" Then
+			If Not FileExists($Download_Icon_path_7_jpg) Then InetGet($URL, $Download_Icon_path_7_jpg, 16, 0)
+		EndIf
 	EndIf
 EndFunc
 #endregion

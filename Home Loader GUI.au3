@@ -31,7 +31,6 @@ Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "Ste
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
 
-
 Global $default_vrsettings_File = IniRead($Config_INI, "Folders", "Steam_default_vrsettings", "")
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 
@@ -79,7 +78,6 @@ Func _Home_Loader_GUI_1()
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Supersampling_menu.bmp")
 	GuiCtrlSetTip(-1, " Opens the Supersampling menu.")
 	GUICtrlSetOnEvent(- 1, "_Button_3")
-
 
 	Global $Button_4 = GUICtrlCreateButton("Start SteamVR HomeApp", 15, 165, 136, 136, $BS_BITMAP)
 	_GUICtrlButton_SetImage(- 1, $gfx & "Button_Start_SteamVR_HomeApp.bmp")
@@ -375,7 +373,6 @@ Func _Button_Restart_GUI()
 	Else
 		ShellExecute($Install_DIR & "Home Loader GUI.au3")
 	EndIf
-	;Sleep(500)
 	Exit
 EndFunc
 
