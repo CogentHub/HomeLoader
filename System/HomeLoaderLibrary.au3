@@ -20,14 +20,14 @@ Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library,
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
 Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 Global $TAB_NR, $listview_7, $listview_8, $listview_9, $listview_10, $listview_11, $listview_TEMP
-Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
+Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item5_1, $RM_Item5_2, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
 Global $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue
 Global $font = "arial"
 Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.65"
+Global $Version = "0.66"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -462,6 +462,8 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1427,21 +1429,28 @@ Func _Download_Icon_for_SteamGameID()
 		EndIf
 
 		If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
+		If Not FileExists($Download_Icon_path_1_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_1_jpg)
 		If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
+		If Not FileExists($Download_Icon_path_2_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_2_jpg)
 		If $Icon_Folder_1 <> "" Then
 			If Not FileExists($Download_Icon_path_3_jpg) Then InetGet($URL, $Download_Icon_path_3_jpg, 16, 0)
+			If Not FileExists($Download_Icon_path_3_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_3_jpg)
 		EndIf
 		If $Icon_Folder_2 <> "" Then
 			If Not FileExists($Download_Icon_path_4_jpg) Then InetGet($URL, $Download_Icon_path_4_jpg, 16, 0)
+			If Not FileExists($Download_Icon_path_4_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_4_jpg)
 		EndIf
 		If $Icon_Folder_3 <> "" Then
 			If Not FileExists($Download_Icon_path_5_jpg) Then InetGet($URL, $Download_Icon_path_5_jpg, 16, 0)
+			If Not FileExists($Download_Icon_path_5_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_5_jpg)
 		EndIf
 		If $Icon_Folder_4 <> "" Then
 			If Not FileExists($Download_Icon_path_6_jpg) Then InetGet($URL, $Download_Icon_path_6_jpg, 16, 0)
+			If Not FileExists($Download_Icon_path_6_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_6_jpg)
 		EndIf
 		If $Icon_Folder_5 <> "" Then
 			If Not FileExists($Download_Icon_path_7_jpg) Then InetGet($URL, $Download_Icon_path_7_jpg, 16, 0)
+			If Not FileExists($Download_Icon_path_7_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_7_jpg)
 		EndIf
 	EndIf
 EndFunc
@@ -1471,6 +1480,9 @@ Func _Create_ListView_1()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1481,6 +1493,8 @@ Func _Create_ListView_1()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1510,6 +1524,9 @@ Func _Create_ListView_2()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1520,6 +1537,8 @@ Func _Create_ListView_2()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1549,6 +1568,9 @@ Func _Create_ListView_3()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1559,6 +1581,8 @@ Func _Create_ListView_3()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1588,6 +1612,9 @@ Func _Create_ListView_4()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1598,6 +1625,8 @@ Func _Create_ListView_4()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1628,6 +1657,9 @@ Func _Create_ListView_5()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1638,6 +1670,8 @@ Func _Create_ListView_5()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1667,6 +1701,9 @@ Func _Create_ListView_6()
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	GUICtrlCreateMenuItem("", $contextmenu)
+	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
+	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
 	$RM_Item6 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item7 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item8 = GUICtrlCreateMenuItem("Move Up", $contextmenu)
@@ -1677,6 +1714,8 @@ Func _Create_ListView_6()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
+	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
 	GUICtrlSetOnEvent($RM_Item9, "_RM_Menu_Item_9")
 	GUICtrlSetOnEvent($RM_Item11, "_RM_Menu_Item11")
@@ -1903,6 +1942,58 @@ Func _ADD_Icons_32x32_to_ListView()
 		_GUICtrlListView_SetItemImage($listview, $NR2, $NR2)
 	Next
 	_GUICtrlListView_EndUpdate($ListView)
+EndFunc
+
+Func _RM_Menu_Item_5_1() ; Add to Autostart List
+	$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+	Local  $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	Local $Check_AppID = _GUICtrlListView_GetItemText($ListView, $ListView_Selected_Row_Nr - 1, 1)
+	Local $Check_AppName = IniRead($ApplicationList_TEMP, "Application_" & $Check_AppID, "name", "")
+	Local $Check_AppStartPath = "steam://rungameid/" & $Check_AppID
+
+	If $Check_AppID <> "" Then
+		For $LOOP = 1 To 9
+		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
+		$Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
+		$Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
+
+		If $Autostart_App_Name = "" Then
+			$Autostart_App_Name = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Name", $Check_AppName)
+			$Autostart_App_Path = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Path", $Check_AppStartPath)
+			$Autostart_App_State = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_State", "false")
+			ExitLoop
+		EndIf
+	Next
+	EndIf
+EndFunc
+
+Func _RM_Menu_Item_5_2() ; Remove to Autostart List
+	$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+	Local  $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	Local $Check_AppID = _GUICtrlListView_GetItemText($ListView, $ListView_Selected_Row_Nr - 1, 1)
+	Local $Check_AppName = IniRead($ApplicationList_TEMP, "Application_" & $Check_AppID, "name", "")
+	Local $Check_AppStartPath = "steam://rungameid/" & $Check_AppID
+
+	If $Check_AppID <> "" Then
+		For $LOOP = 1 To 9
+		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
+		$Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
+		$Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
+
+		If $Check_AppName = $Autostart_App_Name Then
+			$Autostart_App_Name = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
+			$Autostart_App_Path = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
+			$Autostart_App_State = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_State", "false")
+			ExitLoop
+		EndIf
+	Next
+	EndIf
 EndFunc
 
 Func _RM_Menu_Item_8() ; RM_UP

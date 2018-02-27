@@ -1,3 +1,2 @@
-- Added more right click menu entries
+- Added Autostart selection to Settings
 - Optimized code and GUI
-- Cleanup for version 0.64

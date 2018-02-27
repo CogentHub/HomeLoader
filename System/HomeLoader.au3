@@ -187,7 +187,7 @@ Func _Create_JanusVR_Page()
 			'<script>elation.janusweb.init({url: document.location.href})</script>' & @CRLF & _
 			'</body>' & @CRLF & _
 			'</html>')
-EndFunc   ;==>_Create_JanusVR_Page
+EndFunc
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
@@ -279,7 +279,7 @@ Func _Write_PO_Image_2_Image()
 	$hBMPBuff = _GDIPlus_ImageLoadFromFile($hImage1_Path)
 	$hGraphic = _GDIPlus_ImageGetGraphicsContext($hBMPBuff)
 
-	;Graphics here
+	;Graphics
 	_GDIPlus_GraphicsClear($hGraphic, 0xFFE8FFE8)
 
 	$hPen = _GDIPlus_PenCreate(0xFFFF0000, 3)
@@ -292,7 +292,7 @@ Func _Write_PO_Image_2_Image()
 	GUIRegisterMsg(0xF, "MY_PAINT")
 	GUIRegisterMsg(0x85, "MY_PAINT")
 
-	;Save composite image
+	;Save
 	Local $sNewName = $Icons & "460x215\" & $Check_Filename
 	$NewIcon_Path = $sNewName
 

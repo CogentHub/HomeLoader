@@ -26,6 +26,9 @@ Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_
 Global $Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
 Global $Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
 Global $Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
+Global $Autostart_VRUB = IniRead($Config_INI, "Settings", "Autostart_VRUB", "false")
+Global $Autostart_OVRdrop = IniRead($Config_INI, "Settings", "Autostart_OVRdrop", "false")
+Global $Autostart_Pluto = IniRead($Config_INI, "Settings", "Autostart_Pluto", "false")
 
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
@@ -158,15 +161,17 @@ Func _RM_Menu()
 		If $Close_MainGUI_after_selection = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
 		GUICtrlSetOnEvent(- 1, "_RM_Item3")
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Start HomeLoaderGUI with Home App", $contextmenu)
-		If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState($RM_Item4, $GUI_CHECKED)
-		GUICtrlSetOnEvent(- 1, "_RM_Item5")
-	$RM_Item6 = GUICtrlCreateMenuItem("Start HomeLoaderLibrary with Home App", $contextmenu)
-		If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState($RM_Item5, $GUI_CHECKED)
-		GUICtrlSetOnEvent(- 1, "_RM_Item6")
-	$RM_Item7 = GUICtrlCreateMenuItem("Start Settings with Home App", $contextmenu)
-		If $Start_Settings = "true" Then GUICtrlSetState($RM_Item6, $GUI_CHECKED)
-		GUICtrlSetOnEvent(- 1, "_RM_Item7")
+	$RM_Item5 = GUICtrlCreateMenu("Autostart [with Home App]", $contextmenu)
+
+	$RM_Item5_1 = GUICtrlCreateMenuItem("HomeLoaderGUI", $RM_Item5)
+		If $Start_HomeLoaderGUI = "true" Then GUICtrlSetState($RM_Item5_1, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item5_1")
+	$RM_Item5_2 = GUICtrlCreateMenuItem("HomeLoaderLibrary", $RM_Item5)
+		If $Start_HomeLoaderLibrary = "true" Then GUICtrlSetState($RM_Item5_2, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item5_2")
+	$RM_Item5_3 = GUICtrlCreateMenuItem("HomeLoader Settings", $RM_Item5)
+		If $Start_Settings = "true" Then GUICtrlSetState($RM_Item5_3, $GUI_CHECKED)
+		GUICtrlSetOnEvent(- 1, "_RM_Item5_3")
 	$RM_Item8 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item9 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item10 = GUICtrlCreateMenuItem("Info", $contextmenu)
@@ -296,7 +301,6 @@ EndFunc
 
 Func _Button_6()
 	_Button_Exit_GUI()
-	;Exit
 EndFunc
 #endregion
 
@@ -321,7 +325,7 @@ Func _RM_Item3()
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item5()
+Func _RM_Item5_1()
 	$Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
 	If $Start_HomeLoaderGUI = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
@@ -331,9 +335,9 @@ Func _RM_Item5()
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item6()
-	$Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
-	If $Start_HomeLoaderLibrary = "true" Then
+Func _RM_Item5_2()
+	$Autostart = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
+	If $Autostart = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_HomeLoaderLibrary", "false")
 	Else
 		IniWrite($Config_INI, "Settings", "Start_HomeLoaderLibrary", "true")
@@ -341,16 +345,15 @@ Func _RM_Item6()
 	_Button_Restart_GUI()
 EndFunc
 
-Func _RM_Item7()
-	$Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "false")
-	If $Start_Settings = "true" Then
+Func _RM_Item5_3()
+	$Autostart = IniRead($Config_INI, "Settings", "Start_Settings", "false")
+	If $Autostart = "true" Then
 		IniWrite($Config_INI, "Settings", "Start_Settings", "false")
 	Else
 		IniWrite($Config_INI, "Settings", "Start_Settings", "true")
 	EndIf
 	_Button_Restart_GUI()
 EndFunc
-
 
 Func _RM_Item10()
 	MsgBox(0, "HomeLoader" & " [" & $Version & "] by Cogent", "Home Loader is a program that allows you to change the default" & @CRLF & _
