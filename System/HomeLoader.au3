@@ -192,9 +192,9 @@ EndFunc
 Func _Get_ADD_PlayersOnline_DATA()
 	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
 
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding PO values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
-
 	If $FileList <> "" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding PO values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+
 		For $NR = 1 To $FileList[0]
 			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
 			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
@@ -241,8 +241,8 @@ Func _Get_ADD_PlayersOnline_DATA()
 				$Check_AppId = ""
 			EndIf
 		Next
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding PO values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
 	EndIf
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding PO values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
 EndFunc
 
 Func _Write_PO_TEXT_2_Image()
@@ -406,9 +406,9 @@ EndFunc
 Func _Get_AD_SS_Values_to_Icons()
 	Local $FileList = _FileListToArray($Icons & "460x215\", "*.jpg", 1)
 
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
-
 	If $FileList <> "" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+
 		For $NR = 1 To $FileList[0]
 			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
 			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
@@ -431,8 +431,8 @@ Func _Get_AD_SS_Values_to_Icons()
 			$allowSupersampleFiltering_value = ""
 			$Check_AppId = ""
 		Next
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
 	EndIf
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
 EndFunc
 
 Func _Write_SS_TEXT_2_Image()
