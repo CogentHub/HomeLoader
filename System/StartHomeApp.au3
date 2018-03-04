@@ -67,10 +67,16 @@ If $HomeApp = "VR Toolbox" Then	ShellExecute($Home_Path, "-e")
 If $HomeApp = "Vive Home" Then ShellExecute($Home_Path, "", $Vive_Home_Folder_2)
 If $HomeApp <> "SteamVR Home" And $HomeApp <> "VR Toolbox" And $HomeApp <> "Vive Home" Then ShellExecute($Home_Path)
 
-
 FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- Home APP " & $HomeApp & " started --- " & "[" & _Now() & "]")
 
+If $HomeApp <> "SteamVR Home" Then
+	Sleep(6000)
+Else
+	Sleep(3000)
+EndIf
+
 _Start_actions_after()
+
 #endregion
 
 Exit
@@ -107,7 +113,6 @@ Func _Start_actions_before()
 EndFunc
 
 Func _Start_actions_after()
-	Sleep(3000)
 	If $Autostart_VRUB = "true" Then
 		If ProcessExists("VRUtilityBelt.exe") Then
 			ProcessClose("VRUtilityBelt.exe")
@@ -125,14 +130,22 @@ Func _Start_actions_after()
 		Sleep(3000)
 	EndIf
 
-	For $LOOP = 1 To 9
+	For $LOOP = 1 To 10
 		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
 		$Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
 		$Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
 
 		If $Autostart_App_State = "true" Then
 			If $Autostart_App_Path <> "" Then
-				ShellExecute($Autostart_App_Path)
+				If $Autostart_App_Name <> "Viveport Desktop / Dashboard" Then
+					ShellExecute($Autostart_App_Path)
+				Else
+					If Not WinExists("Vive") Then
+						ShellExecute($Autostart_App_Path)
+					Else
+						WinSetState("Vive", "", @SW_ENABLE)
+					EndIf
+				EndIf
 			EndIf
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- APP " & $Autostart_App_Name & " started --- " & $Autostart_App_Path &  " --- " &"[" & _Now() & "]")
 			Sleep(3000)

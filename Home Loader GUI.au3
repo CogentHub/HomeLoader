@@ -20,7 +20,6 @@ Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings"
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Skin = IniRead($Config_INI, "Settings", "Skin", "1")
-Global $ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 Global $Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 
 Global $Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "false")
@@ -267,22 +266,15 @@ Func _Button_3()
 EndFunc
 
 Func _Button_4()
-	$ChangeDefaultSteamVRHome = IniRead($Config_INI, "Settings", "ChangeDefaultSteamVRHome", "")
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
 
-	If $ChangeDefaultSteamVRHome = "true" Then
-		If Not ProcessExists("vrmonitor.exe") Then
-			ShellExecute("steam://rungameid/250820")
-		EndIf
+	If Not ProcessExists("vrmonitor.exe") Then
+		ShellExecute("steam://rungameid/250820")
 	Else
-		If FileExists($HomeLoader_StartBat) Then
-			ShellExecute($HomeLoader_StartBat, "", $System_DIR)
+		If FileExists($System_DIR & "StartHomeAPP.bat") Then
+			ShellExecute($System_DIR & "StartHomeAPP.bat", "", $System_DIR)
 		Else
-			If FileExists($System_DIR & "StartSteamVRHome.exe") Then
-				ShellExecute($System_DIR & "StartSteamVRHome.exe", "", $System_DIR)
-			Else
-				ShellExecute($System_DIR & "StartSteamVRHome.au3", "", $System_DIR)
-			EndIf
+			ShellExecute("steam://rungameid/250820")
 		EndIf
 	EndIf
 

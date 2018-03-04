@@ -294,8 +294,14 @@ Func _Write_vrappconfig_File()
 	FileWriteLine($htc_vive_overlay_vrappconfig, $Value_1)
 	If $Autostart_App_10_State = "true" Then
 		FileWriteLine($htc_vive_overlay_vrappconfig, '   "autolaunch" : ' & "false,")
+		IniWrite($Config_INI, "Autostart", "App_10_Name", $Autostart_App_10_Name)
+		IniWrite($Config_INI, "Autostart", "App_10_Path", $Autostart_App_10_Path)
+		IniWrite($Config_INI, "Autostart", "App_10_State", "false")
 	Else
 		FileWriteLine($htc_vive_overlay_vrappconfig, '   "autolaunch" : ' & "true,")
+		IniWrite($Config_INI, "Autostart", "App_10_Name", $Autostart_App_10_Name)
+		IniWrite($Config_INI, "Autostart", "App_10_Path", $Autostart_App_10_Path)
+		IniWrite($Config_INI, "Autostart", "App_10_State", "true")
 	EndIf
 	FileWriteLine($htc_vive_overlay_vrappconfig, $Value_3)
 EndFunc
@@ -809,6 +815,8 @@ Func _StartUp_Radio_3() ; Janus VR
 	$JanusVR_Settings_Folder = "c:\Users\" & @UserName & "\Documents\janusvr\"
 	$bookmarks_json = "c:\Users\" & @UserName & "\Documents\janusvr\appdata\bookmarks.json"
 	$settings_json = "c:\Users\" & @UserName & "\Documents\janusvr\appdata\settings.json"
+
+	$Install_DIR_StringReplace_path = StringReplace($Install_DIR, '\', '/')
 
 	Local $Abfrage_1 = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Janus VR bookmarks [1/3]", "Do you also want to add the default Home Loader Room" & @CRLF & _
 																"to the JanusVR bookmark page?" & @CRLF & _
