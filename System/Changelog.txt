@@ -1,2 +1,4 @@
-- Added Autostart selection to Settings
-- Optimized code and GUI
+Changelog:
+- Added Scan for Viveport apps
+- Added Support for Viveport Apps to Library
+- Added Viveport apps to all Game Pages (HTML and Overlay)
