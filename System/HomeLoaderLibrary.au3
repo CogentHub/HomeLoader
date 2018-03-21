@@ -27,7 +27,7 @@ Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.66"
+Global $Version = "0.67"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -45,6 +45,7 @@ Global $Show_Playlist = IniRead($Config_INI, "TEMP", "Show_Playlist", "")
 Global $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
 Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
 Global $DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
+Global $ScanVIVEApps = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
 
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Icons = $Install_DIR & "Icons\"
@@ -56,6 +57,8 @@ Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
+
+Global $Steam_AppConfig_Json = $Steam_Path & "config\appconfig.json"
 
 Global $HomeLoader_Overlay_Folder = $Steam_Path & "steamapps\common\VRUtilityBelt\addons\custom\HomeLoader\overlays\HomeLoader\"
 Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
@@ -263,18 +266,30 @@ If $First_Start <> "true" Then
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
 	GuiCtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF)
 
-	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 60, $BS_BITMAP) ; 155, 80 --> 174, 71
+	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Steam Library", 450, 5, 155, 42, $BS_BITMAP) ; 155, 80 --> 174, 71
 	_GUICtrlButton_SetImage($Button_ReScan_Steam_Library, $gfx & "ReScan_SteamLibrary.bmp")
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	$Checkbox_DeleteData_Value = ""
-	If $DeleteHomeLoaderLibraryData = "true" Then $Checkbox_DeleteData_Value = "a"
-	$Checkbox_DeleteData = GUICtrlCreateLabel($Checkbox_DeleteData_Value, 452, 67, 18, 18, 0x1201)
+	$Checkbox_ScanVIVEData_Value = ""
+	If $ScanVIVEApps = "true" Then $Checkbox_ScanVIVEData_Value = "a"
+	$Checkbox_ScanVIVEData = GUICtrlCreateLabel($Checkbox_ScanVIVEData_Value, 452, 49, 15, 15, 0x1201)
+	GuiCtrlSetTip(-1, "Scans also for Viveport Apps if activated." & @CRLF)
 	GUICtrlSetFont(-1, 20, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
-	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("Delete Library Data", 475, 69, 135, 20)
+	GUICtrlCreateLabel("Scan Viveport Apps", 473, 48, 135, 20)
 	GUICtrlSetFont(-1, 11, 400, 1, "arial")
+	GuiCtrlSetTip(-1, "Scans also for Viveport Apps if activated." & @CRLF)
+
+	$Checkbox_DeleteData_Value = ""
+	If $DeleteHomeLoaderLibraryData = "true" Then $Checkbox_DeleteData_Value = "a"
+	$Checkbox_DeleteData = GUICtrlCreateLabel($Checkbox_DeleteData_Value, 452, 68, 15, 15, 0x1201)
+	GuiCtrlSetTip(-1, "Deletes the old Library data before it scans and adds the new content." & @CRLF)
+	GUICtrlSetFont(-1, 18, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlCreateLabel("Del. old Library Data", 473, 68, 135, 20)
+	GUICtrlSetFont(-1, 11, 400, 1, "arial")
+	GuiCtrlSetTip(-1, "Deletes the old Library data before it scans and adds the new content." & @CRLF)
 
 
 	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 65, $BS_BITMAP)
@@ -442,6 +457,7 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($Button_AddGame2Library, "_Button_AddGame2Library")
 	GUICtrlSetOnEvent($Button_ReScan_Steam_Library, "_Button_ReScan_Steam_Library")
 	GUICtrlSetOnEvent($Checkbox_DeleteData, "_Checkbox_DeleteData")
+	GUICtrlSetOnEvent($Checkbox_ScanVIVEData, "_Checkbox_ScanVIVEData")
 
 	GUICtrlSetOnEvent($ButtonTAB_Steam_Library, "_ButtonTAB_Steam_Library")
 	GUICtrlSetOnEvent($ButtonTAB_Non_Steam_Appl, "_ButtonTAB_Non_Steam_Appl")
@@ -1275,7 +1291,6 @@ Func _ApplicationList_Update()
 				IniWrite($ApplicationList_INI, "Application_" & $appid, "IconPath", "")
 			EndIf
 
-
 			_Download_Icon_for_SteamGameID()
 
 			If Not FileExists($Icons & "32x32\" & "steam.app." & $appid & ".bmp") Then
@@ -1468,8 +1483,8 @@ Func _Create_ListView_1()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview, "NR", 60)
-	_GUICtrlListView_AddColumn($listview, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview, "Name", 365)
+	_GUICtrlListView_AddColumn($listview, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview, "Name", 350)
 	_GUICtrlListView_AddColumn($listview, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview, "All time", 82, 2)
@@ -1512,8 +1527,8 @@ Func _Create_ListView_2()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_2, "NR", 60)
-	_GUICtrlListView_AddColumn($listview_2, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_2, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_2, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview_2, "Name", 350)
 	_GUICtrlListView_AddColumn($listview_2, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview_2, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview_2, "All time", 82, 2)
@@ -1556,8 +1571,8 @@ Func _Create_ListView_3()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_3, "NR", 60)
-	_GUICtrlListView_AddColumn($listview_3, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_3, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_3, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview_3, "Name", 350)
 	_GUICtrlListView_AddColumn($listview_3, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview_3, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview_3, "All time", 82, 2)
@@ -1600,8 +1615,8 @@ Func _Create_ListView_4()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_4, "NR", 60)
-	_GUICtrlListView_AddColumn($listview_4, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_4, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_4, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview_4, "Name", 350)
 	_GUICtrlListView_AddColumn($listview_4, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview_4, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview_4, "All time", 82, 2)
@@ -1644,8 +1659,8 @@ Func _Create_ListView_5()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_5, "NR", 60)
-	_GUICtrlListView_AddColumn($listview_5, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_5, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_5, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview_5, "Name", 350)
 	_GUICtrlListView_AddColumn($listview_5, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview_5, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview_5, "All time", 82, 2)
@@ -1689,8 +1704,8 @@ Func _Create_ListView_6()
 
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_6, "NR", 60)
-	_GUICtrlListView_AddColumn($listview_6, "App ID", 90)
-	_GUICtrlListView_AddColumn($listview_6, "Name", 365)
+	_GUICtrlListView_AddColumn($listview_6, "App ID", 105)
+	_GUICtrlListView_AddColumn($listview_6, "Name", 350)
 	_GUICtrlListView_AddColumn($listview_6, "Online", 82, 2)
 	_GUICtrlListView_AddColumn($listview_6, "24h peak", 100, 2)
 	_GUICtrlListView_AddColumn($listview_6, "All time", 82, 2)
@@ -2627,6 +2642,9 @@ Func _Button_Create_GamePage_selected()
 				Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
 				Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
 
+				Local $StringLeft_Application_appid = StringLeft($Application_appid, 9)
+				Local $StringTrimLeft_Application_appid = StringTrimLeft($Application_appid, 9)
+
 				If Not FileExists($WebPage_IconPath) Then
 					FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
@@ -2636,15 +2654,18 @@ Func _Button_Create_GamePage_selected()
 				EndIf
 
 				If Not FileExists($WebPage_IconPath) Then
-					FileCopy($gfx & "steam.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+					If $StringLeft_Application_appid <> "vive.htc." Then FileCopy($gfx & "steamVR.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+					If $StringLeft_Application_appid = "vive.htc." Then FileCopy($gfx & "Viveport.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
 
-				If $WinName = "VR Toolbox" Then
-					FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $HomeApp = "VR Toolbox" Then
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'vive://runapp/" & $StringTrimLeft_Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 
-				If $WinName <> "VR Toolbox" Then
-					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $HomeApp <> "VR Toolbox" Then
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="vive://runapp/' & $StringTrimLeft_Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 			Else
 
@@ -2879,11 +2900,18 @@ Func _Start_ListView_Selected()
 	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
 
 	Local $Check_AppID = _GUICtrlListView_GetItemText($ListView, $ListView_Selected_Row_Nr - 1, 1)
+	Local $StringLeft_Check_AppID = StringLeft($Check_AppID, 9)
+	Local $StringTrimLeft_Check_AppID = StringTrimLeft($Check_AppID, 9)
 
 	If $Check_AppID <> "" Then
-		ShellExecute("steam://rungameid/" & $Check_AppID)
+		If $StringLeft_Check_AppID = "vive.htc." Then
+			ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
+		Else
+			ShellExecute("steam://rungameid/" & $Check_AppID)
+		EndIf
+
 		Sleep(200)
-		_Beenden()
+		;_Beenden()
 	EndIf
 EndFunc
 
@@ -3137,8 +3165,143 @@ Func _Button_ReScan_Steam_Library()
 		Sleep(500)
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 	EndIf
+
+
+	If $ScanVIVEApps = "true" Then
+		If FileExists($Steam_AppConfig_Json) Then
+			_ScanViveData()
+		EndIf
+	EndIf
+
+
 	_Read_from_INI_ADD_2_ListView()
 	_GUICtrlStatusBar_SetText($Statusbar, "Rescan of Steam Library finished." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
+EndFunc
+
+Func _ScanViveData()
+	$NR_LINES_TEMP = _FileCountLines($Steam_AppConfig_Json)
+
+	For $Loop = 3 To $NR_LINES_TEMP
+		$Value = FileReadLine($Steam_AppConfig_Json, $Loop)
+		$Value_1 = StringReplace($Value, '"', '')
+		$Value_2 = StringReplace($Value_1, ',', '')
+		$Value_3 = StringRight($Value_2, 15)
+		$Value_Path = StringLeft($Value_2, StringLen($Value_2) - 15)
+		$Value_Path_StringReplace = StringReplace($Value_Path, '\\', '\')
+		$Value_Path_StringReplace = StringReplace($Value_Path_StringReplace, ' ', '')
+
+		If $Value_3 = "app.vrmanifest" Or $Value_3 = "\app.vrmanifest" Then
+			$Value_2_1 = StringReplace($Value_2, '\\', '\')
+			$Value_2_2 = StringReplace($Value_2_1, ' ', '')
+			$Value_AppVRmanifest_1 = FileRead($Value_2_2)
+			$Value_AppVRmanifest_2 = StringTrimLeft($Value_AppVRmanifest_1, 35)
+
+			Local $StringSplit_Value = StringSplit($Value_AppVRmanifest_2, ",")
+			Local $Application_NR_new = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "") + 1
+
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "NR", $Application_NR_new)
+
+			For $i = 1 To $StringSplit_Value[0]
+				Local $StringSplit_Value_2 = StringSplit($StringSplit_Value[$i], ":")
+				$StringSplit_Value_2_1 = StringReplace($StringSplit_Value_2[1], '"', '')
+				$StringSplit_Value_2_1_1 = StringReplace($StringSplit_Value_2_1, '[', '')
+				$StringSplit_Value_2_1_2 = StringReplace($StringSplit_Value_2_1_1, '{', '')
+
+				If $StringSplit_Value_2_1_2 = "url" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					$StringSplit_Value_2_3 = StringReplace($StringSplit_Value_2[3], '"', '')
+					$StringSplit_Value_2_4 = $StringSplit_Value_2_2 & ":" & $StringSplit_Value_2_3
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "url", $StringSplit_Value_2_4)
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "app_key" Then ; appid
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					$Application_appid_TEMP = $StringSplit_Value_2_2
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "appid", $StringSplit_Value_2_2)
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "strings" Then ; NAME
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[4], '"', '')
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "name", $StringSplit_Value_2_2)
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "launch_type" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "image_path" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					$Value_image_path = $Value_Path_StringReplace & $StringSplit_Value_2_2
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "IconPath", $Value_image_path)
+					If Not FileExists($Icons & "steam.app." & $Application_appid_TEMP & ".jpg") Or $DeleteHomeLoaderLibraryData = "true" Then
+						Local $Download_Icon_path_1_jpg = $Icons & "steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_2_jpg = $Icons & "460x215\steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_3_jpg = $Icon_Folder_1 & "steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_4_jpg = $Icon_Folder_2 & "steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_5_jpg = $Icon_Folder_3 & "steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_6_jpg = $Icon_Folder_4 & "steam.app." & $Application_appid_TEMP & ".jpg"
+						Local $Download_Icon_path_7_jpg = $Icon_Folder_5 & "steam.app." & $Application_appid_TEMP & ".jpg"
+
+						FileCopy($Value_image_path, $Download_Icon_path_1_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_2_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_3_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_4_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_5_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_6_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+						FileCopy($Value_image_path, $Download_Icon_path_7_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
+					EndIf
+					$ListView_Icon_Path = $Icons & "32x32\" & "steam.app." & $Application_appid_TEMP & ".bmp"
+					If Not FileExists($ListView_Icon_Path) Or $DeleteHomeLoaderLibraryData = "true" Then
+						FileCopy($gfx & "Icon_Preview_Viveport_32x32.bmp", $ListView_Icon_Path, $FC_OVERWRITE + $FC_CREATEPATH)
+					EndIf
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "is_dashboard_overlay" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "arguments" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+				EndIf
+
+				If $StringSplit_Value_2_1_2 = "binary_path_windows" Then
+					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					$StringSplit_Value_2_2_1 = StringReplace($StringSplit_Value_2_2, ']', '')
+					$StringSplit_Value_2_2_2 = StringReplace($StringSplit_Value_2_2_1, '}', '')
+					$StringSplit_Value_2_2_3 = $Value_Path_StringReplace & $StringSplit_Value_2_2_2
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "binary_path_windows", $StringSplit_Value_2_2_3)
+				EndIf
+			Next
+
+			Local $NR_TEMP = $Application_NR_new
+			Local $url_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "url", "")
+			Local $appid_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "appid", "")
+			Local $name_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "name", "")
+			Local $IconPath_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "IconPath", "")
+			Local $binary_path_windows_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "binary_path_windows", "")
+
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "NR", $NR_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "url", $url_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "appid", $appid_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "name", $name_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "IconPath", $IconPath_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $appid_TEMP, "binary_path_windows", $binary_path_windows_TEMP)
+
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", $Application_NR_new)
+		EndIf
+	Next
+EndFunc
+
+Func _Checkbox_ScanViveData()
+	$CheckBox = GUICtrlRead($Checkbox_ScanVIVEData)
+	If $CheckBox = "" Then
+		GUICtrlSetData($Checkbox_ScanVIVEData, "a")
+		IniWrite($Config_INI, "Settings", "ScanVIVEApps", "true")
+	Else
+		GUICtrlSetData($Checkbox_ScanVIVEData, "")
+		IniWrite($Config_INI, "Settings", "ScanVIVEApps", "false")
+	EndIf
+	$ScanVIVEApps = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
 EndFunc
 
 Func _Checkbox_DeleteData()
@@ -3150,6 +3313,7 @@ Func _Checkbox_DeleteData()
 		GUICtrlSetData($Checkbox_DeleteData, "")
 		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "false")
 	EndIf
+	$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 EndFunc
 
 #endregion
@@ -3853,6 +4017,12 @@ Func _Overlay_ReScan_Steam_Library()
 			Sleep(500)
 		Next
 		$NR_Library_temp = ""
+
+		If $ScanVIVEApps = "true" Then
+			If FileExists($Steam_AppConfig_Json) Then
+				_ScanViveData()
+			EndIf
+		EndIf
 		Sleep(500)
 	EndIf
 EndFunc
@@ -4089,6 +4259,7 @@ EndFunc
 
 Func _Create_GamePages()
 	Local $ApplicationList_TEMP, $GamePage_path, $NR_Applications, $PageName
+
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Creating Game Pages.")
 
 	For $Loop_Temp = 1 To 6
@@ -4144,6 +4315,9 @@ Func _Create_GamePages()
 				Global $Application_IconPath = IniRead($ApplicationList_TEMP, "Application_" & $Application_appid, "IconPath", "")
 				Global $WebPage_IconPath = $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg"
 
+				Local $StringLeft_Application_appid = StringLeft($Application_appid, 9)
+				Local $StringTrimLeft_Application_appid = StringTrimLeft($Application_appid, 9)
+
 				If Not FileExists($WebPage_IconPath) Then
 					FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
@@ -4153,15 +4327,18 @@ Func _Create_GamePages()
 				EndIf
 
 				If Not FileExists($WebPage_IconPath) Then
-					FileCopy($gfx & "Icon_Preview.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+					If $StringLeft_Application_appid <> "vive.htc." Then FileCopy($gfx & "steamVR.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+					If $StringLeft_Application_appid = "vive.htc." Then FileCopy($gfx & "Viveport.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
 
-				If $WinName = "VR Toolbox" Then
-					FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $HomeApp = "VR Toolbox" Then
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'vive://runapp/" & $StringTrimLeft_Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 
-				If $WinName <> "VR Toolbox" Then
-					FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $HomeApp <> "VR Toolbox" Then
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="vive://runapp/' & $StringTrimLeft_Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 			Next
 			Sleep(100)
@@ -4208,6 +4385,9 @@ Func _Create_SinglePages()
 		Local $HTMLSinglePage_Path = $Install_DIR & "WebPage\steam.app." & $Application_appid & ".html"
 		If FileExists($HTMLSinglePage_Path) Then FileDelete($HTMLSinglePage_Path)
 
+		Local $StringLeft_Application_appid = StringLeft($Application_appid, 9)
+		Local $StringTrimLeft_Application_appid = StringTrimLeft($Application_appid, 9)
+
 		If Not FileExists($WebPage_IconPath) Then
 			FileCopy($Icons & "steam.app." & $Application_appid & ".jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 		EndIf
@@ -4217,7 +4397,8 @@ Func _Create_SinglePages()
 		EndIf
 
 		If Not FileExists($WebPage_IconPath) Then
-			FileCopy($gfx & "steam.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+			If $StringLeft_Application_appid <> "vive.htc." Then FileCopy($gfx & "steamVR.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+			If $StringLeft_Application_appid = "vive.htc." Then FileCopy($gfx & "Viveport.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 		EndIf
 
 		FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_TEMP & 'WebPage/' & 'steam.app.' & $Application_appid & '.html' & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
@@ -4236,8 +4417,9 @@ Func _Create_SinglePages()
 		FileWriteLine($HTMLSinglePage_Path, '</script>')
 		FileWriteLine($HTMLSinglePage_Path, '<div class="icons">')
 		FileWriteLine($HTMLSinglePage_Path, '	<br><br><br><br>')
-		If $WinName = "VR Toolbox" Then
-			FileWriteLine($HTMLSinglePage_Path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
+		If $HomeApp = "VR Toolbox" Then
+			If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($HTMLSinglePage_Path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
+			If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($HTMLSinglePage_Path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'vive://runapp/" & $Application_appid & "');" & '">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
 		Else
 			FileWriteLine($HTMLSinglePage_Path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon2" src="images/steam.app.' & $Application_appid & '.jpg" width="1620" height="980" /></a></div>')
 		EndIf

@@ -13,6 +13,7 @@ Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_too
 Global $Array_tools_vrmanifest_File, $Line_NR_binary_path_windows
 
 _Uninstal_HomeLoader()
+_Delete_Settings_File()
 _Start_Uninstal()
 _Exit()
 
@@ -36,16 +37,32 @@ Func _Start_Uninstal()
 	If FileExists($Install_DIR & "Uninstall Files.exe") Then
 		ShellExecuteWait($Install_DIR & "Uninstall Files.exe")
 	EndIf
-	Sleep(1000)
+	Sleep(200)
 	DirRemove($Install_DIR & "ApplicationList", 1)
+	Sleep(50)
 	DirRemove($Install_DIR & "Icons", 1)
+	Sleep(50)
 	DirRemove($Install_DIR & "System", 1)
+	Sleep(50)
 	DirRemove($Install_DIR & "WebPage", 1)
+	Sleep(50)
 	FileDelete($Install_DIR & "Uninstaller.exe")
+	Sleep(50)
 	FileDelete($Install_DIR & "Uninstaller.au3")
-	Sleep(500)
-	DirRemove($Install_DIR, 1)
-	Exit
+	Sleep(200)
+	DirRemove($Install_DIR, $DIR_REMOVE)
+EndFunc
+
+Func _Delete_Settings_File()
+	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Delete HomeLoader Settings", "Do you want to delete the HomeLoader Settings File located in " & @CRLF & _
+																							$Config_INI	& "?" & @CRLF)
+
+	If $Abfrage = 6 Then
+		Local $HomeLoader_Settings_Folder = StringReplace($Config_INI, 'config.ini', '')
+		DirRemove($HomeLoader_Settings_Folder, $DIR_REMOVE)
+	Else
+		Sleep(100)
+	EndIf
 EndFunc
 
 Func _Exit()
