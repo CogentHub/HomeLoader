@@ -482,13 +482,14 @@ Func _Settings_GUI()
 
 	Global $Button_Start_HomeLoaderLibrary = GUICtrlCreateButton("HomeLoader Library", 5, $POS_Y_Button_Start_HomeLoaderLibrary, 235, 30, $BS_BITMAP)
 
-	If FileExists($ApplicationList_SteamLibrary_ALL_INI) Then
-		GUICtrlSetColor(-1, "0x0000CD")
-		GUICtrlSetFont(-1, 14, 600, 2, $font_StartUp_arial)
-	Else
+	Global $NR_ApplicationsCheck = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+	If Not FileExists($ApplicationList_SteamLibrary_ALL_INI) Or $NR_ApplicationsCheck = "" Or $NR_ApplicationsCheck = 0 Then
 		GUICtrlSetData($Button_Start_HomeLoaderLibrary, "Scan Steam Library first")
 		GUICtrlSetColor(-1, "0xFF0000")
 		GUICtrlSetFont(-1, 13, 600, 2, $font_StartUp_arial)
+	Else
+		GUICtrlSetColor(-1, "0x0000CD")
+		GUICtrlSetFont(-1, 14, 600, 2, $font_StartUp_arial)
 	EndIf
 
 	GuiCtrlSetTip(-1, "Starts Home Loader Library.")
