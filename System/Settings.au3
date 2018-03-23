@@ -140,13 +140,23 @@ If $Steam_tools_vrmanifest_File = ""  Then MsgBox($MB_ICONERROR, "Attention!", "
 If $First_Start = "true" Then
 	If Not FileExists($Install_DIR & "Backups\default.vrsettings") Then FileCopy($default_vrsettings_File, $Install_DIR & "Backups\default.vrsettings", $FC_OVERWRITE)
 	If Not FileExists($Install_DIR & "Backups\tools.vrmanifest") Then FileCopy($Steam_tools_vrmanifest_File, $Install_DIR & "Backups\tools.vrmanifest", $FC_OVERWRITE)
-	_FirstStart_Restart()
+	;_FirstStart_Restart()
 EndIf
 
-If $First_Start = "Settings" Then
-	MsgBox($MB_ICONWARNING, "Welcome to Home Loader, by CogentRifter", "Choose your Home app, and then choose HomeLoaderLibrary to set up your games" & @CRLF & @CRLF & _
-							"or Start SteamVR to just jump in." & @CRLF & @CRLF & _
-							'Click "Advanced Settings" to access additional features.')
+If $First_Start = "true" Then ; Settings
+	MsgBox($MB_ICONWARNING, "Welcome to HomeLoader, by CogentRifter", "Choose your Home app, and then choose HomeLoaderLibrary" & @CRLF & _
+							"to set up your games or Start SteamVR to just jump in." & @CRLF & @CRLF & @CRLF & @CRLF & _
+							'Additional Informations:' & @CRLF & _
+							'The first time that you use HomeLoader, it will create Backups' & @CRLF & _
+							'for your "default.vrsettings" and "tools.manifest" files.' & @CRLF & _
+							"You can find them at '" & $Install_DIR & "Backups\" & "'" & @CRLF & @CRLF & _
+							'When you tell it to, HomeLoader will scan your Steam' & @CRLF & _
+							'directories for games. HomeLoader automatically finds your'  & @CRLF & _
+							'Steam directories but you can still change or add manually'  & @CRLF & _
+							'Steam Library folders in the settings. Click the "Settings" icon' & @CRLF & _
+							'in the lower right to add additional Steam Library folders.' & @CRLF & _
+							'If you changed the default installation path for Steam then' & @CRLF & _
+							'you can change it in "Settings" as well.')
 	IniWrite($Config_INI, "Settings", "First_Start", "false")
 EndIf
 
