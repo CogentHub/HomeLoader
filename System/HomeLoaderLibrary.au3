@@ -27,7 +27,7 @@ Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.67"
+Global $Version = "0.68"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -57,6 +57,7 @@ Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
+Global $libraryfolders_vdf = $Steam_Path & "steamapps\libraryfolders.vdf"
 
 Global $Steam_AppConfig_Json = $Steam_Path & "config\appconfig.json"
 
@@ -547,6 +548,21 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 		EndIf
 		$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	EndIf
+
+	$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+	$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\')
+	If $Install_Folder_Steam_Search_Folder <> "" Then
+		For $Loop_FolderCheck = 2 To 5
+			$LineNR = 3 + $Loop_FolderCheck
+			$Install_Folder_Check = IniRead($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, "")
+			$Install_Folder_1 = FileReadLine($libraryfolders_vdf, $LineNR)
+			$Install_Folder_2 = StringTrimLeft($Install_Folder_1, 6)
+			$Install_Folder_3 = StringReplace($Install_Folder_2, '"', '')
+			$Install_Folder_4 = StringReplace($Install_Folder_3, '}', '')
+			$Install_Folder_5 = StringReplace($Install_Folder_4, '\\', '\') & "\"
+			If $Install_Folder_4 <> "" Then IniWrite($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, $Install_Folder_5)
+		Next
 	EndIf
 
 	If $default_vrsettings_File = "" Then

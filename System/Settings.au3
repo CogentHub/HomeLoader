@@ -22,7 +22,7 @@ Global $font_arial = "arial"
 #Region Variables
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
-Global $Version = "0.67"
+Global $Version = "0.68"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -52,6 +52,7 @@ Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationLis
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 Global $SteamVR_Path = $Steam_Path & "SteamApps\common\SteamVR\"
+Global $libraryfolders_vdf = $Steam_Path & "steamapps\libraryfolders.vdf"
 
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
 Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
@@ -126,6 +127,7 @@ Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 IniWrite($config_ini, "Settings", "Version", $Version)
 #endregion
 
+
 #Region First Start Check
 _First_Start_Empty_Check_1()
 
@@ -179,6 +181,21 @@ Func _First_Start_Empty_Check_1()
 			EndIf
 		EndIf
 		$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
+	EndIf
+
+	$Install_Folder_Steam_Search_Folder = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
+	$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\')
+	If $Install_Folder_Steam_Search_Folder <> "" Then
+		For $Loop_FolderCheck = 2 To 5
+			$LineNR = 3 + $Loop_FolderCheck
+			$Install_Folder_Check = IniRead($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, "")
+			$Install_Folder_1 = FileReadLine($libraryfolders_vdf, $LineNR)
+			$Install_Folder_2 = StringTrimLeft($Install_Folder_1, 6)
+			$Install_Folder_3 = StringReplace($Install_Folder_2, '"', '')
+			$Install_Folder_4 = StringReplace($Install_Folder_3, '}', '')
+			$Install_Folder_5 = StringReplace($Install_Folder_4, '\\', '\') & "\"
+			If $Install_Folder_4 <> "" Then IniWrite($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, $Install_Folder_5)
+		Next
 	EndIf
 
 	If $default_vrsettings_File = "" Or Not FileExists($default_vrsettings_File) Then
@@ -305,7 +322,6 @@ Func _Write_vrappconfig_File()
 	EndIf
 	FileWriteLine($htc_vive_overlay_vrappconfig, $Value_3)
 EndFunc
-
 
 Func _Detect_SteamVR_Files()
 	IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
@@ -574,7 +590,6 @@ Func _RM_Selection_Contextmenu()
 
 	If $Autostart_Apps <> "true" Then _RM_GUI_DISABLE_ALL()
 EndFunc
-
 
 Func _StartUp_Add_Other_GUI()
 	$font_arial = "arial"
