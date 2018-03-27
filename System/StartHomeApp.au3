@@ -51,6 +51,9 @@ Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Local $Vive_Home_Folder_1 = StringInStr($Home_Path, "\", 1, - 1)
 Local $Vive_Home_Folder_2 = StringLeft($Home_Path, $Vive_Home_Folder_1)
+
+Global $ApplicationList_Folder = $Install_DIR & "ApplicationList\"
+Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 #endregion
 
 
@@ -114,14 +117,15 @@ EndFunc
 
 Func _Start_actions_after()
 	If $Autostart_VRUB = "true" Then
-		If ProcessExists("VRUtilityBelt.exe") Then
-			ProcessClose("VRUtilityBelt.exe")
-			Sleep(1000)
-		EndIf
+		;If ProcessExists("VRUtilityBelt.exe") Then
+		;	ProcessClose("VRUtilityBelt.exe")
+		;	Sleep(500)
+		;EndIf
 		If Not ProcessExists("VRUtilityBelt.exe") Then
-			Sleep(1000)
+			Sleep(500)
 			If Not ProcessExists("VRUtilityBelt.exe") Then
-				Sleep(1000)
+				_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+				Sleep(500)
 				ShellExecute("steam://rungameid/645370")
 				Sleep(100)
 			EndIf
@@ -152,6 +156,48 @@ Func _Start_actions_after()
 		EndIf
 	Next
 	Sleep(1000)
+EndFunc
+
+Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
+	Local $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderOverlaySteamID", "")
+	Local $NEW_sText = ""
+	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
+    Local $sText = FileRead($filePath)
+    Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
+
+	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "200")
+	Local $appid_TEMP = ""
+	Local $SteamLibraryContent = ""
+
+	For $Loop_SteamLibrary = 1 To $NR_Applications
+		$appid_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_SteamLibrary, "appid", "")
+		 $SteamLibraryContent = $SteamLibraryContent & "_" & $appid_TEMP
+		 If $Loop_SteamLibrary = 1 Then $SteamLibraryContent = $appid_TEMP
+	Next
+
+    For $i1 = 1 To $aArray[0]
+		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
+		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
+		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
+        Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
+
+		Local $InsertValue = $StringSplit[2]
+		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then $InsertValue = $HomeLoaderOverlaySteamID
+		If $StringSplit[1] = "HomeApp" Then $InsertValue = $HomeApp
+		If $StringSplit[1] = "SteamLibrary" Then $InsertValue = $SteamLibraryContent
+
+		If $i1 <> $aArray[0] Then
+			$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $InsertValue & '",'
+		Else
+			$NEW_sText = $NEW_sText & '"' &  $StringSplit[1] & '"' & ':"' & $InsertValue & '"}'
+		EndIf
+    Next
+	Local $StringRightCheck = StringRight($NEW_sText, '1')
+	If $StringRightCheck = "," Then $NEW_sText = StringTrimRight($NEW_sText, '1')
+	Local $StringLeftCheck = StringLeft($NEW_sText, '1')
+	If $StringLeftCheck <> "{" Then $NEW_sText = "{" & $NEW_sText
+	If FileExists($filePath) Then FileDelete($filePath)
+	FileWrite($filePath, $NEW_sText)
 EndFunc
 
 #endregion

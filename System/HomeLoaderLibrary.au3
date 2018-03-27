@@ -27,7 +27,7 @@ Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.68"
+Global $Version = "0.69"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -62,7 +62,6 @@ Global $libraryfolders_vdf = $Steam_Path & "steamapps\libraryfolders.vdf"
 Global $Steam_AppConfig_Json = $Steam_Path & "config\appconfig.json"
 
 Global $HomeLoader_Overlay_Folder = $Steam_Path & "steamapps\common\VRUtilityBelt\addons\custom\HomeLoader\overlays\HomeLoader\"
-Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 
 Global $VRToolBox_Steam_Folder = $Steam_Path & "steamapps\common\VRToolbox\"
 
@@ -487,6 +486,21 @@ If $First_Start <> "true" Then
 	#endregion
 
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
+
+	Local $NR_ApplicationsCheck = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+
+	If $NR_ApplicationsCheck = "" Or $NR_ApplicationsCheck = "0" Then
+
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Scan Library", "The Game Library is emtpty." & @CRLF & @CRLF & _
+																	"Do you want to scan your Steam and if available also your" & @CRLF & _
+																	"Viveport Library?" & @CRLF & @CRLF & _
+																	'This can also be done manually by using the "Rescan" Button.' & @CRLF)
+
+		If $Abfrage = 6 Then
+			_Button_ReScan_Steam_Library()
+			_Restart()
+		EndIf
+	EndIf
 
 	_Read_from_INI_ADD_2_ListView()
 

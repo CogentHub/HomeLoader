@@ -1,2 +1,3 @@
 Changelog:
-- Added automatic Steam Library Folder detection
+- Added autostart apps to Overlay
+- Added new Overlay functions to Home Loader

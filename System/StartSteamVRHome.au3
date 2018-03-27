@@ -15,6 +15,10 @@ Global $OverlaySettings_Checkbox1, $OverlaySettings_Checkbox2, $OverlaySettings_
 Global $OverlaySettings_Checkbox4, $OverlaySettings_Checkbox5, $OverlaySettings_Checkbox6
 Global $OverlaySettings_LabelCustomPage3, $OverlaySettings_LabelCustomPage4, $OverlaySettings_LabelCustomPage5
 Global $OverlaySettings_LabelCustomPage6, $FirstStart_Overlay, $HomeAppGroup
+Global $OverlaySettings_OS_Autostart_checkbox1, $OverlaySettings_OS_Autostart_checkbox2, $OverlaySettings_OS_Autostart_checkbox3
+Global $OverlaySettings_OS_Autostart_checkbox4, $OverlaySettings_OS_Autostart_checkbox5, $OverlaySettings_OS_Autostart_checkbox6
+Global $OverlaySettings_OS_Autostart_checkbox7, $OverlaySettings_OS_Autostart_checkbox8, $OverlaySettings_OS_Autostart_checkbox9
+Global $OverlaySettings_OS_Autostart_checkbox10
 #endregion
 
 #Region Variables
@@ -68,7 +72,6 @@ Global $StartSteamVRHome_exe = $System_DIR & "StartSteamVRHome.exe"
 
 Global $State_Checkbox_Autostart_VRUB = IniRead($config_ini,"Settings", "Autostart_VRUB", "")
 
-Global $UpdateOverlay = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
 Global $ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
@@ -79,6 +82,17 @@ Global $HomeLoaderOverlaySteamID = IniRead($Config_INI, "Settings", "HomeLoaderO
 Global $default_renderTargetMultiplier = IniRead($Config_INI, "SteamVR_Status", "default_renderTargetMultiplier", "")
 Global $default_supersampleScale = IniRead($Config_INI, "SteamVR_Status", "default_supersampleScale", "")
 Global $default_allowSupersampleFiltering = IniRead($Config_INI, "SteamVR_Status", "default_allowSupersampleFiltering", "")
+
+Global $Autostart_App_1_State = IniRead($Config_INI, "Autostart", "App_1_State", "")
+Global $Autostart_App_2_State = IniRead($Config_INI, "Autostart", "App_2_State", "")
+Global $Autostart_App_3_State = IniRead($Config_INI, "Autostart", "App_3_State", "")
+Global $Autostart_App_4_State = IniRead($Config_INI, "Autostart", "App_4_State", "")
+Global $Autostart_App_5_State = IniRead($Config_INI, "Autostart", "App_5_State", "")
+Global $Autostart_App_6_State = IniRead($Config_INI, "Autostart", "App_6_State", "")
+Global $Autostart_App_7_State = IniRead($Config_INI, "Autostart", "App_7_State", "")
+Global $Autostart_App_8_State = IniRead($Config_INI, "Autostart", "App_8_State", "")
+Global $Autostart_App_9_State = IniRead($Config_INI, "Autostart", "App_9_State", "")
+Global $Autostart_App_10_State = IniRead($Config_INI, "Autostart", "App_10_State", "")
 
 Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 	Local $stats_log_FILE_Lines = _FileCountLines($stats_log_FILE)
@@ -105,7 +119,6 @@ If $TAB6_Label = "" Then $TAB6_Label = "Page 4"
 FileWrite($stats_log_FILE, @CRLF & "[Start SteamVR_HomeApp: " & _Now() & "]" & @CRLF & _
 								"- Home App: " & $HomeApp & @CRLF & _
 								"- Autostart VRUB: " & $State_Checkbox_Autostart_VRUB & @CRLF & _
-								"- Update Overlay: " & $UpdateOverlay & @CRLF & _
 								"- Use Local Icons: " & $Use_Local_Icons & @CRLF & _
 								"- Scan Library OnStart: " & $ScanLibrary_OnStart_SettingValue & @CRLF & _
 								"- Add PlayersOnline to Icons: " & $Add_PlayersOnline_to_Icons & @CRLF & _
@@ -338,35 +351,84 @@ Func _Read_from_VRUB_PersistentStore_File()
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox6 = <" & $OverlaySettings_Checkbox6 & ">")
 		EndIf
 		If $StringSplit[1] = "RenderTargetMultiplier" Then
-			$OverlaySettings_RenderTargetMultiplier = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_RenderTargetMultiplier = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "RenderTargetMultiplier = <" & $OverlaySettings_RenderTargetMultiplier & ">")
 		EndIf
 		If $StringSplit[1] = "SupersampleScale" Then
-			$OverlaySettings_SupersampleScale = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_SupersampleScale = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "SupersampleScale = <" & $OverlaySettings_SupersampleScale & ">")
 		EndIf
 		If $StringSplit[1] = "AllowSupersampleFiltering" Then
-			$OverlaySettings_AllowSupersampleFiltering = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_AllowSupersampleFiltering = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "AllowSupersampleFiltering = <" & $OverlaySettings_AllowSupersampleFiltering & ">")
 		EndIf
 
 		If $StringSplit[1] = "LabelCustomPage3" Then
-			$OverlaySettings_LabelCustomPage3 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_LabelCustomPage3 = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage3 = <" & $OverlaySettings_LabelCustomPage3 & ">")
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage4" Then
-			$OverlaySettings_LabelCustomPage4 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_LabelCustomPage4 = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage4 = <" & $OverlaySettings_LabelCustomPage4 & ">")
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage5" Then
-			$OverlaySettings_LabelCustomPage5 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_LabelCustomPage5 = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage5 = <" & $OverlaySettings_LabelCustomPage5 & ">")
 		EndIf
 		If $StringSplit[1] = "LabelCustomPage6" Then
-			$OverlaySettings_LabelCustomPage6 = $StringSplit[2] ;;; Automatically apply the saved Supersampling settings to the game when it is launched ;;;
+			$OverlaySettings_LabelCustomPage6 = $StringSplit[2] ;;;
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "LabelCustomPage6 = <" & $OverlaySettings_LabelCustomPage6 & ">")
 		EndIf
 
+		If $StringSplit[1] = "OS_Autostart_checkbox1" Then
+			$OverlaySettings_OS_Autostart_checkbox1 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox1 = <" & $OverlaySettings_OS_Autostart_checkbox1 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox2" Then
+			$OverlaySettings_OS_Autostart_checkbox2 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox2 = <" & $OverlaySettings_OS_Autostart_checkbox2 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox3" Then
+			$OverlaySettings_OS_Autostart_checkbox3 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox3 = <" & $OverlaySettings_OS_Autostart_checkbox3 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox4" Then
+			$OverlaySettings_OS_Autostart_checkbox4 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox4 = <" & $OverlaySettings_OS_Autostart_checkbox4 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox5" Then
+			$OverlaySettings_OS_Autostart_checkbox5 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox5 = <" & $OverlaySettings_OS_Autostart_checkbox5 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox6" Then
+			$OverlaySettings_OS_Autostart_checkbox6 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox6 = <" & $OverlaySettings_OS_Autostart_checkbox6 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox7" Then
+			$OverlaySettings_OS_Autostart_checkbox7 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox7 = <" & $OverlaySettings_OS_Autostart_checkbox7 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox8" Then
+			$OverlaySettings_OS_Autostart_checkbox8 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox8 = <" & $OverlaySettings_OS_Autostart_checkbox8 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox9" Then
+			$OverlaySettings_OS_Autostart_checkbox9 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox9 = <" & $OverlaySettings_OS_Autostart_checkbox9 & ">")
+		EndIf
+
+		If $StringSplit[1] = "OS_Autostart_checkbox10" Then
+			$OverlaySettings_OS_Autostart_checkbox10 = $StringSplit[2] ;;;
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OS_Autostart_checkbox10 = <" & $OverlaySettings_OS_Autostart_checkbox10 & ">")
+		EndIf
     Next
 
 	If $HomeApp_Overlay <> "" Then
@@ -388,11 +450,11 @@ Func _Read_from_VRUB_PersistentStore_File()
 		EndIf
 	EndIf
 
-	If $OverlaySettings_Checkbox1 <> "" Then
-		If $OverlaySettings_Checkbox1 <> $UpdateOverlay Then
-			IniWrite($Config_INI, "Settings", "UpdateOverlay", $OverlaySettings_Checkbox1)
-		EndIf
-	EndIf
+	;If $OverlaySettings_Checkbox1 <> "" Then
+	;	If $OverlaySettings_Checkbox1 <> $UpdateOverlay Then
+	;		IniWrite($Config_INI, "Settings", "UpdateOverlay", $OverlaySettings_Checkbox1)
+	;	EndIf
+	;EndIf
 	If $OverlaySettings_Checkbox2 <> "" Then
 		If $OverlaySettings_Checkbox2 <> $Use_Local_Icons Then
 			IniWrite($Config_INI, "Settings", "Use_Local_Icons", $OverlaySettings_Checkbox2)
@@ -455,6 +517,57 @@ Func _Read_from_VRUB_PersistentStore_File()
 		EndIf
 	EndIf
 
+	If $OverlaySettings_OS_Autostart_checkbox1 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox1 <> $Autostart_App_1_State Then
+			IniWrite($Config_INI, "Autostart", "App_1_State", $OverlaySettings_OS_Autostart_checkbox1)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox2 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox2 <> $Autostart_App_2_State Then
+			IniWrite($Config_INI, "Autostart", "App_2_State", $OverlaySettings_OS_Autostart_checkbox2)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox3 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox3 <> $Autostart_App_3_State Then
+			IniWrite($Config_INI, "Autostart", "App_3_State", $OverlaySettings_OS_Autostart_checkbox3)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox4 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox4 <> $Autostart_App_4_State Then
+			IniWrite($Config_INI, "Autostart", "App_4_State", $OverlaySettings_OS_Autostart_checkbox4)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox5 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox5 <> $Autostart_App_5_State Then
+			IniWrite($Config_INI, "Autostart", "App_5_State", $OverlaySettings_OS_Autostart_checkbox5)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox6 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox6 <> $Autostart_App_6_State Then
+			IniWrite($Config_INI, "Autostart", "App_6_State", $OverlaySettings_OS_Autostart_checkbox6)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox7 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox7 <> $Autostart_App_7_State Then
+			IniWrite($Config_INI, "Autostart", "App_7_State", $OverlaySettings_OS_Autostart_checkbox7)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox8 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox8 <> $Autostart_App_8_State Then
+			IniWrite($Config_INI, "Autostart", "App_8_State", $OverlaySettings_OS_Autostart_checkbox8)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox9 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox9 <> $Autostart_App_9_State Then
+			IniWrite($Config_INI, "Autostart", "App_9_State", $OverlaySettings_OS_Autostart_checkbox9)
+		EndIf
+	EndIf
+	If $OverlaySettings_OS_Autostart_checkbox10 <> "" Then
+		If $OverlaySettings_OS_Autostart_checkbox10 <> $Autostart_App_10_State Then
+			IniWrite($Config_INI, "Autostart", "App_10_State", $OverlaySettings_OS_Autostart_checkbox10)
+		EndIf
+	EndIf
+
 	_Start_HomeLoader_UpdateOverlay()
 EndFunc
 
@@ -486,7 +599,7 @@ Func _Start_Home_APP()
 
 
 	If $Autostart_VRUB = "true" Then
-		_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+		;_Write_config_INI_Values_to_VRUB_PersistentStore_File()
 	EndIf
 
 	If $HomeApp <> "Default SteamVR Home" Then

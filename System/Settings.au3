@@ -22,7 +22,7 @@ Global $font_arial = "arial"
 #Region Variables
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
-Global $Version = "0.68"
+Global $Version = "0.69"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
