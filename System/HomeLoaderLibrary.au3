@@ -1384,6 +1384,10 @@ Func _ApplicationList_Update()
 
 			_Download_Icon_for_SteamGameID()
 
+			$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
+			If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icons & "32x32\" & "steam.app." & $appid & ".bmp")
+			If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icons & "256x256\" & "steam.app." & $appid & ".bmp")
+
 			If Not FileExists($Icons & "32x32\" & "steam.app." & $appid & ".bmp") Then
 				_Get_SteamGame_Icon_32x32()
 			EndIf
@@ -1698,15 +1702,16 @@ Func _Get_SteamGame_Icon_256x256()
 EndFunc
 
 Func _Convert_Icon_32x32()
+	Global $Check_AppId = $appid
 	_GDIPlus_Startup()
-	Local $sFile = $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".jpg"
+	Local $sFile = $Icons & "32x32\" & "steam.app." & $Check_AppId & ".jpg"
     If @error Or Not FileExists($sFile) Then Return
     Local $hImage = _GDIPlus_ImageLoadFromFile($sFile)
     Local $iWidth = 600
     Local $iHeight = _GDIPlus_ImageGetHeight($hImage) * 600 / _GDIPlus_ImageGetWidth($hImage)
     Local $tPalette = _GDIPlus_PaletteInitialize(16, $GDIP_PaletteTypeFixedHalftone27, 16, False, $hImage)
     _GDIPlus_BitmapConvertFormat($hImage, "", $GDIP_DitherTypeDualSpiral8x8, $GDIP_PaletteTypeFixedHalftone27, $tPalette)
-	_GDIPlus_ImageSaveToFile($hImage, $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".bmp")
+	_GDIPlus_ImageSaveToFile($hImage, $Icons & "32x32\" & "steam.app." & $Check_AppId & ".bmp")
     _GDIPlus_ImageDispose($hImage)
     _GDIPlus_Shutdown()
 EndFunc
