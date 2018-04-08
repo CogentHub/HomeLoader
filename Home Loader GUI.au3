@@ -234,7 +234,6 @@ EndFunc
 #Region Buttons
 Func _Button_1()
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-	IniWrite($Config_INI, "TEMP", "Show_Playlist", "")
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
 		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
@@ -245,7 +244,6 @@ EndFunc
 
 Func _Button_2()
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-	IniWrite($Config_INI, "TEMP", "Show_Playlist", "true")
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
 		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
 	Else
@@ -256,11 +254,10 @@ EndFunc
 
 Func _Button_3()
 	$Close_MainGUI_after_selection = IniRead($Config_INI, "Settings", "Close_MainGUI_after_selection", "false")
-	IniWrite($Config_INI, "TEMP", "Show_SS_Menu", "true")
 	If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
-		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
+		ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "Show_SS_Menu", $System_DIR)
 	Else
-		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
+		ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "Show_SS_Menu", $System_DIR)
 	EndIf
 	If $Close_MainGUI_after_selection = "true" Then _Button_Exit_GUI()
 EndFunc
@@ -349,14 +346,16 @@ EndFunc
 
 Func _RM_Item10()
 	MsgBox(0, "HomeLoader" & " [" & $Version & "] by Cogent", "Home Loader is a program that allows you to change the default" & @CRLF & _
-																"SteamVR Home App. When starting SteamVR then the new app will be started" & @CRLF & _
-																"instead of the default Steam VR Home app." & @CRLF & _
-																"Additional to that it provides more features like number of current Players" & @CRLF & _
-																"and Supersampling values on the icons or automatically applying the saved" & @CRLF & _
-																"Supersampling settings to the games. HomeLoader provides also an Overlay" & @CRLF & _
-																"[VRUtilityBelt] that be can used by installing VRUtilityBelt." & @CRLF & @CRLF & _
+																"SteamVR Home App. When starting SteamVR then the new app will be" & @CRLF & _
+																"started instead of the default Steam VR Home app." & @CRLF & @CRLF & _
+																"Additional to that it provides more features like number of current" & @CRLF & _
+																"Players and Supersampling values on the icons or automatically" & @CRLF & _
+																"applying the saved Supersampling settings to the games." & @CRLF & @CRLF & _
+																"HomeLoader provides also an Overlay [VRUtilityBelt] that be can used" & @CRLF & _
+																"by installing VRUtilityBelt." & @CRLF & @CRLF & _
+																"HomeLoader:" & @CRLF & _
 																"GitHub Page:   " & "https://github.com/CogentHub/HomeLoader"& @CRLF & _
-																"E-Mail:   " & "cogenthub@web.de" & @CRLF & @CRLF & _
+																"E-Mail:   " & "cogenthub@web.de" & @CRLF & _
 																"HomeLoader" & " [" & $Version & "] made by Cogent [reddit: 'CogentRifter']")
 EndFunc
 #endregion

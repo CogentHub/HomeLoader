@@ -22,7 +22,7 @@ Global $font_arial = "arial"
 #Region Variables
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
-Global $Version = "0.69"
+Global $Version = "0.70"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -434,7 +434,7 @@ Func _Settings_GUI()
 		GuiCtrlSetTip(-1, "If activated it will automatically start VRUB when SteamVR is launched." & @CRLF & _
 							"VRUB is needed to be able to use the 'Automatically add SS per game' function." & @CRLF & _
 							"Games need to be started from the VRUB Overlay to load the predefined values.")
-		If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_CHECKED)
 
 
 	; Button $AutoStart_Selection
@@ -463,27 +463,23 @@ Func _Settings_GUI()
 	$State_Checkbox_Add_PlayersOnline_to_Icons = IniRead($config_ini,"Settings", "Add_PlayersOnline_to_Icons", "")
 	Global $Checkbox_Add_PlayersOnline_to_Icons = GUICtrlCreateCheckbox(" Add current Players to Icons", $POS_X, $POS_Y_AdditionalSettings_Group + 21, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the number of Players that are" & @CRLF & "currently playing the game and write it on top of the Icon.")
-		If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_PlayersOnline_to_Icons, "_Checkbox_Add_PlayersOnline_to_Icons")
 
 	$State_Checkbox_Add_SS_to_Icons = IniRead($config_ini,"Settings", "Add_SS_to_Icons", "")
 	Global $Checkbox_Add_SS_to_Icons = GUICtrlCreateCheckbox(" Add Supersampling to Icons", $POS_X, $POS_Y_AdditionalSettings_Group + 41, 220, 20)
 		GuiCtrlSetTip(-1, "If activated it will check the saved Supersampling settings" & @CRLF & "for each game and adds it on top of the Icon.")
-		If $State_Checkbox_Add_SS_to_Icons = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+		If $State_Checkbox_Add_SS_to_Icons = "True" Then GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_SS_to_Icons, "_Checkbox_Add_SS_to_Icons")
 
 	$State_Checkbox_Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
-	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Automatically add SS per game", $POS_X, $POS_Y_AdditionalSettings_Group + 61, 220, 20)
-		GuiCtrlSetTip(-1, "If activated it will check the saved Supersampling settings" & @CRLF & "for the current loaded game and adds these value to SteamVR.")
-		If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	Global $Checkbox_Add_SS_per_game = GUICtrlCreateCheckbox(" Read/Write Resolution Scale", $POS_X, $POS_Y_AdditionalSettings_Group + 61, 220, 20)
+		GuiCtrlSetTip(-1, "If activated it Reads/Writes the Resolution Scale per game from/to the SteamVR VRSettings File." & @CRLF & "This allows HomeLoader to modify the values.")
+		If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_CHECKED)
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 	GUICtrlSetOnEvent($Checkbox_Add_SS_per_game, "_Checkbox_Add_SS_per_game")
-	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_UNCHECKED)
-	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_DISABLE)
-	If GUICtrlRead($Checkbox_Autostart_VRUB) = 4 Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_UNCHECKED)
-	If GUICtrlRead($Checkbox_Autostart_VRUB) = 4 Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_DISABLE)
 
 	Global $Button_Restore_SteamVR_Settings = GUICtrlCreateButton("Restore SteamVR Settings", $POS_X, $POS_Y_AdditionalSettings_Group + 81, 223, 20)
 		GuiCtrlSetTip(-1, "Restores the SteamVR Settings." & @CRLF & @CRLF & "It will Restore the following Files:" & @CRLF & "- default.vrsettings" & @CRLF & "- tools.vrmanifest")
@@ -774,6 +770,31 @@ Func _Restore_Default_SteamVR_Home()
 	MsgBox($MB_OK + $MB_ICONINFORMATION, "SteamVR Files restored", "SteamVR Files sucessfully restored. You can now restart SteamVR or set a new Home App.")
 
 EndFunc
+
+Func _Refresh_GUICtrlSetState()
+	Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+	$State_Checkbox_Autostart_VRUB = IniRead($config_ini,"Settings", "Autostart_VRUB", "")
+	Global $VRUB_HomeLoaderFile = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
+	$State_Checkbox_Add_PlayersOnline_to_Icons = IniRead($config_ini,"Settings", "Add_PlayersOnline_to_Icons", "")
+	$State_Checkbox_Add_SS_to_Icons = IniRead($config_ini,"Settings", "Add_SS_to_Icons", "")
+	$State_Checkbox_Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
+
+	If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
+	If $HomeApp = "Viveport VR" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
+	If $HomeApp = "Janus VR" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
+	If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
+	If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
+
+	If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_CHECKED)
+	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_UNCHECKED)
+	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_DISABLE)
+
+	If $State_Checkbox_Add_PlayersOnline_to_Icons = "True" Then GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_CHECKED)
+	If $State_Checkbox_Add_SS_to_Icons = "True" Then GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_CHECKED)
+	If $State_Checkbox_Add_SS_per_game = "True" Then GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_CHECKED)
+EndFunc
+
 
 #endregion
 
@@ -1189,14 +1210,43 @@ Func _Checkbox_Autostart_VRUB()
 
 	If $State_Checkbox = 1 Then
 		IniWrite($config_ini, "Settings", "Autostart_VRUB", "true")
-		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_0, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_0, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_1, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_1, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_2, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_2, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_3, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_3, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_4, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_4, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_5, $GUI_UNCHECKED)
+		GUICtrlSetState($StartUp_Radio_5, $GUI_DISABLE)
+		GUICtrlSetState($AutoStart_Selection, $GUI_UNCHECKED)
+		GUICtrlSetState($AutoStart_Selection, $GUI_DISABLE)
+		GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_UNCHECKED)
+		GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_DISABLE)
+		GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_UNCHECKED)
+		GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_DISABLE)
+		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_UNCHECKED)
+		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_DISABLE)
 	EndIf
 
 	If $State_Checkbox = 4 Then
 		IniWrite($config_ini, "Settings", "Autostart_VRUB", "false")
 		IniWrite($config_ini, "Settings", "Add_SS_per_game", "false")
-		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_UNCHECKED)
-		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_DISABLE)
+		GUICtrlSetState($StartUp_Radio_0, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_1, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_2, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_3, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_4, $GUI_ENABLE)
+		GUICtrlSetState($StartUp_Radio_5, $GUI_ENABLE)
+		GUICtrlSetState($AutoStart_Selection, $GUI_ENABLE)
+		GUICtrlSetState($Checkbox_Add_PlayersOnline_to_Icons, $GUI_ENABLE)
+		GUICtrlSetState($Checkbox_Add_SS_to_Icons, $GUI_ENABLE)
+		GUICtrlSetState($Checkbox_Add_SS_per_game, $GUI_ENABLE)
+		_Sync_Config_INI()
+		_Refresh_GUICtrlSetState()
 	EndIf
 	_Sync_Config_INI()
 EndFunc

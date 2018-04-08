@@ -10,7 +10,11 @@
 #include <GUIConstants.au3>
 #include <GDIPlus.au3>
 #include <Inet.au3>
+#include <Array.au3>
+#include <String.au3>
+#include "_GDIPlus_WTOB.au3"
 #endregion
+
 
 Opt("GUIOnEventMode", 1)
 
@@ -20,16 +24,24 @@ Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library,
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
 Global $ListView_ImageList_Temp, $SS_Settings_GUI, $VRSettings_Group
 Global $TAB_NR, $listview_7, $listview_8, $listview_9, $listview_10, $listview_11, $listview_TEMP
-Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item5_1, $RM_Item5_2, $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
-Global $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue
+Global $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item3, $RM_Item4, $RM_Item5, $RM_Item5_1, $RM_Item5_2
+Global $RM_Item6, $RM_Item7,$RM_Item8,$RM_Item9, $RM_Item10, $RM_Item11, $RM_Item12
+Global $RM_Item_RS_0, $RM_Item_RS_1, $RM_Item_RS_2, $RM_Item_RS_3, $RM_Item_RS_4, $RM_Item_RS_5, $RM_Item_RS_6, $RM_Item_RS_7, $RM_Item_RS_8
+Global $RM_Item_RS_9, $RM_Item_RS_10, $RM_Item_RS_11, $RM_Item_RS_12, $RM_Item_RS_13, $RM_Item_RS_14
+Global $GUI, $UpdateOverlay_SettingValue, $ScanLibrary_OnStart_SettingValue, $LOOP_NR_TEMP, $SteamAppID_TEMP, $NR_LOOP_TO_TEMP
+Global $Key_Name_TEMP, $ReadLine_SteamAppCheck, $ResolutionScale_Group, $ReadLine, $Steam_app_Name_TEMP, $ResolutionScale_TEMP
+Global $Game_ID, $hImage1, $hImage2, $hBMPBuff, $hImage1_Path, $hImage2_Path, $hGraphic, $hPen
+Global $Steamvr_vrsettings_Array, $Steamvr_vrsettings_aArray, $Loop_End_1
 Global $font = "arial"
 Global $font_arial = "arial"
 #endregion
 
 #Region Declare Variables/Const 1
-Global $Version = "0.69"
+Global $Version = "0.70"
 Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
+Global $SteamVR_VRSettings_INI = _PathFull("HomeLoader\SteamVR_VRSettings.ini", @AppDataDir)
+;If Not FileExists($SteamVR_VRSettings_INI) Then FileCopy(@ScriptDir & "\SteamVR_VRSettings.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
@@ -41,11 +53,12 @@ Global $Steam_Library = IniRead($Config_INI, "Settings", "Steam_Library", "")
 Global $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 Global $Autostart_VRUB = IniRead($Config_INI, "Settings", "Autostart_VRUB", "")
 Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
-Global $Show_Playlist = IniRead($Config_INI, "TEMP", "Show_Playlist", "")
-Global $Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
 Global $Use_Local_Icons = IniRead($Config_INI, "Settings", "Use_Local_Icons", "")
 Global $DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 Global $ScanVIVEApps = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
+Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
+Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
+Global $Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
 
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Icons = $Install_DIR & "Icons\"
@@ -87,6 +100,9 @@ Global $default_vrsettings_File_new = $default_vrsettings_File & ".new"
 
 Global $Steam_tools_vrmanifest_File = IniRead($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
+
+Global $Steamvr_vrsettings_FilePath = $Steam_Path & "config\steamvr.vrsettings"
+If Not FileExists($Steamvr_vrsettings_FilePath & ".bak") Then FileCopy($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_FilePath & ".bak", $FC_CREATEPATH + $FC_OVERWRITE)
 
 Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 Global $ApplicationList_Non_Steam_Appl_INI = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
@@ -132,12 +148,12 @@ EndIf
 #endregion
 
 #region Declare Names
-$TAB1_Label = IniRead($Config_INI, "Settings", "TAB1_Name", "")
-$TAB2_Label = IniRead($Config_INI, "Settings", "TAB2_Name", "")
-$TAB3_Label = IniRead($Config_INI, "Settings", "TAB3_Name", "")
-$TAB4_Label = IniRead($Config_INI, "Settings", "TAB4_Name", "")
-$TAB5_Label = IniRead($Config_INI, "Settings", "TAB5_Name", "")
-$TAB6_Label = IniRead($Config_INI, "Settings", "TAB6_Name", "")
+Global $TAB1_Label = IniRead($Config_INI, "Settings", "TAB1_Name", "")
+Global $TAB2_Label = IniRead($Config_INI, "Settings", "TAB2_Name", "")
+Global $TAB3_Label = IniRead($Config_INI, "Settings", "TAB3_Name", "")
+Global $TAB4_Label = IniRead($Config_INI, "Settings", "TAB4_Name", "")
+Global $TAB5_Label = IniRead($Config_INI, "Settings", "TAB5_Name", "")
+Global $TAB6_Label = IniRead($Config_INI, "Settings", "TAB6_Name", "")
 If $TAB1_Label = "" Then $TAB1_Label = "Steam Library"
 If $TAB2_Label = "" Then $TAB2_Label = "Non-Steam_Appl"
 If $TAB3_Label = "" Then $TAB3_Label = "Custom 1"
@@ -155,17 +171,24 @@ If $Autostart_VRUB = "true" Then
 
 	If $Parameter_1 = "UpdateOverlay" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating Overlay:")
+		;_Sync_Icons()
 		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+		_Exit_Check()
 		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
+		_Exit_Check()
 		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
+		_Exit_Check()
 		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
+		_Exit_Check()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating the Overlay:")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Game Pages:")
 		_Create_GamePages()
+		_Exit_Check()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Game Pages:")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Single Game Pages:")
 		_Create_SinglePages()
+		_Exit_Check()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Single Game Pages:")
 		Exit
 	EndIf
@@ -173,6 +196,7 @@ If $Autostart_VRUB = "true" Then
 	If $Parameter_1 = "UpdateStartPage" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating VRToolBox StartPage:")
 		_Create_VRToolBox_StartPage()
+		_Exit_Check()
 		_Copy_2_VRToolBox()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating VRToolBox StartPage:")
 		Exit
@@ -185,32 +209,49 @@ Else
 
 	If $Parameter_1 = "Update" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating:")
+		_Sync_Icons()
 		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 
+		_Exit_Check()
 		If $ScanLibrary_OnStart_SettingValue = "true" Then _Overlay_ReScan_Steam_Library()
+		_Exit_Check()
 		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_StartPage()
+		_Exit_Check()
 		If $HomeApp = "VR Toolbox" Then _Copy_2_VRToolBox()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating:")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Game Pages:")
 		_Create_GamePages()
+		_Exit_Check()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Game Pages:")
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Single Game Pages:")
 		_Create_SinglePages()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating Single Game Pages:")
-
 		Exit
 	EndIf
 
 	If $Parameter_1 = "UpdateStartPage" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating VRToolBox StartPage:")
 		_Create_VRToolBox_StartPage()
+		_Exit_Check()
 		_Copy_2_VRToolBox()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End creating VRToolBox StartPage:")
 		Exit
 	EndIf
 EndIf
 #endregion
+
+Local $Parameter_1 = ""
+If $CmdLine[0] Then
+	$Parameter_1 = $CmdLine[1]
+EndIf
+
+If $Parameter_1 = "Read_SteamVR_VRSettings_IN" Then
+	_Read_SteamVR_VRSettings()
+	Exit
+EndIf
+
+_Read_SteamVR_VRSettings()
 
 #Region GUI
 If $First_Start <> "true" Then
@@ -226,7 +267,6 @@ If $First_Start <> "true" Then
 	Local $DesktopWidth = "855"
 	Local $DesktopHeight = @DesktopHeight - 75
 	Local $POS_X_GUI = 4
-	If $Show_Playlist = "true" Then $POS_X_GUI = 10000
 
 	Global $GUI = GUICreate("Home Loader Library", 800, $DesktopHeight, $POS_X_GUI, 4, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
@@ -271,9 +311,9 @@ If $First_Start <> "true" Then
 	If $ButtonTAB_State <>  1 Then GUICtrlSetState($Button_ReScan_Steam_Library, $GUI_HIDE)
 	GuiCtrlSetTip(-1, "Rescan Steam Library." & @CRLF)
 
-	$Checkbox_ScanVIVEData_Value = ""
+	Global $Checkbox_ScanVIVEData_Value = ""
 	If $ScanVIVEApps = "true" Then $Checkbox_ScanVIVEData_Value = "a"
-	$Checkbox_ScanVIVEData = GUICtrlCreateLabel($Checkbox_ScanVIVEData_Value, 452, 49, 15, 15, 0x1201)
+	Global $Checkbox_ScanVIVEData = GUICtrlCreateLabel($Checkbox_ScanVIVEData_Value, 452, 49, 15, 15, 0x1201)
 	GuiCtrlSetTip(-1, "Scans also for Viveport Apps if activated." & @CRLF)
 	GUICtrlSetFont(-1, 20, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
@@ -281,9 +321,9 @@ If $First_Start <> "true" Then
 	GUICtrlSetFont(-1, 11, 400, 1, "arial")
 	GuiCtrlSetTip(-1, "Scans also for Viveport Apps if activated." & @CRLF)
 
-	$Checkbox_DeleteData_Value = ""
+	Global $Checkbox_DeleteData_Value = ""
 	If $DeleteHomeLoaderLibraryData = "true" Then $Checkbox_DeleteData_Value = "a"
-	$Checkbox_DeleteData = GUICtrlCreateLabel($Checkbox_DeleteData_Value, 452, 68, 15, 15, 0x1201)
+	Global $Checkbox_DeleteData = GUICtrlCreateLabel($Checkbox_DeleteData_Value, 452, 68, 15, 15, 0x1201)
 	GuiCtrlSetTip(-1, "Deletes the old Library data before it scans and adds the new content." & @CRLF)
 	GUICtrlSetFont(-1, 18, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
@@ -292,7 +332,11 @@ If $First_Start <> "true" Then
 	GuiCtrlSetTip(-1, "Deletes the old Library data before it scans and adds the new content." & @CRLF)
 
 
-	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 100, 145, 65, $BS_BITMAP)
+	Global $Button_ResolutionScale = GUICtrlCreateButton("Resolution Scale", 408, $DesktopHeight - 110, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
+	_GUICtrlButton_SetImage($Button_ResolutionScale, $gfx & "ResolutionScale.bmp")
+	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
+
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 408, $DesktopHeight - 70, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GuiCtrlSetTip(-1, "Shows the Home Loader settings menu.")
 
@@ -392,15 +436,15 @@ If $First_Start <> "true" Then
 
 
 	; Elemente unten
-	$ElementeUntenGroup = GUICtrlCreateGroup("Create Game Page", 65, $DesktopHeight - 114, 177, 88)
+	Global $ElementeUntenGroup = GUICtrlCreateGroup("Create Game Page", 65, $DesktopHeight - 114, 177, 88)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
 
-	$Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
+	Global $Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 22, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
-	$Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
+	Global $Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
 
 	Global $Button_Create_GamePage = GUICtrlCreateButton("Create Game Page", 70, $DesktopHeight - 96, 166, 32, $BS_BITMAP)
@@ -438,9 +482,6 @@ If $First_Start <> "true" Then
 		GUICtrlSetState($Button_Add_to_Custom, $GUI_HIDE)
 	EndIf
 	GuiCtrlSetTip(-1, "Add selected games to chosen TAB.")
-
-
-
 	#endregion
 
 	_Loading_GUI()
@@ -466,6 +507,7 @@ If $First_Start <> "true" Then
 	GUICtrlSetOnEvent($ButtonTAB_Custom_3 , "_ButtonTAB_Custom_3")
 	GUICtrlSetOnEvent($ButtonTAB_Custom_4 , "_ButtonTAB_Custom_4")
 
+	GUICtrlSetOnEvent($Button_ResolutionScale, "_SS_GUI")
 	GUICtrlSetOnEvent($Button_HomeLoaderSettings, "_Button_HomeLoaderSettings")
 
 	GUICtrlSetOnEvent($Checkbox_CreatePage, "_Checkbox_all")
@@ -516,9 +558,7 @@ EndIf
 
 #endregion
 
-
-$Show_SS_Menu = IniRead($Config_INI, "TEMP", "Show_SS_Menu", "")
-If $Show_SS_Menu = "true" Then
+If $Parameter_1 = "Show_SS_Menu" Then
 	_SS_GUI()
 EndIf
 
@@ -568,13 +608,13 @@ Func _First_Start_Empty_Check_1()
 	$Install_Folder_Steam_Search_Folder = StringReplace($Install_Folder_Steam_Search_Folder, '/', '\')
 	If $Install_Folder_Steam_Search_Folder <> "" Then
 		For $Loop_FolderCheck = 2 To 5
-			$LineNR = 3 + $Loop_FolderCheck
-			$Install_Folder_Check = IniRead($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, "")
-			$Install_Folder_1 = FileReadLine($libraryfolders_vdf, $LineNR)
-			$Install_Folder_2 = StringTrimLeft($Install_Folder_1, 6)
-			$Install_Folder_3 = StringReplace($Install_Folder_2, '"', '')
-			$Install_Folder_4 = StringReplace($Install_Folder_3, '}', '')
-			$Install_Folder_5 = StringReplace($Install_Folder_4, '\\', '\') & "\"
+			Local $LineNR = 3 + $Loop_FolderCheck
+			Local $Install_Folder_Check = IniRead($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, "")
+			Local $Install_Folder_1 = FileReadLine($libraryfolders_vdf, $LineNR)
+			Local $Install_Folder_2 = StringTrimLeft($Install_Folder_1, 6)
+			Local $Install_Folder_3 = StringReplace($Install_Folder_2, '"', '')
+			Local $Install_Folder_4 = StringReplace($Install_Folder_3, '}', '')
+			Local $Install_Folder_5 = StringReplace($Install_Folder_4, '\\', '\') & "\"
 			If $Install_Folder_4 <> "" Then IniWrite($Config_INI, "Folders", "Install_Folder_Steam_" & $Loop_FolderCheck, $Install_Folder_5)
 		Next
 	EndIf
@@ -659,9 +699,9 @@ Func _First_Start_Empty_Check_1()
 	_Detect_SteamVR_Files()
 
 	If FileExists(@DesktopDir & "\HomeLoaderOverlay.url") Then
-		$HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
-		$StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
-		$HomeLoaderOverlaySteamID = StringReplace($StringReplace_SteamID, '"', '')
+		Local $HomeLoaderOverlay_url = IniRead(@DesktopDir & "\HomeLoaderOverlay.url", "InternetShortcut","URL", "ERROR")
+		Local $StringReplace_SteamID = StringReplace($HomeLoaderOverlay_url, 'http://"steam://rungameid/', '')
+		Local $HomeLoaderOverlaySteamID = StringReplace($StringReplace_SteamID, '"', '')
 		IniWrite($Config_INI, "Settings", "HomeLoaderOverlaySteamID", $HomeLoaderOverlaySteamID)
 		FileDelete(@DesktopDir & "\HomeLoaderOverlay.url")
 	EndIf
@@ -710,7 +750,6 @@ Func _Loading_GUI()
 	Local Const $PG_WS_DLGFRAME = 0x00400000
 
 	Local $POS_X_Loading_GUI = ($DesktopWidth / 2) - 152
-	If $Show_Playlist = "true" Or $Show_SS_Menu = "true" Then $POS_X_Loading_GUI = - 1
 
 	$GUI_Loading = GUICreate("Loading...please wait...", 250, 65, $POS_X_Loading_GUI, - 1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
 	GUISetIcon(@AutoItExe, -2, $GUI_Loading)
@@ -757,10 +796,10 @@ Func _Settings_GUI()
 	Global $Button_Install_Folder_Steam_1 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_1_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_1_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_1_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_1_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_1_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_1_open, $gfx & "Folder_small.bmp")
@@ -774,10 +813,10 @@ Func _Settings_GUI()
 	Global $Button_Install_Folder_Steam_2 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_2_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_2_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_2_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_2_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 114, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_2_open, $gfx & "Folder_small.bmp")
@@ -791,10 +830,10 @@ Func _Settings_GUI()
 	Global $Button_Install_Folder_Steam_3 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_3_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_3_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_3_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_3_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 169, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_3_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_3_open, $gfx & "Folder_small.bmp")
@@ -808,10 +847,10 @@ Func _Settings_GUI()
 	Global $Button_Install_Folder_Steam_4 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_4_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_4_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_4_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_4_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 224, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_4_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_4_open, $gfx & "Folder_small.bmp")
@@ -825,10 +864,10 @@ Func _Settings_GUI()
 	Global $Button_Install_Folder_Steam_5 = GUICtrlCreateButton("...", 430, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Install_Folder_Steam_5_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_5_open = GUICtrlCreateButton("Open", 465, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Install_Folder_Steam_5_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
+	Global $Button_Install_Folder_Steam_5_save = GUICtrlCreateButton("Save", 500, $POS_Y_SteamLibraryFolders_Group + 279, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Install_Folder_Steam_5_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Install_Folder_Steam_5_open, $gfx & "Folder_small.bmp")
@@ -865,10 +904,10 @@ Func _Settings_GUI()
 	Global $Button_Icon_Folder_1 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 61, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_1_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_1_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 61, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_1_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_1_open, $gfx & "Folder_small.bmp")
@@ -882,10 +921,10 @@ Func _Settings_GUI()
 	Global $Button_Icon_Folder_2 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 116, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_2_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_2_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 116, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_2_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_2_open, $gfx & "Folder_small.bmp")
@@ -899,10 +938,10 @@ Func _Settings_GUI()
 	Global $Button_Icon_Folder_3 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 171, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_3_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_3_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 171, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_3_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_3_open, $gfx & "Folder_small.bmp")
@@ -916,10 +955,10 @@ Func _Settings_GUI()
 	Global $Button_Icon_Folder_4 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 226, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_4_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_4_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_4_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_4_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 226, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_4_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_4_open, $gfx & "Folder_small.bmp")
@@ -933,10 +972,10 @@ Func _Settings_GUI()
 	Global $Button_Icon_Folder_5 = GUICtrlCreateButton("...", $POS_X + 425, $POS_Y_IconFolders_Group + 281, 30, 30, 0)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5")
 	GuiCtrlSetTip(-1, "Choose Folder.")
-	$Button_Icon_Folder_5_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_5_open = GUICtrlCreateButton("Open", $POS_X + 460, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5_open")
 	GuiCtrlSetTip(-1, "Opens Folder in Explorer.")
-	$Button_Icon_Folder_5_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
+	Global $Button_Icon_Folder_5_save = GUICtrlCreateButton("Save", $POS_X + 495, $POS_Y_IconFolders_Group + 281, 30, 30, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Icon_Folder_5_save")
 	GuiCtrlSetTip(-1, "Saves Folder Path.")
 	_GUICtrlButton_SetImage($Button_Icon_Folder_5_open, $gfx & "Folder_small.bmp")
@@ -1030,7 +1069,7 @@ Func _AddGame2Library_GUI()
 EndFunc
 
 Func _SS_GUI()
-	$SS_Settings_GUI = GUICreate("Steam VR Settings Menu", 285, 290 , - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+	$SS_Settings_GUI = GUICreate("Resolution Scale Menu", 285, 455 , - 1, - 1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -1039,11 +1078,6 @@ Func _SS_GUI()
     Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
 	Local $Steam_app_Name = $ListView_Item_Array[3]
 	Local $Game_ID = $ListView_Item_Array[2]
-
-	$VRSettings_Group = GUICtrlCreateGroup("VR Settings - " & $Steam_app_Name, 5, 5, 275, 240)
-	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
-	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
 
 	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
 	Local $rTM_1 = StringLeft($renderTargetMultiplier_value, 1)
@@ -1060,67 +1094,94 @@ Func _SS_GUI()
 	If $ssS_1 = "0" Then $ssS_value = $ssS_2
 	If $ssS_1 = "0" Then $ssS_Input_value = "0." & $ssS_2
 	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
-	If $allowSupersampleFiltering_value = "true" Then $aSsF_value = 0
-	If $allowSupersampleFiltering_value = "false" Then $aSsF_value = 1
+	If $allowSupersampleFiltering_value = "true" Then Local $aSsF_value = 0
+	If $allowSupersampleFiltering_value = "false" Then Local $aSsF_value = 1
+
+	Local $ResolutionScale_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "ResolutionScale", "100")
+
+	; Group 1
+	Local $Steam_app_Name_RS = StringLeft($Steam_app_Name, 16)
+	If StringLen($Steam_app_Name) > 16 Then $Steam_app_Name_RS = $Steam_app_Name_RS & "..."
+	$ResolutionScale_Group = GUICtrlCreateGroup("Scale [%] for: " & $Steam_app_Name_RS, 5, 5, 275, 105)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	Global $Slider_0 = GUICtrlCreateSlider(8, 35, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	GUICtrlSetLimit($Slider_0, 500, 20)
+	GUICtrlSetData ($Slider_0, $ResolutionScale_value)
+	GUICtrlSetOnEvent(- 1, "_Slider_0")
+
+	Global $Input_ResolutionScale = GUICtrlCreateInput($ResolutionScale_value, 208, 35, 65, 30)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
+	Global $UpDown_ResolutionScale = GUICtrlCreateUpdown($Input_ResolutionScale)
+	GUICtrlSetOnEvent(- 1, "_UpDown_ResolutionScale")
+
+	Global $SAVE_Button_Group_1 = GUICtrlCreateButton("SAVE", 10, 70, 264, 30)
+		GuiCtrlSetTip(-1, "Closes Settings Window.")
+		GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
+		GUICtrlSetColor(-1, "0x006600")
+		GUICtrlSetOnEvent($SAVE_Button_Group_1, "_Write_to_SteamVR_VRSettings")
+
+	; Group 2
+	$VRSettings_Group = GUICtrlCreateGroup("Main Supersampling Settings", 5, 130, 275, 270)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
 
 
-	GUICtrlCreateLabel("Render Target Multiplier:", 10, 40, 265, 25)
+	GUICtrlCreateLabel("Render Target Multiplier:", 10, 160, 265, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 
-	Global $Slider_1 = GUICtrlCreateSlider(10, 65, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	Global $Slider_1 = GUICtrlCreateSlider(8, 190, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
 	GUICtrlSetLimit($Slider_1, 25, 5)
 	GUICtrlSetData ($Slider_1, $rTM_value)
 	GUICtrlSetOnEvent(- 1, "_Slider_1")
 
-	Global $Input_renderTargetMultiplier = GUICtrlCreateInput($rTM_Input_value, 205, 65, 65, 30)
+	Global $Input_renderTargetMultiplier = GUICtrlCreateInput($rTM_Input_value, 208, 190, 65, 30)
 	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
 	Global $UpDown_renderTargetMultiplier = GUICtrlCreateUpdown($Input_renderTargetMultiplier)
 	GUICtrlSetOnEvent(- 1, "_UpDown_renderTargetMultiplier")
 
-
-	GUICtrlCreateLabel("Supersample Scale:", 10, 110, 265, 25)
+	GUICtrlCreateLabel("Supersample Scale:", 10, 225, 265, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 
-	Global $Slider_2 = GUICtrlCreateSlider(10, 135, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	Global $Slider_2 = GUICtrlCreateSlider(8, 257, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
 	GUICtrlSetLimit($Slider_2, 25, 5)
 	GUICtrlSetData ($Slider_2, $ssS_value)
 	GUICtrlSetOnEvent(- 1, "_Slider_2")
 
-	Global $Input_supersampleScale = GUICtrlCreateInput($ssS_Input_value, 205, 135, 65, 30)
+	Global $Input_supersampleScale = GUICtrlCreateInput($ssS_Input_value, 208, 255, 65, 30)
 	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
 	Global $UpDown_supersampleScale = GUICtrlCreateUpdown($Input_supersampleScale)
 	GUICtrlSetOnEvent(- 1, "_UpDown_supersampleScale")
 
-	GUICtrlCreateLabel("Allow Supersample Filtering:", 10, 180, 265, 25)
+	GUICtrlCreateLabel("Allow Supersample Filtering:", 10,295 , 265, 25)
 	GUICtrlSetFont(-1, 16, 400, 1, $font_arial)
 
-	Global $Slider_3 = GUICtrlCreateSlider(10, 205, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+	Global $Slider_3 = GUICtrlCreateSlider(8, 325, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
 	GUICtrlSetLimit($Slider_3, 1, 0)
 	GUICtrlSetData ($Slider_3, $aSsF_value)
 	GUICtrlSetOnEvent(- 1, "_Slider_3")
 
-    Global $ComboBox_3 = GUICtrlCreateCombo("", 205, 205, 65, 30)
+    Global $ComboBox_3 = GUICtrlCreateCombo("", 208, 325, 65, 30)
 	GUICtrlSetFont(-1, 13, 400, 1, $font_arial)
 	GUICtrlSetData($ComboBox_3, "true|false", $allowSupersampleFiltering_value)
 	GUICtrlSetOnEvent(- 1, "_ComboBox_3")
 
+	Global $SAVE_Button_Group_2 = GUICtrlCreateButton("SAVE", 10, 360, 264, 30)
+		GuiCtrlSetTip(-1, "Closes Settings Window.")
+		GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
+		GUICtrlSetColor(-1, "0x006600")
+		GUICtrlSetOnEvent($SAVE_Button_Group_2, "_Button_Add2Steam_Settings_GUI")
 
-	Global $Button_Save_Settings_GUI = GUICtrlCreateButton("Save", 5, 250, 35, 35, $BS_BITMAP)
-	GUICtrlSetOnEvent(- 1, "_Button_Save_Settings_GUI")
-	_GUICtrlButton_SetImage(- 1, $gfx & "Speichern.bmp")
-	GuiCtrlSetTip(-1, "Save values to HomeLoaderLibrary File.")
 
-	Global $Button_Add2Steam_Settings_GUI = GUICtrlCreateButton("Add to Steam", 52, 250, 85, 35, $BS_BITMAP)
-	GUICtrlSetOnEvent(- 1, "_Button_Add2Steam_Settings_GUI")
-	_GUICtrlButton_SetImage(- 1, $gfx & "Add2Steam.bmp")
-	GuiCtrlSetTip(-1, "Add values to the Steam VR settings File [default.vrsettings].")
-
-	Global $Button_StartGame_Settings_GUI = GUICtrlCreateButton("Start Game", 148, 250, 85, 35, $BS_BITMAP)
+	Global $Button_StartGame_Settings_GUI = GUICtrlCreateButton("Start Game", 5, 410, 85, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_StartGame_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "StartGame.bmp")
 	GuiCtrlSetTip(-1, "Saves, Adds and Starts the selected game using the current values.")
 
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 245, 250, 35, 35, $BS_BITMAP)
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 245, 410, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(- 1, "_Button_Exit_SS_Settings_GUI")
 	_GUICtrlButton_SetImage(- 1, $gfx & "Exit_small.bmp")
 	GuiCtrlSetTip(-1, "Closes GUI Window.")
@@ -1145,8 +1206,8 @@ Func _Update_StatusBar()
 EndFunc
 
 Func _Search_Files()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	If $Combo = "ALL" Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	If $Combo = "ALL" Then Local $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
 
 	If $Combo <> "ALL" Then
 		If $Combo = "Steam Library 1" Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
@@ -1339,100 +1400,300 @@ EndFunc
 
 Func _Get_ADD_PlayersOnline_DATA()
 	Global $Check_AppId = $appid
-	Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
-	_INetGetSource($URL)
-	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
-	$WinHttpReq.Open("GET", $URL, false)
-	$WinHttpReq.Send()
-	Local $Data = $WinHttpReq.ResponseText
+	If $Check_AppId <> "" Then
+		Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
+		_INetGetSource($URL)
 
-	Local $iPosition_1 = StringInStr($Data, '<li><strong>')
-	Local $iPosition_2 = StringInStr($Data, '</strong><em>all-time peak')
-	Local $iPosition_3 = $iPosition_2 - $iPosition_1
+		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+		If Not @error Then
+			$WinHttpReq.Open("GET", $URL, false)
+			$WinHttpReq.Send()
+			Local $Data = $WinHttpReq.ResponseText
 
-	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
-	Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
+			Local $iPosition_1 = StringInStr($Data, '<li><strong>')
+			Local $iPosition_2 = StringInStr($Data, '</strong><em>all-time peak')
+			Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
-	If $aArray[0] > 1 Then
-		Global $PlayersOnline_right_now = StringSplit($aArray[2], '<')
-		$PlayersOnline_right_now = $PlayersOnline_right_now[1]
-		Global $PlayersOnline_24h_peak = StringSplit($aArray[3], '<')
-		$PlayersOnline_24h_peak = $PlayersOnline_24h_peak[1]
-		Global $PlayersOnline_all_time_peak = StringSplit($aArray[4], '<')
-		$PlayersOnline_all_time_peak = $PlayersOnline_all_time_peak[1]
+			Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
+			Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
 
-		Local $AppIdTemp = IniRead($ApplicationList_INI, "Application_" & $Application_NR, "appid", "")
+			If $aArray[0] > 1 Then
+				Global $PlayersOnline_right_now = StringSplit($aArray[2], '<')
+				$PlayersOnline_right_now = $PlayersOnline_right_now[1]
+				Global $PlayersOnline_24h_peak = StringSplit($aArray[3], '<')
+				$PlayersOnline_24h_peak = $PlayersOnline_24h_peak[1]
+				Global $PlayersOnline_all_time_peak = StringSplit($aArray[4], '<')
+				$PlayersOnline_all_time_peak = $PlayersOnline_all_time_peak[1]
 
-		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "right_now", $PlayersOnline_right_now)
-		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "24h_peak", $PlayersOnline_24h_peak)
-		IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "all_time_peak", $PlayersOnline_all_time_peak)
-		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "right_now", $PlayersOnline_right_now)
-		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "24h_peak", $PlayersOnline_24h_peak)
-		IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "all_time_peak", $PlayersOnline_all_time_peak)
+				Local $AppIdTemp = IniRead($ApplicationList_INI, "Application_" & $Application_NR, "appid", "")
 
-		$PlayersOnline_right_now = ""
-		$PlayersOnline_24h_peak = ""
-		$PlayersOnline_all_time_peak = ""
+				IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "right_now", $PlayersOnline_right_now)
+				IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "24h_peak", $PlayersOnline_24h_peak)
+				IniWrite($ApplicationList_INI, "Application_" & $Application_NR, "all_time_peak", $PlayersOnline_all_time_peak)
+				IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "right_now", $PlayersOnline_right_now)
+				IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "24h_peak", $PlayersOnline_24h_peak)
+				IniWrite($ApplicationList_INI, "Application_" & $AppIdTemp, "all_time_peak", $PlayersOnline_all_time_peak)
+
+				If $Add_PlayersOnline_to_Icons = "true" Then
+					_Write_PO_TEXT_2_Image()
+					_Write_PO_Image_2_Image()
+				EndIf
+
+				$PlayersOnline_right_now = ""
+				$PlayersOnline_24h_peak = ""
+				$PlayersOnline_all_time_peak = ""
+			EndIf
+		Else
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Get_ADD_PlayersOnline_DATA]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
+		EndIf
 	EndIf
 EndFunc
 
-Func _Get_SteamGame_Icon_32x32()
-	Global $Steam_AppId = $appid
-	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
-	_INetGetSource($URL)
-	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
-	$WinHttpReq.Open("GET", $URL, false)
-	$WinHttpReq.Send()
-	Local $Data = $WinHttpReq.ResponseText
+Func _Write_PO_TEXT_2_Image()
+	_GDIPlus_Startup()
+	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $PlayersOnline_right_now, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
+	_GDIPlus_ImageDispose($hImage)
+	_GDIPlus_Shutdown()
 
-	Local $iPosition_1 = StringInStr($Data, 'clienttga</td>', $STR_CASESENSE, 1, 1000)
-	Local $iPosition_2 = StringInStr($Data, '.jpg" rel="nofollow">', $STR_CASESENSE, 1, 1000)
-	Local $iPosition_3 = $iPosition_2 - $iPosition_1
-	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
-
-	Local $iPosition_1_2 = StringInStr($sString, '<td class="span3">icon</td>', $STR_CASESENSE, 1, 1)
-	Local $iPosition_2_2 = StringLen($sString) + 1
-	Local $iPosition_3_2 = $iPosition_2_2 - $iPosition_1_2
-	Local $sString_2 = StringMid($sString, $iPosition_1_2, $iPosition_3_2)
-
-	Global $HTML_IconLink = StringReplace($sString_2, '<td class="span3">icon</td>', '')
-	$HTML_IconLink = StringReplace($HTML_IconLink, '<td><a href="', '')
-
-	If $HTML_IconLink <> "" Then
-		Local $URL = $HTML_IconLink & ".jpg"
-		Local $Download = InetGet($URL, $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".jpg", 16, 0)
-		If $Download = 0 Then FileCopy($Icons & "32x32\" & "default.bmp", $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".bmp", $FC_OVERWRITE)
-		If $Download <> 0 Then _Convert_Icon_32x32()
-		FileDelete($Icons & "32x32\" & "steam.app." & $Steam_AppId & ".jpg")
+	If FileExists(@ScriptDir & "\" & "WTOB.png") Then
+		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\Icon_NR_Background" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		FileDelete(@ScriptDir & "\" & "WTOB.png")
 	EndIf
+EndFunc
 
-	$ImageList_Icon = $Icons & "32x32\" & "steam.app." & $Steam_AppId & ".bmp"
-	If Not FileExists($ImageList_Icon) Then
-		FileCopy($gfx & "Icon_Preview_32x32.jpg", $ImageList_Icon)
+Func _Write_PO_Image_2_Image()
+	Global $ImageSizeX = 460, $ImageSizeY = 215
+	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
+
+	$hImage1_Path = $Icons & "steam.app." & $Check_AppId & ".jpg"
+	$hImage2_Path = @ScriptDir & "\" & "Icon_NR_Background.jpg"
+
+	Local $Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
+	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
+	Local $Check_Filename_1 = StringTrimLeft($hImage1_Path, $Check_StringSplit_NR)
+	Local $Check_Filename_2 = StringRight($Check_Filename_1, 11)
+	Local $Check_Filename = $Check_Filename_1
+
+	GUISetState()
+
+	_GDIPlus_Startup()
+	$hImage1 = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hImage2 = _GDIPlus_ImageLoadFromFile($hImage2_Path)
+
+	$hBMPBuff = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hGraphic = _GDIPlus_ImageGetGraphicsContext($hBMPBuff)
+
+	;Graphics
+	_GDIPlus_GraphicsClear($hGraphic, 0xFFE8FFE8)
+
+	$hPen = _GDIPlus_PenCreate(0xFFFF0000, 3)
+
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage1, 0, 0, $ImageSizeX, $ImageSizeY)
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage2, 3, 3, $FAVImageSizeX, $FAVImageSizeY)
+
+	_GDIPlus_GraphicsDrawRect($hGraphic, 1, 1, 80 + 3, 60 + 3, $hPen)
+
+	GUIRegisterMsg(0xF, "MY_PAINT")
+	GUIRegisterMsg(0x85, "MY_PAINT")
+
+	;Save
+	Local $sNewName = $Icons & "460x215\" & $Check_Filename
+	Local $NewIcon_Path = $sNewName
+
+	_GDIPlus_ImageSaveToFile($hBMPBuff, $NewIcon_Path)
+
+	_GDIPlus_PenDispose($hPen)
+	_GDIPlus_ImageDispose($hImage1)
+	_GDIPlus_ImageDispose($hImage2)
+	_GDIPlus_GraphicsDispose($hGraphic)
+	_WinAPI_DeleteObject($hBMPBuff)
+	_GDIPlus_Shutdown()
+
+	_Quit_PO_Image_2_Image()
+EndFunc
+
+Func MY_PAINT($hWnd, $msg, $wParam, $lParam)
+	Return $GUI_RUNDEFMSG
+EndFunc
+
+Func _Quit_PO_Image_2_Image()
+	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
+	_GDIPlus_PenDispose($hPen)
+	_GDIPlus_ImageDispose($hImage1)
+	_GDIPlus_ImageDispose($hImage2)
+	_GDIPlus_GraphicsDispose($hGraphic)
+	_WinAPI_DeleteObject($hBMPBuff)
+	_GDIPlus_Shutdown()
+EndFunc
+
+Func _Get_AD_SS_Values_to_Icons()
+	Local $FileList = _FileListToArray($Icons & "460x215\", "*.jpg", 1)
+
+	If $FileList <> "" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+
+		For $NR = 1 To $FileList[0]
+			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
+			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
+
+			Local $SS_Value_Check = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "resolutionScale", "")
+			Global $Value_for_Image = $SS_Value_Check
+
+			If $Value_for_Image <> "" Then
+				_Write_SS_TEXT_2_Image()
+				_Write_SS_Image_2_Image()
+			EndIf
+
+			$SS_Value_Check = ""
+			$Value_for_Image = ""
+			$Check_AppId = ""
+		Next
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+	EndIf
+EndFunc
+
+Func _Write_SS_TEXT_2_Image()
+	_GDIPlus_Startup()
+	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $Value_for_Image & "%", "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
+	_GDIPlus_ImageDispose($hImage)
+	_GDIPlus_Shutdown()
+
+	If FileExists(@ScriptDir & "\" & "WTOB.png") Then
+		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\Icon_NR_Background" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		FileDelete(@ScriptDir & "\" & "WTOB.png")
+	EndIf
+EndFunc
+
+Func _Write_SS_Image_2_Image()
+	Global $ImageSizeX = 460, $ImageSizeY = 215
+	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
+
+	Local $hImage1_Path = $Icons & "460x215\" & "steam.app." & $Check_AppId & ".jpg"
+	Local $hImage2_Path = @ScriptDir & "\" & "Icon_NR_Background.jpg"
+
+	Local $Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
+	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
+	Local $Check_Filename_1 = StringTrimLeft($hImage1_Path, $Check_StringSplit_NR)
+	Local $Check_Filename_2 = StringRight($Check_Filename_1, 11)
+	Local $Check_Filename = $Check_Filename_1
+
+	GUISetState()
+
+	_GDIPlus_Startup()
+	$hImage1 = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hImage2 = _GDIPlus_ImageLoadFromFile($hImage2_Path)
+
+	$hBMPBuff = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hGraphic = _GDIPlus_ImageGetGraphicsContext($hBMPBuff)
+
+	;Graphics
+	_GDIPlus_GraphicsClear($hGraphic, 0xFFE8FFE8)
+
+	$hPen = _GDIPlus_PenCreate(0xFFFF0000, 3)
+
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage1, 0, 0, $ImageSizeX, $ImageSizeY)
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage2, 377, 152, $FAVImageSizeX, $FAVImageSizeY)
+
+	_GDIPlus_GraphicsDrawRect($hGraphic, 375, 150, 80 + 3, 60 + 3, $hPen)
+
+	GUIRegisterMsg(0xF, "MY_PAINT")
+	GUIRegisterMsg(0x85, "MY_PAINT")
+
+	;Save composite image
+	Local $sNewName = $Icons & "460x215\SS_Values\" & $Check_Filename
+	Local $NewIcon_Path = $sNewName
+	_GDIPlus_ImageSaveToFile($hBMPBuff, $NewIcon_Path)
+
+	_GDIPlus_PenDispose($hPen)
+	_GDIPlus_ImageDispose($hImage1)
+	_GDIPlus_ImageDispose($hImage2)
+	_GDIPlus_GraphicsDispose($hGraphic)
+	_WinAPI_DeleteObject($hBMPBuff)
+	_GDIPlus_Shutdown()
+
+	_Quit_SS_Image_2_Image()
+EndFunc
+
+Func _Quit_SS_Image_2_Image()
+	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
+	_GDIPlus_PenDispose($hPen)
+	_GDIPlus_ImageDispose($hImage1)
+	_GDIPlus_ImageDispose($hImage2)
+	_GDIPlus_GraphicsDispose($hGraphic)
+	_WinAPI_DeleteObject($hBMPBuff)
+	_GDIPlus_Shutdown()
+EndFunc
+
+Func _Get_SteamGame_Icon_32x32()
+	Global $Check_AppId = $appid
+	If $Check_AppId <> "" Then
+		Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
+		_INetGetSource($URL)
+		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+		If Not @error Then
+			$WinHttpReq.Open("GET", $URL, false)
+			$WinHttpReq.Send()
+			Local $Data = $WinHttpReq.ResponseText
+
+			Local $iPosition_1 = StringInStr($Data, 'clienttga</td>', $STR_CASESENSE, 1, 1000)
+			Local $iPosition_2 = StringInStr($Data, '.jpg" rel="nofollow">', $STR_CASESENSE, 1, 1000)
+			Local $iPosition_3 = $iPosition_2 - $iPosition_1
+			Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
+
+			Local $iPosition_1_2 = StringInStr($sString, '<td class="span3">icon</td>', $STR_CASESENSE, 1, 1)
+			Local $iPosition_2_2 = StringLen($sString) + 1
+			Local $iPosition_3_2 = $iPosition_2_2 - $iPosition_1_2
+			Local $sString_2 = StringMid($sString, $iPosition_1_2, $iPosition_3_2)
+
+			Global $HTML_IconLink = StringReplace($sString_2, '<td class="span3">icon</td>', '')
+			$HTML_IconLink = StringReplace($HTML_IconLink, '<td><a href="', '')
+
+			If $HTML_IconLink <> "" Then
+				Local $URL = $HTML_IconLink & ".jpg"
+				Local $Download = InetGet($URL, $Icons & "32x32\" & "steam.app." & $appid & ".jpg", 16, 0)
+				If $Download = 0 Then FileCopy($Icons & "32x32\" & "default.bmp", $Icons & "32x32\" & "steam.app." & $appid & ".bmp", $FC_OVERWRITE)
+				If $Download <> 0 Then _Convert_Icon_32x32()
+				FileDelete($Icons & "32x32\" & "steam.app." & $appid & ".jpg")
+			EndIf
+
+			Local $ImageList_Icon = $Icons & "32x32\" & "steam.app." & $appid & ".bmp"
+			If Not FileExists($ImageList_Icon) Then
+				FileCopy($gfx & "Icon_Preview_32x32.jpg", $ImageList_Icon)
+			EndIf
+		Else
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Get_SteamGame_Icon_32x32]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
+		EndIf
 	EndIf
 EndFunc
 
 Func _Get_SteamGame_Icon_256x256()
-	Global $Steam_AppId = $appid
-	Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
-	_INetGetSource($URL)
-	Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
-	$WinHttpReq.Open("GET", $URL, false)
-	$WinHttpReq.Send()
-	Local $Data = $WinHttpReq.ResponseText
+	Global $Check_AppId = $appid
+	If $Check_AppId <> "" Then
+		Global $Steam_AppId = $appid
+		Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
+		_INetGetSource($URL)
+		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
+		If Not @error Then
+			$WinHttpReq.Open("GET", $URL, false)
+			$WinHttpReq.Send()
+			Local $Data = $WinHttpReq.ResponseText
 
-	Local $iPosition_1 = StringInStr($Data, 'clienticon</td>')
-	Local $iPosition_2 = StringInStr($Data, '.ico" rel="nofollow')
-	Local $iPosition_3 = $iPosition_2 - $iPosition_1
+			Local $iPosition_1 = StringInStr($Data, 'clienticon</td>')
+			Local $iPosition_2 = StringInStr($Data, '.ico" rel="nofollow')
+			Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
-	Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
+			Local $sString = StringMid($Data, $iPosition_1, $iPosition_3)
 
-	Global $HTML_IconLink = StringReplace($sString, 'clienticon</td>', '')
-	$HTML_IconLink = StringReplace($HTML_IconLink, '<td><a href="', '')
+			Global $HTML_IconLink = StringReplace($sString, 'clienticon</td>', '')
+			$HTML_IconLink = StringReplace($HTML_IconLink, '<td><a href="', '')
 
-	If $HTML_IconLink <> "" Then
-		Local $URL = $HTML_IconLink & ".ico"
-		InetGet($URL, $Icons & "256x256\" & "steam.app." & $Steam_AppId & ".ico", 16, 0)
+			If $HTML_IconLink <> "" Then
+				Local $URL = $HTML_IconLink & ".ico"
+				InetGet($URL, $Icons & "256x256\" & "steam.app." & $Steam_AppId & ".ico", 16, 0)
+			EndIf
+		Else
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Get_SteamGame_Icon_256x256]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
+		EndIf
 	EndIf
 EndFunc
 
@@ -1463,42 +1724,30 @@ Func _Download_Icon_for_SteamGameID()
 	Local $URL = "http://cdn.akamai.steamstatic.com/steam/apps/" & $Application_appid & "/header.jpg"
 
 	If $Application_appid <> "" Then
-		If $DeleteHomeLoaderLibraryData = "true" Then
-			If FileExists($Download_Icon_path_1_jpg) Then FileDelete($Download_Icon_path_1_jpg)
-			If FileExists($Download_Icon_path_2_jpg) Then FileDelete($Download_Icon_path_2_jpg)
-			If FileExists($Download_Icon_path_3_jpg) Then FileDelete($Download_Icon_path_3_jpg)
-			If FileExists($Download_Icon_path_4_jpg) Then FileDelete($Download_Icon_path_4_jpg)
-			If FileExists($Download_Icon_path_5_jpg) Then FileDelete($Download_Icon_path_5_jpg)
-			If FileExists($Download_Icon_path_6_jpg) Then FileDelete($Download_Icon_path_6_jpg)
-			If FileExists($Download_Icon_path_7_jpg) Then FileDelete($Download_Icon_path_7_jpg)
-		EndIf
-
+		If FileExists($Download_Icon_path_1_jpg) Then FileDelete($Download_Icon_path_1_jpg)
 		If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
 		If Not FileExists($Download_Icon_path_1_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_1_jpg)
 		If Not FileExists($Download_Icon_path_2_jpg) Then InetGet($URL, $Download_Icon_path_2_jpg, 16, 0)
 		If Not FileExists($Download_Icon_path_2_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_2_jpg)
-		If $Icon_Folder_1 <> "" Then
-			If Not FileExists($Download_Icon_path_3_jpg) Then InetGet($URL, $Download_Icon_path_3_jpg, 16, 0)
-			If Not FileExists($Download_Icon_path_3_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_3_jpg)
-		EndIf
-		If $Icon_Folder_2 <> "" Then
-			If Not FileExists($Download_Icon_path_4_jpg) Then InetGet($URL, $Download_Icon_path_4_jpg, 16, 0)
-			If Not FileExists($Download_Icon_path_4_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_4_jpg)
-		EndIf
-		If $Icon_Folder_3 <> "" Then
-			If Not FileExists($Download_Icon_path_5_jpg) Then InetGet($URL, $Download_Icon_path_5_jpg, 16, 0)
-			If Not FileExists($Download_Icon_path_5_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_5_jpg)
-		EndIf
-		If $Icon_Folder_4 <> "" Then
-			If Not FileExists($Download_Icon_path_6_jpg) Then InetGet($URL, $Download_Icon_path_6_jpg, 16, 0)
-			If Not FileExists($Download_Icon_path_6_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_6_jpg)
-		EndIf
-		If $Icon_Folder_5 <> "" Then
-			If Not FileExists($Download_Icon_path_7_jpg) Then InetGet($URL, $Download_Icon_path_7_jpg, 16, 0)
-			If Not FileExists($Download_Icon_path_7_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_7_jpg)
-		EndIf
 	EndIf
 EndFunc
+
+Func _Sync_Icons()
+	Local $FileList = _FileListToArray($Icons & "460x215\" , "*.jpg" , 1)
+	For $LOOP_1 = 1 To $FileList[0]
+		For $LOOP_2 = 1 To 5
+			Local $Icon_Folder_Sync = IniRead($Config_INI, "Folders", "Icon_Folder_" & $LOOP_2, "")
+			If $Icon_Folder_Sync <> "" Then
+				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$LOOP_1])
+				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$LOOP_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$LOOP_1], $Icon_Folder_Sync & $FileList[$LOOP_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$LOOP_1]) Then FileCopy($Icons & "460x215\" & $FileList[$LOOP_1], $Icon_Folder_Sync & $FileList[$LOOP_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\" & $FileList[$LOOP_1]) Then FileCopy($Icons & $FileList[$LOOP_1], $Icon_Folder_Sync & $FileList[$LOOP_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icon_Folder_Sync & $FileList[$LOOP_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$LOOP_1])
+			EndIf
+		Next
+	Next
+EndFunc
+
 #endregion
 
 #Region Func MAIN GUI
@@ -1514,17 +1763,33 @@ Func _Create_ListView_1()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview, "NR", 60)
 	_GUICtrlListView_AddColumn($listview, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview, "Name", 350)
-	_GUICtrlListView_AddColumn($listview, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview, "Name", 320)
+	_GUICtrlListView_AddColumn($listview, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview, "Res. Scale", 116, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_0 = GUICtrlCreateMenuItem("Customize", $RM_Item5)
+		GUICtrlCreateMenuItem("", $RM_Item5)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1538,6 +1803,25 @@ Func _Create_ListView_1()
 	GUICtrlSetOnEvent($RM_Item1, "_Start_ListView_Selected")
 	GUICtrlSetOnEvent($RM_Item3, "_Create_HTMLView_GUI")
 	GUICtrlSetOnEvent($RM_Item5, "_SS_GUI")
+
+	GUICtrlSetOnEvent($RM_Item_RS_0, "_SS_GUI")
+	GUICtrlSetOnEvent($RM_Item_RS_1, "_RM_Item_RS_1")
+	GUICtrlSetOnEvent($RM_Item_RS_2, "_RM_Item_RS_2")
+	GUICtrlSetOnEvent($RM_Item_RS_3, "_RM_Item_RS_3")
+	GUICtrlSetOnEvent($RM_Item_RS_4, "_RM_Item_RS_4")
+	GUICtrlSetOnEvent($RM_Item_RS_5, "_RM_Item_RS_5")
+	GUICtrlSetOnEvent($RM_Item_RS_6, "_RM_Item_RS_6")
+	GUICtrlSetOnEvent($RM_Item_RS_7, "_RM_Item_RS_7")
+	GUICtrlSetOnEvent($RM_Item_RS_8, "_RM_Item_RS_8")
+	GUICtrlSetOnEvent($RM_Item_RS_9, "_RM_Item_RS_9")
+	GUICtrlSetOnEvent($RM_Item_RS_10, "_RM_Item_RS_10")
+	GUICtrlSetOnEvent($RM_Item_RS_11, "_RM_Item_RS_11")
+	GUICtrlSetOnEvent($RM_Item_RS_12, "_RM_Item_RS_12")
+	GUICtrlSetOnEvent($RM_Item_RS_13, "_RM_Item_RS_13")
+	GUICtrlSetOnEvent($RM_Item_RS_14, "_RM_Item_RS_14")
+
+
+
 	GUICtrlSetOnEvent($RM_Item5_1, "_RM_Menu_Item_5_1")
 	GUICtrlSetOnEvent($RM_Item5_2, "_RM_Menu_Item_5_2")
 	GUICtrlSetOnEvent($RM_Item8, "_RM_Menu_Item_8")
@@ -1558,17 +1842,31 @@ Func _Create_ListView_2()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_2, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_2, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview_2, "Name", 350)
-	_GUICtrlListView_AddColumn($listview_2, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_2, "Name", 320)
+	_GUICtrlListView_AddColumn($listview_2, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview_2, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview_2, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview_2, "Res. Scale", 116, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_2)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1602,17 +1900,31 @@ Func _Create_ListView_3()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_3, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_3, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview_3, "Name", 350)
-	_GUICtrlListView_AddColumn($listview_3, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_3, "Name", 320)
+	_GUICtrlListView_AddColumn($listview_3, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview_3, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview_3, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview_3, "Res. Scale", 116, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_3)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1646,17 +1958,31 @@ Func _Create_ListView_4()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_4, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_4, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview_4, "Name", 350)
-	_GUICtrlListView_AddColumn($listview_4, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_4, "Name", 320)
+	_GUICtrlListView_AddColumn($listview_4, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview_4, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview_4, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview_4, "Res. Scale", 116, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_4)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1690,10 +2016,10 @@ Func _Create_ListView_5()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_5, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_5, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview_5, "Name", 350)
-	_GUICtrlListView_AddColumn($listview_5, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_5, "Name", 320)
+	_GUICtrlListView_AddColumn($listview_5, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview_5, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview_5, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview_5, "Res. Scale", 116, 2)
 	GUICtrlSetState($listview_5, $GUI_HIDE)
 	$contextmenu = GUICtrlCreateContextMenu($listview_5)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
@@ -1701,7 +2027,21 @@ Func _Create_ListView_5()
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1735,17 +2075,31 @@ Func _Create_ListView_6()
 	; Add columns
 	_GUICtrlListView_AddColumn($listview_6, "NR", 60)
 	_GUICtrlListView_AddColumn($listview_6, "App ID", 105)
-	_GUICtrlListView_AddColumn($listview_6, "Name", 350)
-	_GUICtrlListView_AddColumn($listview_6, "Online", 82, 2)
+	_GUICtrlListView_AddColumn($listview_6, "Name", 320)
+	_GUICtrlListView_AddColumn($listview_6, "Online", 78, 2)
 	_GUICtrlListView_AddColumn($listview_6, "24h peak", 100, 2)
-	_GUICtrlListView_AddColumn($listview_6, "All time", 82, 2)
+	_GUICtrlListView_AddColumn($listview_6, "Res. Scale", 116, 2)
 	$contextmenu = GUICtrlCreateContextMenu($listview_6)
 	$RM_Item0 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item1 = GUICtrlCreateMenuItem("Start Game", $contextmenu)
 	$RM_Item2 = GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item3 = GUICtrlCreateMenuItem("Steamdb.info", $contextmenu)
 	$RM_Item4 = GUICtrlCreateMenuItem("", $contextmenu)
-	$RM_Item5 = GUICtrlCreateMenuItem("Supersampling Menu", $contextmenu)
+	$RM_Item5 = GUICtrlCreateMenu("Resolution Scale", $contextmenu)
+		$RM_Item_RS_1 = GUICtrlCreateMenuItem("40%", $RM_Item5)
+		$RM_Item_RS_2 = GUICtrlCreateMenuItem("60%", $RM_Item5)
+		$RM_Item_RS_3 = GUICtrlCreateMenuItem("80%", $RM_Item5)
+		$RM_Item_RS_4 = GUICtrlCreateMenuItem("100%", $RM_Item5)
+		$RM_Item_RS_5 = GUICtrlCreateMenuItem("120%", $RM_Item5)
+		$RM_Item_RS_6 = GUICtrlCreateMenuItem("140%", $RM_Item5)
+		$RM_Item_RS_7 = GUICtrlCreateMenuItem("160%", $RM_Item5)
+		$RM_Item_RS_8 = GUICtrlCreateMenuItem("180%", $RM_Item5)
+		$RM_Item_RS_9 = GUICtrlCreateMenuItem("200%", $RM_Item5)
+		$RM_Item_RS_10 = GUICtrlCreateMenuItem("220%", $RM_Item5)
+		$RM_Item_RS_11 = GUICtrlCreateMenuItem("240%", $RM_Item5)
+		$RM_Item_RS_12 = GUICtrlCreateMenuItem("260%", $RM_Item5)
+		$RM_Item_RS_13 = GUICtrlCreateMenuItem("280%", $RM_Item5)
+		$RM_Item_RS_14 = GUICtrlCreateMenuItem("300%", $RM_Item5)
 	GUICtrlCreateMenuItem("", $contextmenu)
 	$RM_Item5_1 = GUICtrlCreateMenuItem("Add to Autostart List", $contextmenu)
 	$RM_Item5_2 = GUICtrlCreateMenuItem("Remove from Autostart List", $contextmenu)
@@ -1768,8 +2122,8 @@ Func _Create_ListView_6()
 EndFunc
 
 Func _Read_from_INI_ADD_2_ListView()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -1819,17 +2173,19 @@ Func _Read_from_INI_ADD_2_ListView()
 		Global $Application_right_now = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "right_now", "")
 		Global $Application_24h_peak = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "24h_peak", "")
 		Global $Application_all_time_peak = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "all_time_peak", "")
+		Global $Application_resolutionScale = IniRead($ApplicationList_TEMP, "Application_" & $NR + 1, "resolutionScale", "")
+		If $Application_resolutionScale <> "" Then $Application_resolutionScale = $Application_resolutionScale & "%"
 
 		If $Application_appid <> "" Then
 			Local $ListView_RowNR = $NR; - 1
 
-			$ImageList_Icon = $Icons & "32x32\" & "steam.app." & $Application_appid & ".bmp"
+			Local $ImageList_Icon = $Icons & "32x32\" & "steam.app." & $Application_appid & ".bmp"
 
 			If Not FileExists($ImageList_Icon) Then
 				FileCopy($gfx & "Icon_Preview_32x32.bmp", $ImageList_Icon)
 			EndIf
 
-			$ListView_Icon = $ImageList_Icon
+			Local $ListView_Icon = $ImageList_Icon
 			_GUIImageList_AddBitmap($ListView_ImageList_Temp, $ListView_Icon)
 			_GUICtrlListView_SetImageList($listview_Temp, $ListView_ImageList_Temp, 1)
 			_GUICtrlListView_AddItem($listview_Temp, "", $Application_NR)
@@ -1837,7 +2193,7 @@ Func _Read_from_INI_ADD_2_ListView()
 			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_name, 2)
 			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_right_now, 3)
 			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_24h_peak, 4)
-			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_all_time_peak, 5)
+			_GUICtrlListView_AddSubItem($listview_Temp, $ListView_RowNR, $Application_resolutionScale, 5)
 		EndIf
 	Next
 	_GUICtrlListView_EndUpdate($listview_Temp)
@@ -1858,8 +2214,8 @@ Func _Read_from_INI_ADD_2_ListView()
 EndFunc
 
 Func _Update_ListView_Icons()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 	_GUICtrlListView_BeginUpdate($ListView)
 	_GUICtrlListView_DeleteAllItems($ListView)
 
@@ -1919,7 +2275,7 @@ Func _Update_ListView_Icons()
 				FileCopy($gfx & "Icon_Preview_32x32.bmp", $ImageList_Icon_new)
 			EndIf
 
-			$ListView_Icon = $ImageList_Icon_new
+			Local $ListView_Icon = $ImageList_Icon_new
 			_GUIImageList_AddBitmap($ListView_ImageList_Temp, $ListView_Icon)
 			_GUICtrlListView_SetImageList($listview_Temp, $ListView_ImageList_Temp, 1)
 			_GUICtrlListView_AddItem($listview_Temp, "", $Application_NR)
@@ -1933,8 +2289,8 @@ Func _Update_ListView_Icons()
 EndFunc
 
 Func _ADD_Icons_32x32_to_ListView()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 	_GUICtrlListView_BeginUpdate($ListView)
 	_GUICtrlListView_DeleteAllItems($ListView)
 
@@ -1964,13 +2320,13 @@ Func _ADD_Icons_32x32_to_ListView()
 		If $Application_appid <> "" Then
 			Local $ListView_RowNR = $NR; - 1
 
-			$ImageList_Icon = $Icons & "32x32\" & "steam.app." & $Application_appid & ".bmp"
+			Local $ImageList_Icon = $Icons & "32x32\" & "steam.app." & $Application_appid & ".bmp"
 
 			If Not FileExists($ImageList_Icon) Then
 				FileCopy($gfx & "Icon_Preview_32x32.bmp", $ImageList_Icon)
 			EndIf
 
-			$ListView_Icon = $ImageList_Icon
+			Local $ListView_Icon = $ImageList_Icon
 			_GUIImageList_AddBitmap($ListView_Favorite_Image, $ListView_Icon)
 			_GUICtrlListView_SetImageList($ListView, $ListView_Favorite_Image, 1)
 		EndIf
@@ -1989,6 +2345,77 @@ Func _ADD_Icons_32x32_to_ListView()
 	_GUICtrlListView_EndUpdate($ListView)
 EndFunc
 
+#Region Func RM_Menu
+Func _RM_Item_RS_1() ; Resolution Scale 40%
+	$ResolutionScale_TEMP = "40"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_2() ; Resolution Scale 60%
+	$ResolutionScale_TEMP = "60"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_3() ; Resolution Scale 80%
+	$ResolutionScale_TEMP = "80"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_4() ; Resolution Scale 100%
+	$ResolutionScale_TEMP = "100"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_5() ; Resolution Scale 120%
+	$ResolutionScale_TEMP = "120"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_6() ; Resolution Scale 140%
+	$ResolutionScale_TEMP = "140"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_7() ; Resolution Scale 160%
+	$ResolutionScale_TEMP = "160"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_8() ; Resolution Scale 180%
+	$ResolutionScale_TEMP = "180"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_9() ; Resolution Scale 200%
+	$ResolutionScale_TEMP = "200"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_10() ; Resolution Scale 220%
+	$ResolutionScale_TEMP = "220"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_11() ; Resolution Scale 240%
+	$ResolutionScale_TEMP = "240"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_12() ; Resolution Scale 260%
+	$ResolutionScale_TEMP = "260"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_13() ; Resolution Scale 280%
+	$ResolutionScale_TEMP = "280"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
+Func _RM_Item_RS_14() ; Resolution Scale 300%
+	$ResolutionScale_TEMP = "300"
+	_RM_Write_to_SteamVR_VRSettings()
+EndFunc
+
 Func _RM_Menu_Item_5_1() ; Add to Autostart List
 	$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 	Local  $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
@@ -2001,9 +2428,9 @@ Func _RM_Menu_Item_5_1() ; Add to Autostart List
 
 	If $Check_AppID <> "" Then
 		For $LOOP = 1 To 9
-		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
-		$Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
-		$Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
+		Local $Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
+		Local $Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
+		Local $Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
 
 		If $Autostart_App_Name = "" Then
 			$Autostart_App_Name = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Name", $Check_AppName)
@@ -2027,9 +2454,9 @@ Func _RM_Menu_Item_5_2() ; Remove to Autostart List
 
 	If $Check_AppID <> "" Then
 		For $LOOP = 1 To 9
-		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
-		$Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
-		$Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
+		Local $Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
+		Local $Autostart_App_Path = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Path", "")
+		Local $Autostart_App_State = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_State", "")
 
 		If $Check_AppName = $Autostart_App_Name Then
 			$Autostart_App_Name = IniWrite($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
@@ -2042,8 +2469,8 @@ Func _RM_Menu_Item_5_2() ; Remove to Autostart List
 EndFunc
 
 Func _RM_Menu_Item_8() ; RM_UP
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -2081,23 +2508,23 @@ Func _RM_Menu_Item_8() ; RM_UP
 	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	$GameNR = $ListView_Selected_Row_Nr
+	Local $GameNR = $ListView_Selected_Row_Nr
 
-	$GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
-	$GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
-	$GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
-	$GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
-	$GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
-	$GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
-	$GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+	Local $GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
+	Local $GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
+	Local $GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+	Local $GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
+	Local $GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	Local $GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	Local $GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
 
-	$GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "NR", "")
-	$GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "name", "")
-	$GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "appid", "")
-	$GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "Playtime", "")
-	$GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "renderTargetMultiplier", "")
-	$GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "supersampleScale", "")
-	$GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "allowSupersampleFiltering", "")
+	Local $GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "NR", "")
+	Local $GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "name", "")
+	Local $GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "appid", "")
+	Local $GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "Playtime", "")
+	Local $GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "renderTargetMultiplier", "")
+	Local $GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "supersampleScale", "")
+	Local $GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR - 1, "allowSupersampleFiltering", "")
 
 	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
 	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
@@ -2119,8 +2546,8 @@ Func _RM_Menu_Item_8() ; RM_UP
 EndFunc
 
 Func _RM_Menu_Item_9() ; RM_DOWN
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -2158,23 +2585,23 @@ Func _RM_Menu_Item_9() ; RM_DOWN
 	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	$GameNR = $ListView_Selected_Row_Nr
+	Local $GameNR = $ListView_Selected_Row_Nr
 
-	$GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
-	$GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
-	$GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
-	$GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
-	$GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
-	$GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
-	$GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
+	Local $GetItem_NR_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "NR", "")
+	Local $GetItem_name_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "name", "")
+	Local $GetItem_appid_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+	Local $GetItem_Playtime_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "Playtime", "")
+	Local $GetItem_renderTargetMultiplier_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "renderTargetMultiplier", "")
+	Local $GetItem_supersampleScale_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "supersampleScale", "")
+	Local $GetItem_allowSupersampleFiltering_1 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "allowSupersampleFiltering", "")
 
-	$GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "NR", "")
-	$GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "name", "")
-	$GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "appid", "")
-	$GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "Playtime", "")
-	$GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "renderTargetMultiplier", "")
-	$GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "supersampleScale", "")
-	$GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "allowSupersampleFiltering", "")
+	Local $GetItem_NR_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "NR", "")
+	Local $GetItem_name_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "name", "")
+	Local $GetItem_appid_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "appid", "")
+	Local $GetItem_Playtime_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "Playtime", "")
+	Local $GetItem_renderTargetMultiplier_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "renderTargetMultiplier", "")
+	Local $GetItem_supersampleScale_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "supersampleScale", "")
+	Local $GetItem_allowSupersampleFiltering_2 = IniRead($ApplicationList_TEMP, "Application_" & $GameNR + 1, "allowSupersampleFiltering", "")
 
 	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "NR", $GetItem_NR_2)
 	IniWrite($ApplicationList_TEMP, "Application_" & $GetItem_NR_2, "name", $GetItem_name_1)
@@ -2196,8 +2623,8 @@ Func _RM_Menu_Item_9() ; RM_DOWN
 EndFunc
 
 Func _RM_Menu_Item11() ; Delete ListView item
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
-	$Combo_State = StringReplace($Combo, 'Steam Library ', '')
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
@@ -2235,23 +2662,23 @@ Func _RM_Menu_Item11() ; Delete ListView item
 	Local $GameName_Replaced = StringReplace($GameName, ' ', '_')
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	$GameNR = $ListView_Selected_Row_Nr
-	$GameNR_next = $ListView_Selected_Row_Nr + 1
-	$GetItem_appid_delete = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
+	Local $GameNR = $ListView_Selected_Row_Nr
+	Local $GameNR_next = $ListView_Selected_Row_Nr + 1
+	Local $GetItem_appid_delete = IniRead($ApplicationList_TEMP, "Application_" & $GameNR, "appid", "")
 
-	$ApplicationList_NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+	Local $ApplicationList_NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
 
-	$GetItem_NR_1 = ""
-	$GetItem_appid_1 = ""
-	$GetItem_name_1 = ""
-	$GetItem_installdir_1 = ""
-	$GetItem_IconPath_1 = ""
-	$GetItem_right_now_1 = ""
-	$GetItem_24h_peak_1 = ""
-	$GetItem_all_time_peak_1 = ""
-	$GetItem_renderTargetMultiplier_1 = ""
-	$GetItem_supersampleScale_1 = ""
-	$GetItem_allowSupersampleFiltering_1 = ""
+	Local $GetItem_NR_1 = ""
+	Local $GetItem_appid_1 = ""
+	Local $GetItem_name_1 = ""
+	Local $GetItem_installdir_1 = ""
+	Local $GetItem_IconPath_1 = ""
+	Local $GetItem_right_now_1 = ""
+	Local $GetItem_24h_peak_1 = ""
+	Local $GetItem_all_time_peak_1 = ""
+	Local $GetItem_renderTargetMultiplier_1 = ""
+	Local $GetItem_supersampleScale_1 = ""
+	Local $GetItem_allowSupersampleFiltering_1 = ""
 
 	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "NR", $GetItem_NR_1)
 	IniWrite($ApplicationList_TEMP, "Application_" & $GameNR, "appid", $GetItem_appid_1)
@@ -2268,21 +2695,21 @@ Func _RM_Menu_Item11() ; Delete ListView item
 	IniWrite($ApplicationList_TEMP, "ApplicationList", "NR_Applications", $ApplicationList_NR_Applications - 1)
 
 	For $Loop_Temp = $GameNR_next To $ApplicationList_NR_Applications
-		$GameName_before = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "name", "")
-		$GameName_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
+		Local $GameName_before = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "name", "")
+		Local $GameName_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
 		If $GameName_next <> "" Then
-			$GetItem_NR_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "NR", "")
-			$GetItem_appid_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "appid", "")
-			$GetItem_name_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
-			$GetItem_installdir_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "installdir", "")
-			$GetItem_IconPath_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "IconPath", "")
-			$GetItem_right_now_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "right_now", "")
+			Local $GetItem_NR_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "NR", "")
+			Local $GetItem_appid_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "appid", "")
+			Local $GetItem_name_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "name", "")
+			Local $GetItem_installdir_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "installdir", "")
+			Local $GetItem_IconPath_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "IconPath", "")
+			Local $GetItem_right_now_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "right_now", "")
+			Local $GetItem_24h_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "24h_peak", "")
+			Local $GetItem_all_time_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "all_time_peak", "")
 			$GetItem_24h_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "24h_peak", "")
-			$GetItem_all_time_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "all_time_peak", "")
-			$GetItem_24h_peak_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "24h_peak", "")
-			$GetItem_renderTargetMultiplier_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "renderTargetMultiplier", "")
-			$GetItem_supersampleScale_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "supersampleScale", "")
-			$GetItem_allowSupersampleFiltering_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "allowSupersampleFiltering", "")
+			Local $GetItem_renderTargetMultiplier_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "renderTargetMultiplier", "")
+			Local $GetItem_supersampleScale_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "supersampleScale", "")
+			Local $GetItem_allowSupersampleFiltering_next = IniRead($ApplicationList_TEMP, "Application_" & $Loop_Temp, "allowSupersampleFiltering", "")
 
 			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "NR", $Loop_Temp - 1)
 			IniWrite($ApplicationList_TEMP, "Application_" & $Loop_Temp - 1, "appid", $GetItem_appid_next)
@@ -2304,6 +2731,7 @@ Func _RM_Menu_Item11() ; Delete ListView item
 	_Update_ListView_Icons()
 	_Read_from_INI_ADD_2_ListView()
 EndFunc
+#endregion
 
 Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     Local $tagNMHDR, $event, $hwndFrom, $code
@@ -2313,7 +2741,7 @@ Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
     If $wParam = $ListView Then
         If $event = $NM_CLICK Then
 			_Change_Preview_Icon_ListView()
-			If WinExists("Steam VR Settings Menu") Then _Update_VRSettings_GUI_Items()
+			If WinExists("Resolution Scale Menu") Then _Update_VRSettings_GUI_Items()
 			_Update_StatusBar()
         EndIf
 
@@ -2375,6 +2803,8 @@ Func _Update_VRSettings_GUI_Items()
 
     Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
 	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Steam_app_Name_RS = StringLeft($Steam_app_Name, 18)
+	If StringLen($Steam_app_Name) > 18 Then $Steam_app_Name_RS = $Steam_app_Name_RS & "."
 	Local $Game_ID = $ListView_Item_Array[2]
 
 	Local $renderTargetMultiplier_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
@@ -2392,11 +2822,16 @@ Func _Update_VRSettings_GUI_Items()
 	If $ssS_1 = "0" Then $ssS_value = $ssS_2
 	If $ssS_1 = "0" Then $ssS_Input_value = "0." & $ssS_2
 	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
-	If $allowSupersampleFiltering_value = "true" Then $aSsF_value = 0
-	If $allowSupersampleFiltering_value = "false" Then $aSsF_value = 1
+	If $allowSupersampleFiltering_value = "true" Then Local $aSsF_value = 0
+	If $allowSupersampleFiltering_value = "false" Then Local $aSsF_value = 1
+
+	Local $ResolutionScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "ResolutionScale", "100")
 
 	GUICtrlSetData($ComboBox_3, "", "")
-	GUICtrlSetData($VRSettings_Group, "VR Settings - " & $Steam_app_Name)
+	GUICtrlSetData($ResolutionScale_Group, "Scale [%] for: " & $Steam_app_Name_RS)
+	;GUICtrlSetData($VRSettings_Group, "VR Settings - " & $Steam_app_Name)
+	GUICtrlSetData($Slider_0, $ResolutionScale_value)
+	GUICtrlSetData($Input_ResolutionScale, $ResolutionScale_value)
 	GUICtrlSetData($Slider_1, $rTM_value)
 	GUICtrlSetData($Input_renderTargetMultiplier, $rTM_Input_value)
 	GUICtrlSetData($Slider_2, $ssS_value)
@@ -2418,20 +2853,23 @@ Func _Create_HTMLView_GUI()
 	Local $Game_ID = $ListView_Item_Array[2]
 
 	Local $oIE = ObjCreate("Shell.Explorer.2")
+	If Not @error Then
+		Global $HTML_GUI = GUICreate($Steam_app_Name & " - " & "steam.app." & $Game_ID, 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+		GUICtrlCreateObj($oIE, 0, 0, 979, 550)
 
-	Global $HTML_GUI = GUICreate($Steam_app_Name & " - " & "steam.app." & $Game_ID, 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
-	GUICtrlCreateObj($oIE, 0, 0, 979, 550)
+		Global $Button_Exit_HTML_GUI = GUICtrlCreateButton("Exit", 940, 560, 35, 35, $BS_BITMAP)
+		GUICtrlSetOnEvent(- 1, "_Button_Exit_HTML_GUI")
+		_GUICtrlButton_SetImage(- 1, $gfx & "Close_small.bmp")
+		GuiCtrlSetTip(-1, "Closes HTML GUI.")
 
-	Global $Button_Exit_HTML_GUI = GUICtrlCreateButton("Exit", 940, 560, 35, 35, $BS_BITMAP)
-	GUICtrlSetOnEvent(- 1, "_Button_Exit_HTML_GUI")
-	_GUICtrlButton_SetImage(- 1, $gfx & "Close_small.bmp")
-	GuiCtrlSetTip(-1, "Closes HTML GUI.")
+		Local $IE_Adresse = "https://steamdb.info/app/" & $Game_ID & "/graphs/"
+		$oIE.navigate($IE_Adresse)
 
-	Local $IE_Adresse = "https://steamdb.info/app/" & $Game_ID & "/graphs/"
-	$oIE.navigate($IE_Adresse)
-
-	GUISetState()
-	$Game_ID = ""
+		GUISetState()
+		$Game_ID = ""
+	Else
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Create_HTMLView_GUI]: " & "ObjCreate 'Shell.Explorer.2'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
+	EndIf
 EndFunc
 
 Func _Button_Exit_HTML_GUI()
@@ -2458,7 +2896,7 @@ Func _Show_HTML_GamePage_GUI()
 EndFunc
 
 Func _Checkbox_all()
-	$CheckBox = GUICtrlRead($Checkbox_CreatePage)
+	Local $CheckBox = GUICtrlRead($Checkbox_CreatePage)
 	If $CheckBox = "" Then
 		GUICtrlSetData($Checkbox_CreatePage, "a")
 	Else
@@ -2468,8 +2906,8 @@ Func _Checkbox_all()
 EndFunc
 
 Func _Checkbox_CheckUncheck()
-	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $ButtonTAB_State = "1" Then $listview_Temp = $ListView
 	If $ButtonTAB_State = "2" Then $listview_Temp = $listview_2
 	If $ButtonTAB_State = "3" Then $listview_Temp = $ListView_3
@@ -2507,7 +2945,7 @@ Func _Checkbox_CheckUncheck()
 EndFunc
 
 Func _Button_Create_GamePage_all()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $Combo = "ALL" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 	If $Combo = "Steam Library 1" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
 	If $Combo = "Steam Library 2" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_2.ini"
@@ -2593,7 +3031,7 @@ Func _Button_Create_GamePage_selected()
 	_GUICtrlStatusBar_SetText($Statusbar, "Creating Game Page..." & @TAB & @TAB & "'Version " & $Version & "'")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
 
 	If $ButtonTAB_State = "1" Then
@@ -2721,7 +3159,7 @@ Func _Button_Create_SinglePage_selected()
 	_GUICtrlStatusBar_SetText($Statusbar, "Creating Single Page..." & @TAB & @TAB & "'Version " & $Version & "'")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
 
 	If $ButtonTAB_State = "1" Then
@@ -2851,9 +3289,9 @@ Func _Button_Create_SinglePage_selected()
 EndFunc
 
 Func _Button_Add_to_Custom()
-	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
-	$Status_Combo_Add_to_Custom = GUICtrlRead($Combo_Add_to_Custom)
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	Local $Status_Combo_Add_to_Custom = GUICtrlRead($Combo_Add_to_Custom)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	If $Combo = "" Then $ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_1.ini"
 
 	If $ButtonTAB_State = "1" Then $listview_Temp = $ListView
@@ -2876,12 +3314,12 @@ Func _Button_Add_to_Custom()
 
 
 	If $Status_Combo_Add_to_Custom <> "Choose TAB" Then
-		$ButtonTAB_State_1 = GUICtrlRead($ButtonTAB_Custom_1)
-		$ButtonTAB_State_2 = GUICtrlRead($ButtonTAB_Custom_2)
-		$ButtonTAB_State_3 = GUICtrlRead($ButtonTAB_Custom_3)
-		$ButtonTAB_State_4 = GUICtrlRead($ButtonTAB_Custom_4)
+		Local $ButtonTAB_State_1 = GUICtrlRead($ButtonTAB_Custom_1)
+		Local $ButtonTAB_State_2 = GUICtrlRead($ButtonTAB_Custom_2)
+		Local $ButtonTAB_State_3 = GUICtrlRead($ButtonTAB_Custom_3)
+		Local $ButtonTAB_State_4 = GUICtrlRead($ButtonTAB_Custom_4)
 
-		$ApplicationList_target = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
+		Local $ApplicationList_target = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
 
 		If $Status_Combo_Add_to_Custom = $ButtonTAB_State_1 Then $ApplicationList_target = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
 		If $Status_Combo_Add_to_Custom = $ButtonTAB_State_2 Then $ApplicationList_target = $ApplicationList_Folder & "ApplicationList_Custom_2.ini"
@@ -2890,8 +3328,8 @@ Func _Button_Add_to_Custom()
 
 
 		Global $NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
-		$LastAppNR = IniRead($ApplicationList_target, "ApplicationList", "NR_Applications", "")
-		$NewAppNR = $LastAppNR + 1
+		Local $LastAppNR = IniRead($ApplicationList_target, "ApplicationList", "NR_Applications", "")
+		Local $NewAppNR = $LastAppNR + 1
 
 		For $NR = 1 To $NR_Applications
 			If _GUICtrlListView_GetItemChecked($listview_Temp, $NR - 1) Then
@@ -2946,7 +3384,7 @@ Func _Start_ListView_Selected()
 EndFunc
 
 Func _Combo_SteamLibrary()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	IniWrite($config_ini, "Settings", "Steam_Library", $Combo)
 	FileDelete($ApplicationList_INI)
 
@@ -3157,7 +3595,7 @@ Func _Button_AddGame2Library()
 EndFunc
 
 Func _Button_ReScan_Steam_Library()
-	$Combo = GUICtrlRead($Combo_SteamLibrary)
+	Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 
 	If $Combo = "ALL" Then
 		If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
@@ -3178,7 +3616,7 @@ Func _Button_ReScan_Steam_Library()
 		Next
 		$NR_Library_temp = ""
 		_GUICtrlListView_DeleteAllItems($listview)
-		$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
+		Local $SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
 		If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini")
 		FileCopy($ApplicationList_INI, $ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini", $FC_OVERWRITE + $FC_CREATEPATH)
 		Sleep(500)
@@ -3203,28 +3641,30 @@ Func _Button_ReScan_Steam_Library()
 		EndIf
 	EndIf
 
-
+	_Read_SteamVR_VRSettings()
+	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
 	_Read_from_INI_ADD_2_ListView()
+	_Sync_Icons()
 	_GUICtrlStatusBar_SetText($Statusbar, "Rescan of Steam Library finished." & @TAB & "Apps: " & $NR_Applications & @TAB & "'Version " & $Version & "'")
 EndFunc
 
 Func _ScanViveData()
-	$NR_LINES_TEMP = _FileCountLines($Steam_AppConfig_Json)
+	Local $NR_LINES_TEMP = _FileCountLines($Steam_AppConfig_Json)
 
 	For $Loop = 3 To $NR_LINES_TEMP
-		$Value = FileReadLine($Steam_AppConfig_Json, $Loop)
-		$Value_1 = StringReplace($Value, '"', '')
-		$Value_2 = StringReplace($Value_1, ',', '')
-		$Value_3 = StringRight($Value_2, 15)
-		$Value_Path = StringLeft($Value_2, StringLen($Value_2) - 15)
-		$Value_Path_StringReplace = StringReplace($Value_Path, '\\', '\')
-		$Value_Path_StringReplace = StringReplace($Value_Path_StringReplace, ' ', '')
+		Local $Value = FileReadLine($Steam_AppConfig_Json, $Loop)
+		Local $Value_1 = StringReplace($Value, '"', '')
+		Local $Value_2 = StringReplace($Value_1, ',', '')
+		Local $Value_3 = StringRight($Value_2, 15)
+		Local $Value_Path = StringLeft($Value_2, StringLen($Value_2) - 15)
+		Local $Value_Path_StringReplace_temp = StringReplace($Value_Path, '\\', '\')
+		Local $Value_Path_StringReplace = StringReplace($Value_Path_StringReplace_temp, ' ', '')
 
 		If $Value_3 = "app.vrmanifest" Or $Value_3 = "\app.vrmanifest" Then
-			$Value_2_1 = StringReplace($Value_2, '\\', '\')
-			$Value_2_2 = StringReplace($Value_2_1, ' ', '')
-			$Value_AppVRmanifest_1 = FileRead($Value_2_2)
-			$Value_AppVRmanifest_2 = StringTrimLeft($Value_AppVRmanifest_1, 35)
+			Local $Value_2_1 = StringReplace($Value_2, '\\', '\')
+			Local $Value_2_2 = StringReplace($Value_2_1, ' ', '')
+			Local $Value_AppVRmanifest_1 = FileRead($Value_2_2)
+			Local $Value_AppVRmanifest_2 = StringTrimLeft($Value_AppVRmanifest_1, 35)
 
 			Local $StringSplit_Value = StringSplit($Value_AppVRmanifest_2, ",")
 			Local $Application_NR_new = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "") + 1
@@ -3233,20 +3673,20 @@ Func _ScanViveData()
 
 			For $i = 1 To $StringSplit_Value[0]
 				Local $StringSplit_Value_2 = StringSplit($StringSplit_Value[$i], ":")
-				$StringSplit_Value_2_1 = StringReplace($StringSplit_Value_2[1], '"', '')
-				$StringSplit_Value_2_1_1 = StringReplace($StringSplit_Value_2_1, '[', '')
-				$StringSplit_Value_2_1_2 = StringReplace($StringSplit_Value_2_1_1, '{', '')
+				Local $StringSplit_Value_2_1 = StringReplace($StringSplit_Value_2[1], '"', '')
+				Local $StringSplit_Value_2_1_1 = StringReplace($StringSplit_Value_2_1, '[', '')
+				Local $StringSplit_Value_2_1_2 = StringReplace($StringSplit_Value_2_1_1, '{', '')
 
 				If $StringSplit_Value_2_1_2 = "url" Then
-					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
-					$StringSplit_Value_2_3 = StringReplace($StringSplit_Value_2[3], '"', '')
-					$StringSplit_Value_2_4 = $StringSplit_Value_2_2 & ":" & $StringSplit_Value_2_3
+					Local $StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					Local $StringSplit_Value_2_3 = StringReplace($StringSplit_Value_2[3], '"', '')
+					Local $StringSplit_Value_2_4 = $StringSplit_Value_2_2 & ":" & $StringSplit_Value_2_3
 					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "url", $StringSplit_Value_2_4)
 				EndIf
 
 				If $StringSplit_Value_2_1_2 = "app_key" Then ; appid
-					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
-					$Application_appid_TEMP = $StringSplit_Value_2_2
+					Local $StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
+					Local $Application_appid_TEMP = $StringSplit_Value_2_2
 					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "appid", $StringSplit_Value_2_2)
 				EndIf
 
@@ -3261,7 +3701,7 @@ Func _ScanViveData()
 
 				If $StringSplit_Value_2_1_2 = "image_path" Then
 					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
-					$Value_image_path = $Value_Path_StringReplace & $StringSplit_Value_2_2
+					Local $Value_image_path = $Value_Path_StringReplace & $StringSplit_Value_2_2
 					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "IconPath", $Value_image_path)
 					If Not FileExists($Icons & "steam.app." & $Application_appid_TEMP & ".jpg") Or $DeleteHomeLoaderLibraryData = "true" Then
 						Local $Download_Icon_path_1_jpg = $Icons & "steam.app." & $Application_appid_TEMP & ".jpg"
@@ -3280,7 +3720,7 @@ Func _ScanViveData()
 						FileCopy($Value_image_path, $Download_Icon_path_6_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
 						FileCopy($Value_image_path, $Download_Icon_path_7_jpg, $FC_OVERWRITE + $FC_CREATEPATH)
 					EndIf
-					$ListView_Icon_Path = $Icons & "32x32\" & "steam.app." & $Application_appid_TEMP & ".bmp"
+					Local $ListView_Icon_Path = $Icons & "32x32\" & "steam.app." & $Application_appid_TEMP & ".bmp"
 					If Not FileExists($ListView_Icon_Path) Or $DeleteHomeLoaderLibraryData = "true" Then
 						FileCopy($gfx & "Icon_Preview_Viveport_32x32.bmp", $ListView_Icon_Path, $FC_OVERWRITE + $FC_CREATEPATH)
 					EndIf
@@ -3296,9 +3736,9 @@ Func _ScanViveData()
 
 				If $StringSplit_Value_2_1_2 = "binary_path_windows" Then
 					$StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
-					$StringSplit_Value_2_2_1 = StringReplace($StringSplit_Value_2_2, ']', '')
-					$StringSplit_Value_2_2_2 = StringReplace($StringSplit_Value_2_2_1, '}', '')
-					$StringSplit_Value_2_2_3 = $Value_Path_StringReplace & $StringSplit_Value_2_2_2
+					Local $StringSplit_Value_2_2_1 = StringReplace($StringSplit_Value_2_2, ']', '')
+					Local $StringSplit_Value_2_2_2 = StringReplace($StringSplit_Value_2_2_1, '}', '')
+					Local $StringSplit_Value_2_2_3 = $Value_Path_StringReplace & $StringSplit_Value_2_2_2
 					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Application_NR_new, "binary_path_windows", $StringSplit_Value_2_2_3)
 				EndIf
 			Next
@@ -3323,7 +3763,7 @@ Func _ScanViveData()
 EndFunc
 
 Func _Checkbox_ScanViveData()
-	$CheckBox = GUICtrlRead($Checkbox_ScanVIVEData)
+	Local $CheckBox = GUICtrlRead($Checkbox_ScanVIVEData)
 	If $CheckBox = "" Then
 		GUICtrlSetData($Checkbox_ScanVIVEData, "a")
 		IniWrite($Config_INI, "Settings", "ScanVIVEApps", "true")
@@ -3335,7 +3775,7 @@ Func _Checkbox_ScanViveData()
 EndFunc
 
 Func _Checkbox_DeleteData()
-	$CheckBox = GUICtrlRead($Checkbox_DeleteData)
+	Local $CheckBox = GUICtrlRead($Checkbox_DeleteData)
 	If $CheckBox = "" Then
 		GUICtrlSetData($Checkbox_DeleteData, "a")
 		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "true")
@@ -3350,20 +3790,20 @@ EndFunc
 
 #Region Func Add to Library GUI
 Func _DROPDOWN_Library()
-	$DROPDOWN = GUICtrlRead($DROPDOWN_Library)
+	Local $DROPDOWN = GUICtrlRead($DROPDOWN_Library)
 	If $DROPDOWN <> "" Then
-		$Value_DROPDOWN_Library = $DROPDOWN
+		Local $Value_DROPDOWN_Library = $DROPDOWN
 		IniWrite($config_ini, "TEMP", "Value_DROPDOWN_Library", $Value_DROPDOWN_Library)
 	EndIf
 EndFunc
 
 Func _BUTTON_GamePath_Folder()
-	$FileSelect = FileOpenDialog("Choose File.", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
+	Local $FileSelect = FileOpenDialog("Choose File.", $install_dir, "All (*.*)", $FD_FILEMUSTEXIST)
 	If $FileSelect <> "" Then
-		$Value_GamePath_Folder = $FileSelect
+		Local $Value_GamePath_Folder = $FileSelect
 		GUICtrlSetData($Input_GamePath_Folder, $FileSelect)
 		IniWrite($config_ini, "TEMP", "Value_GamePath_Folder", $FileSelect)
-		$HL_ID = "HL" & StringReplace(StringLeft(Random(0, 99, 0), 2) & StringLeft(Random(0, 99, 0), 2) & StringLeft(Random(0, 99, 0), 2), '.', '')
+		Local $HL_ID = "HL" & StringReplace(StringLeft(Random(0, 99, 0), 2) & StringLeft(Random(0, 99, 0), 2) & StringLeft(Random(0, 99, 0), 2), '.', '')
 		IniWrite($config_ini, "TEMP", "Value_Use_SteamID", $HL_ID)
 		GUICtrlSetState($Input_GamePath_Folder, $GUI_SHOW)
 		GUICtrlSetState($Input_Name, $GUI_SHOW)
@@ -3376,10 +3816,10 @@ Func _BUTTON_GamePath_Folder()
 		GUICtrlSetState($Icon_Preview, $GUI_SHOW)
 		GUICtrlSetImage($Icon_Preview, $gfx & "Icon_Preview.jpg")
 		IniWrite($config_ini, "TEMP", "Value_IconPath_Folder", $gfx & "Icon_Preview.jpg")
-		$Value_FileName = StringInStr($Value_GamePath_Folder, "\", "", -1)
+		Local $Value_FileName = StringInStr($Value_GamePath_Folder, "\", "", -1)
 		$Value_FileName = StringTrimLeft($Value_GamePath_Folder, $Value_FileName)
-		$Value_NamefromFile = StringInStr($Value_FileName, ".", "", -1)
-		$StringCut_NR = StringLen($Value_FileName) - $Value_NamefromFile + 1
+		Local $Value_NamefromFile = StringInStr($Value_FileName, ".", "", -1)
+		Local $StringCut_NR = StringLen($Value_FileName) - $Value_NamefromFile + 1
 		$Value_NamefromFile = StringTrimRight($Value_FileName, $StringCut_NR)
 		IniWrite($config_ini, "TEMP", "Value_Input_Name", $Value_NamefromFile)
 		GUICtrlSetData($Input_Name, $Value_NamefromFile)
@@ -3387,9 +3827,9 @@ Func _BUTTON_GamePath_Folder()
 EndFunc
 
 Func _BUTTON_Use_SteamID()
-	$InputBox = InputBox("Enter Steam Game ID", " ", "", "", - 1, 1)
+	Local $InputBox = InputBox("Enter Steam Game ID", " ", "", "", - 1, 1)
 	If $InputBox <> "" Then
-		$Value_Use_SteamID = $InputBox
+		Local $Value_Use_SteamID = $InputBox
 		GUICtrlSetData($Input_GamePath_Folder, "steam://rungameid/" & $Value_Use_SteamID)
 		IniWrite($config_ini, "TEMP", "Value_Use_SteamID", $Value_Use_SteamID)
 		GUICtrlSetState($Input_GamePath_Folder, $GUI_SHOW)
@@ -3403,24 +3843,24 @@ Func _BUTTON_Use_SteamID()
 		GUICtrlSetState($Icon_Preview, $GUI_SHOW)
 		GUICtrlSetImage($Icon_Preview, $gfx & "Icon_Preview.jpg")
 		IniWrite($config_ini, "TEMP", "Value_IconPath_Folder", $gfx & "Icon_Preview.jpg")
-		$Value_FileName = "SteamGameID " & $Value_Use_SteamID
+		Local $Value_FileName = "SteamGameID " & $Value_Use_SteamID
 		IniWrite($config_ini, "TEMP", "Value_Input_Name", $Value_FileName)
 		GUICtrlSetData($Input_Name, $Value_FileName)
 	EndIf
 EndFunc
 
 Func _Input_Name()
-	$Input_Input_Name = GUICtrlRead($Input_Name)
+	Local $Input_Input_Name = GUICtrlRead($Input_Name)
 	If $Input_Input_Name <> "" Then
-		$Value_Input_Name = $Input_Input_Name
+		Local $Value_Input_Name = $Input_Input_Name
 		IniWrite($config_ini, "TEMP", "Value_Input_Name", $Input_Input_Name)
 	EndIf
 EndFunc
 
 Func _BUTTON_IconPath_Folder()
-	$FileSelect = FileOpenDialog("Choose Icon File.", $Icons, "All (*.*)", $FD_FILEMUSTEXIST)
+	Local $FileSelect = FileOpenDialog("Choose Icon File.", $Icons, "All (*.*)", $FD_FILEMUSTEXIST)
 	If $FileSelect <> "" Then
-		$Value_IconPath_Folder = $FileSelect
+		Local $Value_IconPath_Folder = $FileSelect
 		GUICtrlSetImage($Icon_Preview, $Value_IconPath_Folder)
 		IniWrite($config_ini, "TEMP", "Value_IconPath_Folder", $Value_IconPath_Folder)
 		GUICtrlSetState($Frame_up, $GUI_SHOW)
@@ -3432,14 +3872,14 @@ Func _BUTTON_IconPath_Folder()
 EndFunc
 
 Func _Button_SAVE_APP()
-	$Value_DROPDOWN_Library = IniRead($config_ini, "TEMP", "Value_DROPDOWN_Library", "")
-	$Value_GamePath_Folder = IniRead($config_ini, "TEMP", "Value_GamePath_Folder", "")
-	$Value_Use_SteamID = IniRead($config_ini, "TEMP", "Value_Use_SteamID", "")
-	$Value_Input_Name = IniRead($config_ini, "TEMP", "Value_Input_Name", "")
-	$Value_IconPath_Folder = IniRead($config_ini, "TEMP", "Value_IconPath_Folder", "")
+	Local $Value_DROPDOWN_Library = IniRead($config_ini, "TEMP", "Value_DROPDOWN_Library", "")
+	Local $Value_GamePath_Folder = IniRead($config_ini, "TEMP", "Value_GamePath_Folder", "")
+	Local $Value_Use_SteamID = IniRead($config_ini, "TEMP", "Value_Use_SteamID", "")
+	Local $Value_Input_Name = IniRead($config_ini, "TEMP", "Value_Input_Name", "")
+	Local $Value_IconPath_Folder = IniRead($config_ini, "TEMP", "Value_IconPath_Folder", "")
 
-	$LastAppNR = IniRead($ApplicationList_Non_Steam_Appl_INI, "ApplicationList", "NR_Applications", "")
-	$NewAppNR = $LastAppNR + 1
+	Local $LastAppNR = IniRead($ApplicationList_Non_Steam_Appl_INI, "ApplicationList", "NR_Applications", "")
+	Local $NewAppNR = $LastAppNR + 1
 
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "Application_" & $NewAppNR, "appid", $Value_Use_SteamID)
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "Application_" & $NewAppNR, "name", $Value_Input_Name)
@@ -3832,9 +4272,13 @@ EndFunc
 #endregion
 
 #Region Func SS_Settings GUI
+Func _Slider_0()
+	Local $Value_Slider = GUICtrlRead($Slider_0)
+	GUICtrlSetData($Input_ResolutionScale, $Value_Slider)
+EndFunc
 
 Func _Slider_1()
-	$Value_Slider_1 = GUICtrlRead($Slider_1)
+	Local $Value_Slider_1 = GUICtrlRead($Slider_1)
 	Local $rTM_1 = StringLeft($Value_Slider_1, 1)
 	Local $rTM_2 = StringRight($Value_Slider_1, 1)
 	Local $rTM_value = $rTM_1 & $rTM_2
@@ -3845,7 +4289,7 @@ Func _Slider_1()
 EndFunc
 
 Func _Slider_2()
-	$Value_Slider_2 = GUICtrlRead($Slider_2)
+	Local $Value_Slider_2 = GUICtrlRead($Slider_2)
 	Local $ssS_1 = StringLeft($Value_Slider_2, 1)
 	Local $ssS_2 = StringRight($Value_Slider_2, 1)
 	Local $ssS_value = $ssS_1 & $ssS_2
@@ -3856,15 +4300,23 @@ Func _Slider_2()
 EndFunc
 
 Func _Slider_3()
-	$Value_Slider_3 = GUICtrlRead($Slider_3)
+	Local $Value_Slider_3 = GUICtrlRead($Slider_3)
 	If $Value_Slider_3 = 0 Then $Value_Slider_3 = "true"
 	If $Value_Slider_3 = 1 Then $Value_Slider_3 = "false"
 	GUICtrlSetData($ComboBox_3, "", "")
 	GUICtrlSetData($ComboBox_3, "true|false", $Value_Slider_3)
 EndFunc
 
+Func _UpDown_ResolutionScale()
+	Local $Value_UpDown = GUICtrlRead($Input_ResolutionScale)
+	If $Value_UpDown < 20 Then $Value_UpDown = "20"
+	If $Value_UpDown > 500 Then $Value_UpDown = "500"
+	GUICtrlSetData($Input_ResolutionScale, $Value_UpDown)
+	GUICtrlSetData($Slider_0, $Value_UpDown)
+EndFunc
+
 Func _UpDown_renderTargetMultiplier()
-	$Value_UpDown = GUICtrlRead($Input_renderTargetMultiplier)
+	Local $Value_UpDown = GUICtrlRead($Input_renderTargetMultiplier)
 	Local $rTM_1 = StringLeft($Value_UpDown, 1)
 	Local $rTM_2 = StringRight($Value_UpDown, 1)
 	Local $rTM_value = $rTM_1 & $rTM_2
@@ -3878,7 +4330,7 @@ Func _UpDown_renderTargetMultiplier()
 EndFunc
 
 Func _UpDown_supersampleScale()
-	$Value_UpDown = GUICtrlRead($Input_supersampleScale)
+	Local $Value_UpDown = GUICtrlRead($Input_supersampleScale)
 	Local $ssS_1 = StringLeft($Value_UpDown, 1)
 	Local $ssS_2 = StringRight($Value_UpDown, 1)
 	Local $ssS_value = $ssS_1 & $ssS_2
@@ -3892,17 +4344,18 @@ Func _UpDown_supersampleScale()
 EndFunc
 
 Func _ComboBox_3()
-	$Value_ComboBox = GUICtrlRead($ComboBox_3)
-	If $Value_ComboBox = "true" Then $Value_Slider_3 = 0
-	If $Value_ComboBox = "false" Then $Value_Slider_3 = 1
+	Local $Value_ComboBox = GUICtrlRead($ComboBox_3)
+	If $Value_ComboBox = "true" Then Local $Value_Slider_3 = 0
+	If $Value_ComboBox = "false" Then Local $Value_Slider_3 = 1
 	GUICtrlSetData($Slider_3, $Value_Slider_3)
 EndFunc
 
 
 Func _Button_Save_Settings_GUI()
+	$Input_ResolutionScale = GUICtrlRead($Input_ResolutionScale)
 	$Input_renderTargetMultiplier = GUICtrlRead($Input_renderTargetMultiplier)
 	$Input_supersampleScale = GUICtrlRead($Input_supersampleScale)
-	$Input_allowSupersampleFiltering = GUICtrlRead($ComboBox_3)
+	Local $Input_allowSupersampleFiltering = GUICtrlRead($ComboBox_3)
 
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -3912,15 +4365,15 @@ Func _Button_Save_Settings_GUI()
 	Local $Steam_app_Name = $ListView_Item_Array[3]
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	Local $App_NR = IniRead($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "NR", "")
+	Local $App_NR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "NR", "")
+	Local $AppName = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "appName", "")
 
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "renderTargetMultiplier", $Input_renderTargetMultiplier)
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "supersampleScale", $Input_supersampleScale)
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $App_NR, "allowSupersampleFiltering", $Input_allowSupersampleFiltering)
-
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "renderTargetMultiplier", $Input_renderTargetMultiplier)
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "supersampleScale", $Input_supersampleScale)
-	IniWrite($ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini", "Application_" & $Game_ID, "allowSupersampleFiltering", $Input_allowSupersampleFiltering)
+	;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $Game_ID, "resolutionScale", $Input_ResolutionScale)
+	IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "resolutionScale", $Input_ResolutionScale)
+	IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $App_NR, "resolutionScale", $Input_ResolutionScale)
+	IniWrite($Config_INI, "SteamVR_Status", "renderTargetMultiplier", $Input_renderTargetMultiplier)
+	IniWrite($Config_INI, "SteamVR_Status", "supersampleScale", $Input_supersampleScale)
+	IniWrite($Config_INI, "SteamVR_Status", "allowSupersampleFiltering", $Input_allowSupersampleFiltering)
 EndFunc
 
 Func _Button_Add2Steam_Settings_GUI()
@@ -3936,21 +4389,21 @@ Func _Button_Add2Steam_Settings_GUI()
 	Local $Steam_app_Name = $ListView_Item_Array[3]
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	$FileLines = _FileCountLines($default_vrsettings_File)
+	Local $FileLines = _FileCountLines($default_vrsettings_File)
 
-	$renderTargetMultiplier_value = GUICtrlRead($Input_renderTargetMultiplier)
-	$supersampleScale_value = GUICtrlRead($Input_supersampleScale)
-	$allowSupersampleFiltering_value = GUICtrlRead($ComboBox_3)
+	Local $renderTargetMultiplier_value = GUICtrlRead($Input_renderTargetMultiplier)
+	Local $supersampleScale_value = GUICtrlRead($Input_supersampleScale)
+	Local $allowSupersampleFiltering_value = GUICtrlRead($ComboBox_3)
 
 	FileWriteLine($default_vrsettings_File_new, '{')
 	FileWriteLine($default_vrsettings_File_new, '	"steamvr" : {')
 
 	For $LOOP_vrsettings = 3 To $FileLines
 		$ReadLine = FileReadLine($default_vrsettings_File, $LOOP_vrsettings)
-		$ReadLine_Split_value = $ReadLine
+		Local $ReadLine_Split_value = $ReadLine
 
 		If $ReadLine <> '	},' Then
-			$ReadLine_Split = StringSplit($ReadLine, ':')
+			Local $ReadLine_Split = StringSplit($ReadLine, ':')
 			$ReadLine_Split_value = StringReplace($ReadLine_Split[1], '"', '')
 			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, '        ', '')
 			$ReadLine_Split_value = StringReplace($ReadLine_Split_value, ' ', '')
@@ -3992,7 +4445,6 @@ Func _Button_StartGame_Settings_GUI()
 EndFunc
 
 Func _Button_Exit_SS_Settings_GUI()
-	IniWrite($Config_INI, "TEMP", "Show_SS_Menu", "")
 	GUIDelete($SS_Settings_GUI)
 EndFunc
 #endregion
@@ -4018,20 +4470,24 @@ Func _Restart()
 	Exit
 EndFunc
 
+Func _Exit_Check()
+	If Not ProcessExists("vrmonitor.exe") Then
+		FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " Exit Check: SteamVR is not running --> Exit [HomeLoaderLibrary] -----" & _Now() & "]")
+		Exit
+	EndIf
+EndFunc
+
 Func _Beenden()
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
-	IniWrite($Config_INI, "TEMP", "Show_Playlist", "")
-	IniWrite($Config_INI, "TEMP", "Show_SS_Menu", "")
 	Exit
 EndFunc
 #endregion
 
 #Region Func OVERLAY
-
 Func _Overlay_ReScan_Steam_Library()
 	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
 	Local $NR_temp4
-	$Combo = "ALL"
+	Local $Combo = "ALL"
 
 	If $Combo = "ALL" Then
 		If $Install_Folder_Steam_1 <> "" Then $NR_temp4 = 1
@@ -4055,12 +4511,18 @@ Func _Overlay_ReScan_Steam_Library()
 		EndIf
 		Sleep(500)
 	EndIf
+	_Read_SteamVR_VRSettings()
+	;If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
+	_Exit_Check()
+	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
+	_Sync_Icons()
+	_Exit_Check()
 EndFunc
 
 Func _Overlay_Search_Files()
 	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
-	$Combo = "ALL"
-	If $Combo = "ALL" Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
+	Local $Combo = "ALL"
+	If $Combo = "ALL" Then Local $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
 
 	If $Combo = "ALL" Then
 			If $NR_Library_temp = 1 Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
@@ -4219,11 +4681,9 @@ Func _Overlay_ApplicationList_Update()
 			EndIf
 	EndIf
 EndFunc
-
 #endregion
 
 #Region Func VR ToolBox
-
 Func _Create_VRToolBox_StartPage()
 	Local $Array_StartPageTemplate_Value
 
@@ -4234,12 +4694,12 @@ Func _Create_VRToolBox_StartPage()
 
 	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
 
-	$StartPage_NR_3 = IniRead($Config_INI, "TEMP", "StartPage_NR_3", "3")
+	Local $StartPage_NR_3 = IniRead($Config_INI, "TEMP", "StartPage_NR_3", "3")
 	For $Loop_NR3 = 1 To $Array_StartPageTemplate_Value[0] - $StartPage_NR_3
 		FileWriteLine($StartPage_path, $Array_StartPageTemplate_Value[$Loop_NR3])
 	Next
 
-	$Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
+	Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
 
 	FileWriteLine($StartPage_path, '    <br><br><br><br>')
 	FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_ALL.html' & '">         <img class="icon" src="images/GamePageAllGames.png" width="190" />                    <span class="tooltiptext">All Games</span></a></div>')
@@ -4282,11 +4742,9 @@ Func _Copy_2_VRToolBox()
 
 	If FileExists($VRToolBox_StartPage_Template_path) Then FileCopy($VRToolBox_StartPage_Template_path, $VRToolBox_path, $FC_OVERWRITE + $FC_CREATEPATH)
 EndFunc
-
 #endregion
 
 #Region Func Create Game Pages
-
 Func _Create_GamePages()
 	Local $ApplicationList_TEMP, $GamePage_path, $NR_Applications, $PageName
 
@@ -4465,6 +4923,217 @@ Func _Create_SinglePages()
 	Sleep(100)
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating Single Game Pages. [NR of Game Pages created = " & $NR_Applications & ".")
+EndFunc
+#endregion
+
+#Region Read/Write Steam Files
+Func _Read_SteamVR_VRSettings()
+	Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
+	_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+
+	$Loop_End_1 = $Steamvr_vrsettings_Array[0]
+
+	For $LOOP = 1 to $Loop_End_1
+		$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$LOOP], '"', '"', $STR_ENDNOTSTART)
+
+		If $Steamvr_vrsettings_aArray <> 0 Then
+
+			If $Steamvr_vrsettings_aArray[0] <> "" Then
+				Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
+				Local $Check_Right = StringTrimLeft($Steamvr_vrsettings_aArray[0], 10)
+
+				If $Check_Left = "steam.app." Then
+					$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$LOOP + 1], '"', '"', $STR_ENDNOTSTART)
+					$ResolutionScale_TEMP = StringRight($Steamvr_vrsettings_Array[$LOOP + 2], 3)
+					$ResolutionScale_TEMP = StringReplace($ResolutionScale_TEMP, ' ', '')
+					Local $SteamAppID_TEMP = $Check_Right
+					Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+					IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+				EndIf
+			EndIf
+		EndIf
+	Next
+EndFunc
+
+Func _Write_to_SteamVR_VRSettings()
+	$Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
+	If $Add_SS_per_game = "true" Then
+		If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+		Local $SteamAppExist = "false"
+		Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+		$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+		Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+		Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+		Local $Steam_app_Name = $ListView_Item_Array[3]
+		$Game_ID = $ListView_Item_Array[2]
+
+		Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
+		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
+
+		For $LOOP = 1 to $Loop_End_1
+			$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$LOOP], '"', '"', $STR_ENDNOTSTART)
+			If $Steamvr_vrsettings_aArray <> "" Then
+				If $Steamvr_vrsettings_aArray <> 0 Then
+					If $Steamvr_vrsettings_aArray[0] <> "" Then
+						Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
+						Local $Check_Right = $Game_ID
+
+						If $Steamvr_vrsettings_aArray[0] = "steam.app." & $Check_Right Then
+							$SteamAppExist = "true"
+							$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$LOOP + 1], '"', '"', $STR_ENDNOTSTART)
+							$ResolutionScale_TEMP = StringRight($Steamvr_vrsettings_Array[$LOOP + 2], 3)
+							$ResolutionScale_TEMP = GUICtrlRead($Input_ResolutionScale)
+							Local $SteamAppID_TEMP = $Check_Right
+							Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+							;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "appName", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+
+							;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP[1] & '",')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+							$LOOP = $LOOP + 3
+						Else
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+						EndIf
+					EndIf
+				EndIf
+			Else
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+			EndIf
+		Next
+
+		If $SteamAppExist = "false" Then
+			If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+			Local $SteamAppID_TEMP = $Game_ID
+			Local $Steam_app_Name_TEMP = $Steam_app_Name
+			Local $ResolutionScale_TEMP = GUICtrlRead($Input_ResolutionScale)
+
+			For $LOOP = 1 to $Loop_End_1 - 2
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+			Next
+
+			Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+			;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "appName", $Steam_app_Name_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP)
+
+			;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
+		EndIf
+		If FileExists($Steamvr_vrsettings_FilePath) Then FileDelete($Steamvr_vrsettings_FilePath)
+		FileMove($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_FilePath)
+		_Read_from_INI_ADD_2_ListView()
+	Else
+		MsgBox($MB_ICONINFORMATION, "Attention!", "Read/Write Resolution Scale is disabled." & @CRLF & _
+													"Enable it in the Settings to be able to use this function.")
+	EndIf
+EndFunc
+
+Func _RM_Write_to_SteamVR_VRSettings()
+	$Add_SS_per_game = IniRead($config_ini,"Settings", "Add_SS_per_game", "")
+	If $Add_SS_per_game = "true" Then
+		If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+		Local $SteamAppExist = "false"
+		Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($ListView)
+		$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+		Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+		Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($ListView, $ListView_Selected_Row_Index)
+		Local $Steam_app_Name = $ListView_Item_Array[3]
+		$Game_ID = $ListView_Item_Array[2]
+
+		Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
+		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
+
+		For $LOOP = 1 to $Loop_End_1
+			$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$LOOP], '"', '"', $STR_ENDNOTSTART)
+			If $Steamvr_vrsettings_aArray <> "" Then
+				If $Steamvr_vrsettings_aArray <> 0 Then
+					If $Steamvr_vrsettings_aArray[0] <> "" Then
+						Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
+						Local $Check_Right = $Game_ID
+
+						If $Steamvr_vrsettings_aArray[0] = "steam.app." & $Check_Right Then
+							$SteamAppExist = "true"
+							$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$LOOP + 1], '"', '"', $STR_ENDNOTSTART)
+							Local $SteamAppID_TEMP = $Check_Right
+							Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP[1] & '",')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+							$LOOP = $LOOP + 3
+						Else
+							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+						EndIf
+					EndIf
+				EndIf
+			Else
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+			EndIf
+		Next
+
+		If $SteamAppExist = "false" Then
+			If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+			Local $SteamAppID_TEMP = $Game_ID
+			Local $Steam_app_Name_TEMP = $Steam_app_Name
+
+			For $LOOP = 1 to $Loop_End_1 - 2
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$LOOP])
+			Next
+
+			Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP)
+
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+			IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
+		EndIf
+		If FileExists($Steamvr_vrsettings_FilePath) Then FileDelete($Steamvr_vrsettings_FilePath)
+		FileMove($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_FilePath)
+		_Read_from_INI_ADD_2_ListView()
+	Else
+		MsgBox($MB_ICONINFORMATION, "Attention!", "Read/Write Resolution Scale is disabled." & @CRLF & _
+													"Enable it in the Settings to be able to use this function.")
+	EndIf
 EndFunc
 
 #endregion

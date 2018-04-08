@@ -39,7 +39,6 @@ Global $TEMP_StartHomeSettings = IniRead($Config_INI, "TEMP", "StartHomeLoaderSe
 Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
 Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "false")
-Global $StartSteamVRHome = $System_DIR & "StartSteamVRHome.exe"
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
 Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $gfx = $System_DIR & "gfx\"
@@ -91,10 +90,6 @@ Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
 
 Global $DefaultClickAction = IniRead($Config_INI, "TEMP", "DefaultClickAction", "")
 
-Global $default_renderTargetMultiplier_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "SteamVR_Status", "default_renderTargetMultiplier", "1.0")
-Global $default_supersampleScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "SteamVR_Status", "default_supersampleScale", "1.0")
-Global $default_allowSupersampleFiltering_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "SteamVR_Status", "default_allowSupersampleFiltering", "true")
-
 Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 #EndRegion Variablen
 
@@ -118,16 +113,24 @@ If $Autostart_VRUB = "true" Then
 
 	If $Parameter_1 = "UpdateOverlay" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating the Overlay:")
-		If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
-		If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
+		_Check_SteamVR_Exit()
+		;If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
+		_Check_SteamVR_Exit()
+		;If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
+		_Check_SteamVR_Exit()
 		_Start_HomeLoaderLibrary_UpdateOverlay()
+		_Check_SteamVR_Exit()
 		Exit
 	EndIf
 Else
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating without Overlay:")
+	_Check_SteamVR_Exit()
 	_Start_HomeLoaderLibrary_Update()
+	_Check_SteamVR_Exit()
 	If $Add_PlayersOnline_to_Icons = "true" Then _Get_ADD_PlayersOnline_DATA()
+	_Check_SteamVR_Exit()
 	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
+	_Check_SteamVR_Exit()
 EndIf
 
 #EndRegion Start Check
@@ -140,7 +143,6 @@ Func _LOOP_1()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ----- HomeLoader Loop 1 Finished -----" & "[" & _Now() & "]")
 	Sleep(1000)
 	_Check_SteamVR_Exit()
-	WinSetOnTop("Home Loader", "", $WINDOWS_ONTOP)
 	_LOOP_2()
 EndFunc
 
@@ -247,22 +249,22 @@ EndFunc
 
 Func _Write_PO_TEXT_2_Image()
 	_GDIPlus_Startup()
-	Global $hImage = _GDIPlus_WTOB($gfx & "PlayersOnline.jpg", $PlayersOnline_right_now, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
+	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $PlayersOnline_right_now, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
 	_GDIPlus_ImageDispose($hImage)
 	_GDIPlus_Shutdown()
 
 	If FileExists(@ScriptDir & "\" & "WTOB.png") Then
-		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\PlayersOnline" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\Icon_NR_Background" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 		FileDelete(@ScriptDir & "\" & "WTOB.png")
 	EndIf
 EndFunc
 
 Func _Write_PO_Image_2_Image()
 	Global $ImageSizeX = 460, $ImageSizeY = 215
-	Global $FAVImageSizeX = 60, $FAVImageSizeY = 60
+	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
 
 	$hImage1_Path = $Icons & "steam.app." & $Check_AppId & ".jpg"
-	$hImage2_Path = @ScriptDir & "\" & "PlayersOnline.jpg"
+	$hImage2_Path = @ScriptDir & "\" & "Icon_NR_Background.jpg"
 
 	$Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
 	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
@@ -287,7 +289,7 @@ Func _Write_PO_Image_2_Image()
 	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage1, 0, 0, $ImageSizeX, $ImageSizeY)
 	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage2, 3, 3, $FAVImageSizeX, $FAVImageSizeY)
 
-	_GDIPlus_GraphicsDrawRect($hGraphic, 1, 1, 60 + 3, 60 + 3, $hPen)
+	_GDIPlus_GraphicsDrawRect($hGraphic, 1, 1, 80 + 3, 60 + 3, $hPen)
 
 	GUIRegisterMsg(0xF, "MY_PAINT")
 	GUIRegisterMsg(0x85, "MY_PAINT")
@@ -338,7 +340,7 @@ Func MY_PAINT($hWnd, $msg, $wParam, $lParam)
 EndFunc
 
 Func _Quit_PO_Image_2_Image()
-	FileDelete(@ScriptDir & "\PlayersOnline" & ".jpg")
+	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
 	_GDIPlus_ImageDispose($hImage2)
@@ -357,13 +359,9 @@ Func _Add_SS_to_SteamVR()
 
 	$FileLines = _FileCountLines($default_vrsettings_File)
 
-	$default_renderTargetMultiplier_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "default_renderTargetMultiplier", "1.0")
-	$default_supersampleScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "default_supersampleScale", "1.0")
-	$default_allowSupersampleFiltering_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "default_allowSupersampleFiltering", "true")
-
-	Local $renderTargetMultiplier_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "renderTargetMultiplier", $default_renderTargetMultiplier_value)
-	Local $supersampleScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "supersampleScale", $default_supersampleScale_value)
-	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "allowSupersampleFiltering", $default_allowSupersampleFiltering_value)
+	Local $renderTargetMultiplier_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "renderTargetMultiplier", "1.0")
+	Local $supersampleScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "supersampleScale", "1.0")
+	Local $allowSupersampleFiltering_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "allowSupersampleFiltering", "true")
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " <renderTargetMultiplier: " & $renderTargetMultiplier_value & ">" & " - " & "<supersampleScale: " & $supersampleScale_value & ">" & " - " & "<allowSupersampleFiltering: " & $allowSupersampleFiltering_value & ">")
 
@@ -437,22 +435,22 @@ EndFunc
 
 Func _Write_SS_TEXT_2_Image()
 	_GDIPlus_Startup()
-	Global $hImage = _GDIPlus_WTOB($gfx & "SS_Values.jpg", $Value_for_Image, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
+	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $Value_for_Image, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
 	_GDIPlus_ImageDispose($hImage)
 	_GDIPlus_Shutdown()
 
 	If FileExists(@ScriptDir & "\" & "WTOB.png") Then
-		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\SS_Values" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\Icon_NR_Background" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 		FileDelete(@ScriptDir & "\" & "WTOB.png")
 	EndIf
 EndFunc
 
 Func _Write_SS_Image_2_Image()
 	Global $ImageSizeX = 460, $ImageSizeY = 215
-	Global $FAVImageSizeX = 200, $FAVImageSizeY = 60
+	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
 
 	$hImage1_Path = $Icons & "460x215\" & "steam.app." & $Check_AppId & ".jpg"
-	$hImage2_Path = @ScriptDir & "\" & "SS_Values.jpg"
+	$hImage2_Path = @ScriptDir & "\" & "Icon_NR_Background.jpg"
 
 	$Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
 	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
@@ -477,7 +475,7 @@ Func _Write_SS_Image_2_Image()
 	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage1, 0, 0, $ImageSizeX, $ImageSizeY)
 	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage2, 257, 152, $FAVImageSizeX, $FAVImageSizeY)
 
-	_GDIPlus_GraphicsDrawRect($hGraphic, 255, 150, 200 + 3, 60 + 3, $hPen)
+	_GDIPlus_GraphicsDrawRect($hGraphic, 255, 150, 80 + 3, 60 + 3, $hPen)
 
 	GUIRegisterMsg(0xF, "MY_PAINT")
 	GUIRegisterMsg(0x85, "MY_PAINT")
@@ -523,8 +521,8 @@ Func _Write_SS_Image_2_Image()
 EndFunc
 
 Func _Quit_SS_Image_2_Image()
-	FileDelete(@ScriptDir & "\SS_Values." & ".jpg")
-	FileDelete(@ScriptDir & "\System\SS_Values." & ".jpg")
+	If FileExists(@ScriptDir & "\Icon_NR_Background." & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background." & ".jpg")
+	If FileExists(@ScriptDir & "\System\Icon_NR_Background." & ".jpg") Then FileDelete(@ScriptDir & "\System\Icon_NR_Background." & ".jpg")
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
 	_GDIPlus_ImageDispose($hImage2)
@@ -535,8 +533,8 @@ EndFunc
 
 Func _Check_SteamVR_Exit()
 	If Not ProcessExists("vrmonitor.exe") Then
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ----- HomeLoader SteamVR Closed --> Exit -----" & "[" & _Now() & "]")
-		_Exit()
+		FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " Exit Check: SteamVR is not running --> Exit [HomeLoader] -----" & _Now() & "]")
+		Exit
 	EndIf
 EndFunc
 

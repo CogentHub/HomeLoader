@@ -1,3 +1,5 @@
 Changelog:
-- Added autostart apps to Overlay
-- Added new Overlay functions to Home Loader
+- Added Open TPCast Camera Stream to the Overlay
+- Added Autostart apps to the Overlay and new Overlay functions
+- Added new Steam VR Beta Resolution Scale per Game and new functions
+- Added more "Exit" Points to the HomeLoader Files

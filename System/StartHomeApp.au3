@@ -61,8 +61,8 @@ FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Home APP:")
 FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Home APP = " & $HomeApp)
 FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Home Path = " & $Home_Path)
 
-
 #Region Start Actions
+_Exit_Check()
 _Start_actions_before()
 
 If $HomeApp = "SteamVR Home" Then ShellExecute($Home_Path, "-vr")
@@ -78,8 +78,8 @@ Else
 	Sleep(3000)
 EndIf
 
+_Exit_Check()
 _Start_actions_after()
-
 #endregion
 
 Exit
@@ -116,23 +116,12 @@ Func _Start_actions_before()
 EndFunc
 
 Func _Start_actions_after()
-	If $Autostart_VRUB = "true" Then
-		;If ProcessExists("VRUtilityBelt.exe") Then
-		;	ProcessClose("VRUtilityBelt.exe")
-		;	Sleep(500)
-		;EndIf
-		If Not ProcessExists("VRUtilityBelt.exe") Then
-			Sleep(500)
-			If Not ProcessExists("VRUtilityBelt.exe") Then
-				_Write_config_INI_Values_to_VRUB_PersistentStore_File()
-				Sleep(500)
-				ShellExecute("steam://rungameid/645370")
-				Sleep(100)
-			EndIf
-		EndIf
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
-		Sleep(3000)
-	EndIf
+
+	;If $Autostart_VRUB = "true" Then
+		;Sleep(3000)
+		;_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+		;Sleep(6000)
+	;EndIf
 
 	For $LOOP = 1 To 10
 		$Autostart_App_Name = IniRead($Config_INI, "Autostart", "App_" & $LOOP & "_Name", "")
@@ -145,7 +134,7 @@ Func _Start_actions_after()
 					ShellExecute($Autostart_App_Path)
 				Else
 					If Not WinExists("Vive") Then
-						ShellExecute($Autostart_App_Path)
+						If FileExists($Autostart_App_Path) Then ShellExecute($Autostart_App_Path)
 					Else
 						WinSetState("Vive", "", @SW_ENABLE)
 					EndIf
@@ -156,6 +145,24 @@ Func _Start_actions_after()
 		EndIf
 	Next
 	Sleep(1000)
+
+	If $Autostart_VRUB = "true" Then
+		If ProcessExists("VRUtilityBelt.exe") Then
+			;ProcessClose("VRUtilityBelt.exe")
+			;Sleep(500)
+		EndIf
+		;If Not ProcessExists("VRUtilityBelt.exe") Then
+			;Sleep(500)
+			If Not ProcessExists("VRUtilityBelt.exe") Then
+				;Sleep(500)
+				ShellExecute("steam://rungameid/645370")
+				;Sleep(3000)
+				;_Write_config_INI_Values_to_VRUB_PersistentStore_File()
+				;Sleep(3000)
+			EndIf
+		;EndIf
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
+	EndIf
 EndFunc
 
 Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
@@ -168,6 +175,17 @@ Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
 	Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "200")
 	Local $appid_TEMP = ""
 	Local $SteamLibraryContent = ""
+
+	Global $Autostart_App_1_Name = IniRead($Config_INI, "Autostart", "App_1_Name", "")
+	Global $Autostart_App_2_Name = IniRead($Config_INI, "Autostart", "App_2_Name", "")
+	Global $Autostart_App_3_Name = IniRead($Config_INI, "Autostart", "App_3_Name", "")
+	Global $Autostart_App_4_Name = IniRead($Config_INI, "Autostart", "App_4_Name", "")
+	Global $Autostart_App_5_Name = IniRead($Config_INI, "Autostart", "App_5_Name", "")
+	Global $Autostart_App_6_Name = IniRead($Config_INI, "Autostart", "App_6_Name", "")
+	Global $Autostart_App_7_Name = IniRead($Config_INI, "Autostart", "App_7_Name", "")
+	Global $Autostart_App_8_Name = IniRead($Config_INI, "Autostart", "App_8_Name", "")
+	Global $Autostart_App_9_Name = IniRead($Config_INI, "Autostart", "App_9_Name", "")
+	Global $Autostart_App_10_Name = "Viveport Desktop / Dashboard"
 
 	For $Loop_SteamLibrary = 1 To $NR_Applications
 		$appid_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_SteamLibrary, "appid", "")
@@ -185,7 +203,16 @@ Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
 		If $StringSplit[1] = "HomeLoaderOverlaySteamID" Then $InsertValue = $HomeLoaderOverlaySteamID
 		If $StringSplit[1] = "HomeApp" Then $InsertValue = $HomeApp
 		If $StringSplit[1] = "SteamLibrary" Then $InsertValue = $SteamLibraryContent
-
+		If $StringSplit[1] = "OS_Autostart_AppName1" Then $InsertValue = $Autostart_App_1_Name
+		If $StringSplit[1] = "OS_Autostart_AppName2" Then $InsertValue = $Autostart_App_2_Name
+		If $StringSplit[1] = "OS_Autostart_AppName3" Then $InsertValue = $Autostart_App_3_Name
+		If $StringSplit[1] = "OS_Autostart_AppName4" Then $InsertValue = $Autostart_App_4_Name
+		If $StringSplit[1] = "OS_Autostart_AppName5" Then $InsertValue = $Autostart_App_5_Name
+		If $StringSplit[1] = "OS_Autostart_AppName6" Then $InsertValue = $Autostart_App_6_Name
+		If $StringSplit[1] = "OS_Autostart_AppName7" Then $InsertValue = $Autostart_App_7_Name
+		If $StringSplit[1] = "OS_Autostart_AppName8" Then $InsertValue = $Autostart_App_8_Name
+		If $StringSplit[1] = "OS_Autostart_AppName9" Then $InsertValue = $Autostart_App_9_Name
+		If $StringSplit[1] = "OS_Autostart_AppName10" Then $InsertValue = $Autostart_App_10_Name
 		If $i1 <> $aArray[0] Then
 			$NEW_sText = $NEW_sText & '"' & $StringSplit[1] & '"' & ':"' & $InsertValue & '",'
 		Else
@@ -198,6 +225,13 @@ Func _Write_config_INI_Values_to_VRUB_PersistentStore_File()
 	If $StringLeftCheck <> "{" Then $NEW_sText = "{" & $NEW_sText
 	If FileExists($filePath) Then FileDelete($filePath)
 	FileWrite($filePath, $NEW_sText)
+EndFunc
+
+Func _Exit_Check()
+	If Not ProcessExists("vrmonitor.exe") Then
+		FileWrite($stats_log_FILE, @CRLF & "----- [" & _Now() & "]" & " Exit Check: SteamVR is not running --> Exit [StartHomeApp] -----" & _Now() & "]")
+		Exit
+	EndIf
 EndFunc
 
 #endregion
