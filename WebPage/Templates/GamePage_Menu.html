@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <title>Game Page Menu</title>
+  <link href="css/main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<script>
+    function VRTStartCommand(cmd) {
+      var Path = location.pathname
+      var PathLength = Path.length - 18;
+      var Path_1 = Path.substring(1, PathLength);
+      var Filepath = 'file:///' + Path_1 + cmd
+      var s = '{ "LightVRCallback": { "ShellExec": "' + Filepath + '" } }';
+      console.log(s);
+    }
+</script>
+	<div class="icon8">
+		<span class="h1" id="GamePageMenu">Game Page Menu</span><br>
+		<div class="tooltip"><a href="GamePage_ALL.html">         <img class="icon8" src="images/GamePageAllGames.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">Library</span></a></div>
+		<div class="tooltip"><a href="GamePage_Non-Steam_Appl.html">         <img class="icon8" src="images/GamePage_NonSteamAppl.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">Non-Steam Appl.</span></a></div>
+		<div class="tooltip"><a href="GamePage_Custom_1.html">         <img class="icon8" src="images/GamePage1.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">___Label_3___</span></a></div>
+		<div class="tooltip"><a href="GamePage_Custom_2.html">         <img class="icon8" src="images/GamePage2.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">___Label_4___</span></a></div>
+		<div class="tooltip"><a href="GamePage_Custom_3.html">         <img class="icon8" src="images/GamePage3.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">___Label_5___</span></a></div>
+		<div class="tooltip"><a href="GamePage_Custom_4.html">         <img class="icon8" src="images/GamePage4.png" width="450" height="200"/><br>&nbsp;<span class="tooltiptext">___Label_6___</span></a></div>
+	    <div class="tooltip"><a href="GamePage_Viveport.html">         <img class="icon8" src="images/Viveport.app.icon.png" width="450" height="200" /><br>&nbsp; <span class="tooltiptext">Viveport Games</span></a></div>
+	    <div class="tooltip"><a href="GamePage_Oculus.html">         <img class="icon8" src="images/Revive.app.icon.png" width="450" height="200" /><br>&nbsp;<span class="tooltiptext">Oculus Games</span></a></div>
+	    <div class="tooltip"><a href="GamePage_Tags.html">         <img class="icon8" src="images/GameTags.png" width="450" height="200" /><br>&nbsp;<span class="tooltiptext">Game Tags</span></a></div>
+		<br>
+	</div>  
+</body>
+</html>

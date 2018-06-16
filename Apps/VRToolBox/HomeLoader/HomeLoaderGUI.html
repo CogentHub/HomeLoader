@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <title>HomeLoaderGUI</title>
+  <link href="css/main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<script>
+	    function VRTStartCommand(cmd) {
+	      var Path = location.pathname
+	      var PathLength = Path.length - 18;
+	      var Path_1 = Path.substring(1, PathLength);
+	      var Filepath = 'file:///' + Path_1 + cmd
+	      var s = '{ "LightVRCallback": { "ShellExec": "' + Filepath + '" } }';
+	      console.log(s);
+	    }
+	</script>
+	<main>	
+		<div class="icons">
+			<br><br><br>
+			<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderLibrary.exe');">         <img class="icon7" src="Images/Button_HomeLoaderLibrary.png" width="350" height="350" />                    <span class="tooltiptext">Home Loader Library</span></a></div>&nbsp;&nbsp;
+			<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderLibrary_GamePageMode.exe');">         <img class="icon7" src="Images/Button_HomeLoaderLibrary_GamePageMode.png" width="350" height="350" />                    <span class="tooltiptext">Home Loader Library Game Page Mode</span></a></div>&nbsp;&nbsp;
+			<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderSettings.exe');">         <img class="icon7" src="Images/Button_HomeLoaderSettings.png" width="350" height="350" />                    <span class="tooltiptext">Home Loader Settings</span></a></div>&nbsp;&nbsp;
+			<br>
+		</div>
+	</main>    
+</body>
+</html>

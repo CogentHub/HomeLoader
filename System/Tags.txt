@@ -1,0 +1,30 @@
+Action
+Simulation
+Strategy
+RPG
+Singleplayer
+Multiplayer
+Massively Multiplayer
+Puzzle
+Atmospheric
+2D
+VR
+Horror
+Anime
+Sports
+Platformer
+Open World
+Sci-fi
+Fantasy
+Shooter
+Racing
+Co-op
+Arcade
+Survival
+Family Friendly
+Point & Click
+Space
+Exploration
+Utilities
+Third Person
+Tactical

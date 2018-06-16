@@ -1,0 +1,51 @@
+﻿<html>
+<head>
+  <title>HomeLoader Start Page</title>
+  <link href="css/main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<script>
+    function VRTStartCommand(cmd) {
+      var Path = location.pathname
+      var PathLength = Path.length - 25;
+      var Path_1 = Path.substring(1, PathLength);
+      var Filepath = 'file:///' + Path_1 + cmd
+      var s = '{ "LightVRCallback": { "ShellExec": "' + Filepath + '" } }';
+      console.log(s);
+    }
+</script>
+    <span class="h3" id="GamePages">HomeLoader:</span>
+    <br>
+	<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderLibrary.exe');">         <img class="icon" src="Images/Button_HomeLoaderLibrary.png" width="200" />                    <span class="tooltiptext">Home Loader Library</span></a></div>&nbsp;&nbsp;
+	<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderLibrary_GamePageMode.exe');">         <img class="icon" src="Images/Button_HomeLoaderLibrary_GamePageMode.png" width="200" />                    <span class="tooltiptext">Home Loader Library Game Page Mode</span></a></div>&nbsp;&nbsp;
+	<div class="tooltip"><a onclick="VRTStartCommand('Launch_HomeLoaderSettings.exe');">         <img class="icon" src="Images/Button_HomeLoaderSettings.png" width="200" />                    <span class="tooltiptext">Home Loader Settings</span></a></div>&nbsp;&nbsp;
+	<div class="tooltip"><a href="___Instal_Dir___Apps/VRToolBox/HomeLoader/HomeLoaderGUI.html">         <img class="icon" src="images/Button_HomeLoaderSingleMenu.png" width="200" />                    <span class="tooltiptext">Home Loader GUI Page</span></a></div>
+    <br><br><br><br>
+    <span class="h3" id="GamePages">Game Pages:</span>
+    <br>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Menu.html">           <img class="icon" src="images/GamePageMenu.png" width="200" />                    <span class="tooltiptext">Game Page Menu</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_ALL.html">         <img class="icon" src="images/GamePageAllGames.png" width="200" />                    <span class="tooltiptext">All Games</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Non-Steam_Appl.html">         <img class="icon" src="images/GamePage_NonSteamAppl.png" width="200" />                    <span class="tooltiptext">Non-Steam Appl.</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Custom_1.html">         <img class="icon" src="images/GamePage1.png" width="200" />                    <span class="tooltiptext">Game Page 1</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Custom_2.html">         <img class="icon" src="images/GamePage2.png" width="200" />                    <span class="tooltiptext">Game Page 2</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Custom_3.html">         <img class="icon" src="images/GamePage3.png" width="200" />                    <span class="tooltiptext">Game Page 3</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Custom_4.html">         <img class="icon" src="images/GamePage4.png" width="200" />                    <span class="tooltiptext">Game Page 4</span></a></div><br><br><br>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Tags.html">         <img class="icon" src="images/GameTags.png" width="300" />                    <span class="tooltiptext">Game Shortcut Page</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Viveport.html">         <img class="icon" src="images/Viveport.app.icon.png" width="300" />                    <span class="tooltiptext">Viveport Games</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamePage_Oculus.html">         <img class="icon" src="images/Revive.app.icon.png" width="300" />                    <span class="tooltiptext">Oculus Games</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/GamesPage.html">         <img class="icon" src="images/Game.png" width="300" />                    <span class="tooltiptext">Game Shortcut Page</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___WebPage/Coverflow/index.html">         <img class="icon" src="images/CoverFlow.png" width="200" />                    <span class="tooltiptext">Cover Flow Page</span></a></div>
+    <br><br><br><br>
+    <span class="h3" id="GamePages">Different Pages/Functions:</span>
+    <br>
+    <div class="tooltip"><a href="___Instal_Dir___Apps/VRToolBox/HomeLoader/KeyboardShortcuts.html">         <img class="icon" src="images/KeyboardShortcuts.png" width="200" />                    <span class="tooltiptext">Helper Shortcuts</span></a></div>
+    <div class="tooltip"><a href="https://discordapp.com/channels/@me">         <img class="icon" src="images/Discord.png" width="200" />                    <span class="tooltiptext">Discord</span></a></div>
+    <div class="tooltip"><a href="https://www.netflix.com">         <img class="icon" src="images/Netflix.png" width="200" />                    <span class="tooltiptext">NETFLIX</span></a></div>
+    <div class="tooltip"><a href="https://supermarioemulator.com/mario.php">         <img class="icon" src="images/Super_Mario_Emulator.png" width="200" />                    <span class="tooltiptext">Super Mario Emulator</span></a></div>
+    <div class="tooltip"><a href="___Instal_Dir___Apps/VRToolBox/HomeLoader/VideoPageGUI.html">         <img class="icon" src="images/VideoPage.png" width="200" />                    <span class="tooltiptext">YouTube Random Video Page</span></a></div>
+    <div class="tooltip"><a href="https://steamdb.info">         <img class="icon" src="images/SteamDB.png" width="200" />                    <span class="tooltiptext">steamdb .info Page</span></a></div>
+    <div class="tooltip"><a href="http://vrlfg.net">         <img class="icon" src="images/VRLF_net.png" width="200" />                    <span class="tooltiptext">vrlfg .net Page</span></a></div><br><br><br>
+    <div class="tooltip"><a href="http://localhost:8998/dashboard/controllerbinding.html">         <img class="icon" src="images/SteamVR_Web_Interface.png" width="200" />                    <span class="tooltiptext">Controller Binding</span></a></div>
+    <br>
+</body>
+</html>

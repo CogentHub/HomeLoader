@@ -1,0 +1,26 @@
+﻿<html>
+<head>
+    <link href="css/main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="icons">
+	<br><br><br><br>
+	<div class="tooltip"><a href="javascript:Function_PrepareNewVideoPage();">         <img class="icon4" src="images/VideoPageIcon.png" />                    <span class="tooltiptext">Create new Video Page</span></a></div>
+ </div>
+ <script>
+    function VRTStartCommand(cmd) {
+      var s = '{ "LightVRCallback": { "ShellExec": "' + cmd + '" } }';
+      console.log(s);
+    }
+    function Function_PrepareNewVideoPage() {
+      var Path = location.pathname
+	  var PathLength = Path.length - 43;
+	  var Path_1 = Path.substring(1, PathLength);
+      VRTStartCommand('file:///' + Path_1 + 'Apps/VRToolBox/HomeLoader/NewVideoPage.exe');
+      var timer = setTimeout(function() {
+      window.location='file:///' + Path_1 + 'WebPage/VideoPage/VideoPage.html'
+      }, 500);
+    }
+</script>
+</body>
+</html>

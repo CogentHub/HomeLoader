@@ -1,0 +1,65 @@
+﻿<html>
+
+<head>
+	<link href="addon://overlays/HomeLoader/styles.css" rel="stylesheet">
+	<title>VIVECamera</title>
+</head>
+
+<body>	
+    <span class="h1" id="SettingsLabel"> HomeLoader</span><br>
+    <a class="game" href="index.html"><img src="images/Back2HL.jpg" height="56px" width="120px"></a>&nbsp;&nbsp;&nbsp;
+    <label id="VIVECameraLabel" class="GamePageName"> VIVE Camera</label>
+    <br><img height="7" src="images/Frame.jpg" width="1460"><br><br>
+
+	<h1 class="h1">TPCast:</h1>
+	<form class="InputField">
+		<button class="button" name="Camera2" id="Camera2" onclick="Function_Start_TPCast_Camera_Service()" style="height:40px">Start Service</button><br><br>
+		<button class="button" name="Camera3" id="Camera3" onclick="Function_Stop_TPCast_Camera_Service()" style="height:40px">Stop Service</button><br><br><br>
+		<button class="buttonRefresh" name="Refresh" id="Refresh" onclick="Function_Refresh()" style="height:50px">Refresh</button>&nbsp;
+	</form>	
+
+	<style>
+	    #wrap { width: 600px; height: 390px; padding: 0; overflow: hidden; }
+	    #frame { width: 480px; height: 360px; border: 1px solid black; }
+	    #frame {
+	        -ms-zoom:2.15;
+	        -moz-transform: scale(2.15);
+	        -moz-transform-origin: 0 0;
+	        -o-transform: scale(2.15);
+	        -o-transform-origin: 0 0;
+	        -webkit-transform: scale(2.15);
+	        -webkit-transform-origin: 0 0;
+	    }
+	</style>
+	<div id="wrap">
+		<iframe  id="frame" src="http://tpcast.local:8080/?action=stream" style="position: absolute; z-index: 1; left: 270px; top: 155px"></iframe>
+	</div>
+
+
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    
+    <script>
+
+		function Function_Start_TPCast_Camera_Service() {
+			newurl = "http://tpcast.local/api/camera/start"
+			console.log("Start TPCast Camera Service: " + newurl);
+			location.href = newurl;
+			// window.setTimeout('window.location = "http://tpcast.local/api/camera/start"',1);
+		}
+		
+		function Function_Stop_TPCast_Camera_Service() {
+			newurl = "http://tpcast.local/api/camera/stop"
+			console.log("Stop TPCast Camera Service: " + newurl);
+			location.href = newurl;
+			// window.setTimeout('window.location = "http://tpcast.local/api/camera/stop"',1);
+		}
+
+		function Function_Refresh() {
+			console.log("Refresh Page..." + Date());
+			window.setTimeout('window.location = "addon://overlays/HomeLoader/VIVECamera.html"',1);
+		}
+
+	</script>
+
+</body>
+</html>
