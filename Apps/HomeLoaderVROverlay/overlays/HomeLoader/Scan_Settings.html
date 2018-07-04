@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <title>HomeLoader Overlay</title>
+    <link href="addon://shared/styles.css" rel="stylesheet">
+</head>
+<body>
+    <span class="h1" id="SettingsLabel"> HomeLoader</span><br>
+    <a class="game" href="index.html"><img src="images/Back2HL.jpg" height="56px" width="120px"></a><br><br><br> 
+	<main>	
+		<form class="checkbox">
+			<label class="container">Scan with HomeApp Start<input type="checkbox" id="IDcheckbox1" onclick="Function_checkbox_1('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Request Steamdb Info<input type="checkbox" id="IDcheckbox2" onclick="Function_checkbox_2('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Request Steamdb Tags<input type="checkbox" id="IDcheckbox3" onclick="Function_checkbox_3('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Scan for Viveport Apps<input type="checkbox" id="IDcheckbox4" onclick="Function_checkbox_4('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Scan for Oculus Apps<input type="checkbox" id="IDcheckbox5" onclick="Function_checkbox_5('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Sort Apps in Alphabetical order<input type="checkbox" id="IDcheckbox6" onclick="Function_checkbox_6('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Add Apps based on their tags to the categories<input type="checkbox" id="IDcheckbox7" onclick="Function_checkbox_7('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Allow multiple Tag assigments<input type="checkbox" id="IDcheckbox8" onclick="Function_checkbox_8('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Add number of current Players to the game Icons<input type="checkbox" id="IDcheckbox9" onclick="Function_checkbox_9('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Add the Resolution Scale Value to the game Icons<input type="checkbox" id="IDcheckbox10" onclick="Function_checkbox_10('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Allow Read/Write of the Resolution Scale Value<input type="checkbox" id="IDcheckbox11" onclick="Function_checkbox_11('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Create HTML Game Pages<input type="checkbox" id="IDcheckbox12" onclick="Function_checkbox_12('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+			<label class="container">Delete old HomeLoader Library Data first<input type="checkbox" id="IDcheckbox13" onclick="Function_checkbox_13('IDcheckbox')" checked="checked"><span class="checkmark"></span></label>
+		</form>	
+		<br>
+	</main>
+	
+    <script src="vrub://libs/jquery-3.2.1.min.js"></script>
+    <script src="addon://overlays/HomeLoader/scriptSettings.js"></script>
+    
+    <script type="text/javascript">
+
+    </script>
+</body>
+</html>

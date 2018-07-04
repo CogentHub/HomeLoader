@@ -22,7 +22,7 @@
 Opt("GUIOnEventMode", 1)
 
 #Region Set Global
-Global $HLL_GUI, $HLL_Settings_GUI
+Global $HLL_GUI, $HLL_Settings_GUI, $InputBox, $TAB_NR_Temp, $Oculus_App_URL
 Global $GUI_Loading, $AddGame2Library_GUI, $HomeLoaderLibrary_GUI, $Button_Exit_Settings_GUI, $HTML_GUI, $NR_Applications
 Global $appid, $name, $installdir, $NR_temp1, $NR_temp2, $NR_temp3, $NR_Library, $NR_Library_temp
 Global $listview, $listview_2, $listview_3, $listview_4, $listview_5, $listview_6, $iStylesEx, $CheckBox_Restart, $Icon_Preview, $ApplicationList_TEMP
@@ -60,7 +60,7 @@ Global $oMyError = ObjEvent("AutoIt.Error", "MyErrFunc")
 #EndRegion Set Global
 
 #Region Declare Variables/Const 1
-Global $Version = "0.72"
+Global $Version = "0.73"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
@@ -153,6 +153,13 @@ Global $Install_Folder_Steam_3 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 
+Global $VRUB_Folder = $Install_Folder_Steam_1 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_2 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_3 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_4 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_5 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = ""
+
 Global $Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
 Global $Icon_Folder_2 = IniRead($Config_INI, "Folders", "Icon_Folder_2", "")
 Global $Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
@@ -241,18 +248,16 @@ If $Autostart_VRUB = "true" Then
 		$Parameter_1 = $CmdLine[1]
 	EndIf
 
-	If $Parameter_1 = "UpdateOverlay" Then
-		$Parameter_Temp = "Update"
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Scan/Updating Overlay:")
-		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_VideoPage()
-		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
+	If $Parameter_1 = "UpdateLibrary" Then
 		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_VideoPage()
 		;_Exit_Check()
 
 		If $ScanLibrary_OnStart_SettingValue = "true" Then
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start UpdateLibrary:")
 			_Button_ReScan_Steam_Library_AutoUpdate()
 		EndIf
-		MsgBox(0, "1", "UpdateOverlay fertig")
+		;MsgBox(0, "1", "UpdateOverlay fertig")
 		Exit
 	EndIf
 
@@ -272,10 +277,8 @@ Else
 		$Parameter_1 = $CmdLine[1]
 	EndIf
 
-	If $Parameter_1 = "Update" Then
-		$Parameter_Temp = "Update"
+	If $Parameter_1 = "UpdateLibrary" Then
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Scan/Updating:")
-		$UpdateOverlay_SettingValue = IniRead($Config_INI, "Settings", "UpdateOverlay", "")
 		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 		If $HomeApp = "VR Toolbox" Then _Create_VRToolBox_VideoPage()
 		;_Exit_Check()
@@ -684,9 +687,9 @@ Func _Create_HLL_GUI()
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GUICtrlSetTip(-1, "Shows the HomeLoader Settings Window where it is possible to change the Home App.")
 
-	Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
-	_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
-	GUICtrlSetTip(-1, "Settings." & @CRLF & @CRLF & "Includes:" & @CRLF & "- Steam Library Folders" & @CRLF & "- Icon Folders")
+	;Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
+	;_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
+	;GUICtrlSetTip(-1, "Settings." & @CRLF & @CRLF & "Includes:" & @CRLF & "- Steam Library Folders" & @CRLF & "- Icon Folders")
 
 	Global $Button_Restart = GUICtrlCreateButton("Restart", 660, $DesktopHeight - 100, 65, 65, $BS_BITMAP) ;
 	_GUICtrlButton_SetImage($Button_Restart, $gfx & "Restart.bmp")
@@ -833,7 +836,7 @@ Func _Create_HLL_GUI()
 	GUISetOnEvent($GUI_EVENT_CLOSE, "_Exit")
 	GUICtrlSetOnEvent($Button_Restart, "_Restart")
 	GUICtrlSetOnEvent($Button_Exit, "_Exit")
-	GUICtrlSetOnEvent($Button_Settings, "_HLL_Settings_GUI")
+	;GUICtrlSetOnEvent($Button_Settings, "_HLL_Settings_GUI")
 	GUICtrlSetOnEvent($Button_Exit_Settings_GUI, "_Button_Exit_Settings_GUI")
 
 	;GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
@@ -879,7 +882,8 @@ Func _Create_HLL_GUI()
 	GUIRegisterMsg($WM_notify, "_ClickOnListView")
 
 	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
-	_GUICtrlStatusBar_SetText($Statusbar, "'Rescan Libraries' if a game was added or removed." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	If $Autostart_VRUB = "true" Then _GUICtrlStatusBar_SetText($Statusbar, "HomeLoader OVERLAY [VRUB] is enabled..." & "   " & "" & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 EndFunc
 
 Func _HLL_Settings_GUI()
@@ -1988,12 +1992,90 @@ Func _Write_PO_Image_2_Image()
 	_Quit_PO_Image_2_Image()
 EndFunc   ;==>_Write_PO_Image_2_Image
 
+Func _Write_CategoryNameTemplate_2_Image()
+	Local $CategoryNameTemplate = $gfx & "CategoryNameTemplate.jpg"
+	_GDIPlus_Startup()
+	Global $hImage = _GDIPlus_WTOB($CategoryNameTemplate, $InputBox, "Arial", 26, -1, 3, 0, 0, 0x000000, 1, 1)
+	_GDIPlus_ImageDispose($hImage)
+	_GDIPlus_Shutdown()
+	$InputBox = ""
+
+	If FileExists(@ScriptDir & "\" & "WTOB.png") Then
+		FileCopy(@ScriptDir & "\" & "WTOB.png", @ScriptDir & "\CategoryNameImage" & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		FileDelete(@ScriptDir & "\" & "WTOB.png")
+	EndIf
+	_Write_CategoryNameTemplate_Image_2_Image()
+EndFunc   ;==>_Write_PO_TEXT_2_Image
+
+Func _Write_CategoryNameTemplate_Image_2_Image()
+	Global $ImageSizeX = 460, $ImageSizeY = 215
+	Global $FAVImageSizeX = 460, $FAVImageSizeY = 45 ; 80 , 60
+
+	$hImage1_Path = $gfx & "CategoryTemplate" & ".jpg"
+	$hImage2_Path = @ScriptDir & "\" & "CategoryNameImage.jpg"
+
+	Local $Check_StringSplit_NR = StringInStr($hImage1_Path, "/", "", -1)
+	If $Check_StringSplit_NR = "0" Then $Check_StringSplit_NR = StringInStr($hImage1_Path, "\", "", -1)
+	Local $Check_Filename_1 = StringTrimLeft($hImage1_Path, $Check_StringSplit_NR)
+	Local $Check_Filename_2 = StringRight($Check_Filename_1, 11)
+	Local $Check_Filename = $Check_Filename_1
+
+	GUISetState()
+
+	_GDIPlus_Startup()
+	$hImage1 = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hImage2 = _GDIPlus_ImageLoadFromFile($hImage2_Path)
+
+	$hBMPBuff = _GDIPlus_ImageLoadFromFile($hImage1_Path)
+	$hGraphic = _GDIPlus_ImageGetGraphicsContext($hBMPBuff)
+
+	;Graphics
+	_GDIPlus_GraphicsClear($hGraphic, 0xFFE8FFE8)
+
+	$hPen = _GDIPlus_PenCreate(0xFFFF0000, 3)
+
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage1, 0, 0, $ImageSizeX, $ImageSizeY)
+	_GDIPlus_GraphicsDrawImageRect($hGraphic, $hImage2, 3, 3, $FAVImageSizeX, $FAVImageSizeY)
+
+	;_GDIPlus_GraphicsDrawRect($hGraphic, 1, 1, 80 + 3, 60 + 3, $hPen)
+
+	GUIRegisterMsg(0xF, "MY_PAINT")
+	GUIRegisterMsg(0x85, "MY_PAINT")
+
+	;Save
+	Local $NewIcon_Path
+	If $TAB_NR_Temp = "3" Then $NewIcon_Path = $Install_DIR & "WebPage\images\GamePage1.png"
+	If $TAB_NR_Temp = "4" Then $NewIcon_Path = $Install_DIR & "WebPage\images\GamePage2.png"
+	If $TAB_NR_Temp = "5" Then $NewIcon_Path = $Install_DIR & "WebPage\images\GamePage3.png"
+	If $TAB_NR_Temp = "6" Then $NewIcon_Path = $Install_DIR & "WebPage\images\GamePage4.png"
+
+	If $NewIcon_Path = "" Then $NewIcon_Path = $Install_DIR & "WebPage\images\" & IniRead($Config_INI, "Settings", "TAB" & $TAB_NR_Temp & "_Name", "") & ".png"
+
+	If $NewIcon_Path <> "" Then
+		_GDIPlus_ImageSaveToFile($hBMPBuff, $NewIcon_Path)
+	EndIf
+
+	_GDIPlus_PenDispose($hPen)
+	_GDIPlus_ImageDispose($hImage1)
+	_GDIPlus_ImageDispose($hImage2)
+	_GDIPlus_GraphicsDispose($hGraphic)
+	_WinAPI_DeleteObject($hBMPBuff)
+	_GDIPlus_Shutdown()
+
+	_Quit_PO_Image_2_Image()
+EndFunc   ;==>_Write_PO_Image_2_Image
+
 Func MY_PAINT($hWnd, $Msg, $wParam, $lParam)
 	Return $GUI_RUNDEFMSG
 EndFunc   ;==>MY_PAINT
 
 Func _Quit_PO_Image_2_Image()
 	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
+	If FileExists(@ScriptDir & "\CategoryNameImage" & ".jpg") Then FileDelete(@ScriptDir & "\CategoryNameImage" & ".jpg")
+	If FileExists(@ScriptDir & "\WTOB" & ".png") Then FileDelete(@ScriptDir & "\WTOB" & ".png")
+	If FileExists($Install_DIR & "Icon_NR_Background" & ".jpg") Then FileDelete($Install_DIR & "Icon_NR_Background" & ".jpg")
+	If FileExists($Install_DIR & "\CategoryNameImage" & ".jpg") Then FileDelete($Install_DIR & "CategoryNameImage" & ".jpg")
+	If FileExists($Install_DIR & "WTOB" & ".png") Then FileDelete($Install_DIR & "WTOB" & ".png")
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
 	_GDIPlus_ImageDispose($hImage2)
@@ -2659,7 +2741,7 @@ Func _Read_from_INI_ADD_2_ListView()
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$ApplicationList_TEMP = $ApplicationList_INI
 
-	If $Parameter_Temp = "Update" Then $Status_Combo_ApplicationList = "ALL Categories"
+	If $Parameter_Temp = "UpdateLibrary" Then $Status_Combo_ApplicationList = "ALL Categories"
 
 	If $ButtonTAB_State = "1" Then
 		If $Status_Combo_ApplicationList = "ALL Categories" Then
@@ -4680,49 +4762,57 @@ EndFunc   ;==>_RM_Buttons
 
 Func _RM_Button_Item_3_1()
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_1)
-	Local $InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB3_Label, "", -1, 160)
+	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB3_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
 		GUICtrlSetData($ButtonTAB_Custom_1, $InputBox_old)
 		IniWrite($Config_INI, "Settings", "TAB3_Name", $InputBox_old)
 	Else
 		GUICtrlSetData($ButtonTAB_Custom_1, $InputBox)
 		IniWrite($Config_INI, "Settings", "TAB3_Name", $InputBox)
+		$TAB_NR_Temp = "3"
+		_Write_CategoryNameTemplate_2_Image()
 	EndIf
 EndFunc   ;==>_RM_Button_Item_3_1
 
 Func _RM_Button_Item_4_1()
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_2)
-	Local $InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB4_Label, "", -1, 160)
+	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB4_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
 		GUICtrlSetData($ButtonTAB_Custom_2, $InputBox_old)
 		IniWrite($Config_INI, "Settings", "TAB4_Name", $InputBox_old)
 	Else
 		GUICtrlSetData($ButtonTAB_Custom_2, $InputBox)
 		IniWrite($Config_INI, "Settings", "TAB4_Name", $InputBox)
+		$TAB_NR_Temp = "4"
+		_Write_CategoryNameTemplate_2_Image()
 	EndIf
 EndFunc   ;==>_RM_Button_Item_4_1
 
 Func _RM_Button_Item_5_1()
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_3)
-	Local $InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB5_Label, "", -1, 160)
+	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB5_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
 		GUICtrlSetData($ButtonTAB_Custom_3, $InputBox_old)
 		IniWrite($Config_INI, "Settings", "TAB5_Name", $InputBox_old)
 	Else
 		GUICtrlSetData($ButtonTAB_Custom_3, $InputBox)
 		IniWrite($Config_INI, "Settings", "TAB5_Name", $InputBox)
+		$TAB_NR_Temp = "5"
+		_Write_CategoryNameTemplate_2_Image()
 	EndIf
 EndFunc   ;==>_RM_Button_Item_5_1
 
 Func _RM_Button_Item_6_1()
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_4)
-	Local $InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB6_Label, "", -1, 160)
+	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB6_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
 		GUICtrlSetData($ButtonTAB_Custom_4, $InputBox_old)
 		IniWrite($Config_INI, "Settings", "TAB6_Name", $InputBox_old)
 	Else
 		GUICtrlSetData($ButtonTAB_Custom_4, $InputBox)
 		IniWrite($Config_INI, "Settings", "TAB6_Name", $InputBox)
+		$TAB_NR_Temp = "6"
+		_Write_CategoryNameTemplate_2_Image()
 	EndIf
 EndFunc   ;==>_RM_Button_Item_6_1
 
@@ -8128,7 +8218,7 @@ Func _Create_HTMLGamePage_GUI() ; GamePageMode
 				_IEDocInsertHTML($oBody, "<div id='EXIT'></div>", "afterbegin")
 				Local $oEXIT = _IEGetObjById($oIE, "EXIT")
 				_IEPropertySet($oEXIT, "innerhtml", $InsertHTML_1)
-					EndIf
+			EndIf
 
 			If $locationurl_new = "EXIT" And $locationurl_old <> "EXIT" Then
 				Exit
@@ -8164,6 +8254,24 @@ Func _Create_HTMLGamePage_GUI() ; GamePageMode
 			If $locationurl_new = "HomeLoaderLibrary" And $locationurl_old <> "HomeLoaderLibrary" Then
 				_Button_Exit_HTMLGamePage_GUI()
 				_Restart()
+			EndIf
+
+			If StringLeft($locationurl_new, 11) = "revive.app." And StringLeft($locationurl_old, 11) <> "revive.app." Then
+				$oIE.navigate($IE_Adresse)
+				;MsgBox(0, "revive.app.", $Install_DIR & "WebPage\Revive\" & $locationurl_new & ".bat")
+				ShellExecute($Install_DIR & "WebPage\Revive\" & $locationurl_new & ".bat")
+				;$Oculus_App_URL = $locationurl_new
+				;_Start_Revive_Oculus_App()
+			EndIf
+
+			;MsgBox(0, "$locationurl_new", StringLen("steam://rungameid/HLNSG"))
+			If StringLeft($locationurl_new, 5) = "HLNSG" And StringLeft($locationurl_old, 5) <> "HLNSG" Then
+				;MsgBox(0, "HLNSG", "HLNSG")
+				$oIE.navigate($IE_Adresse)
+				Local $HLNSG_installdir = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $locationurl_new, "installdir", "")
+				ShellExecute($HLNSG_installdir)
+				;$Oculus_App_URL = $locationurl_new
+				;_Start_Revive_Oculus_App()
 			EndIf
 
 			If $locationurl_new <> "" Then
@@ -8755,33 +8863,18 @@ Func _Start_ListView_Selected()
 
 	If $Check_AppId <> "" Then
 		If $StringLeft_Check_AppID = "vive.htc." Then
+			If Not ProcessExists("Vive.exe") Then
+				If FileExists($HTCVive_Path & "PCClient\Vive.exe") Then
+					ShellExecute($HTCVive_Path & "PCClient\Vive.exe")
+				EndIf
+				Sleep(500)
+			EndIf
 			ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
 		Else
 			$StringLeft_Check_AppID = StringLeft($Check_AppId, 11)
 			$StringTrimLeft_Check_AppID = StringTrimLeft($Check_AppId, 11)
 			If $StringLeft_Check_AppID = "revive.app." Then
-				If $ScanOnlyVR = "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
-				If $ScanOnlyVR <> "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
-
-				Local $App_binary_path = IniRead($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "binary_path_windows", "")
-				$App_binary_path = StringReplace($App_binary_path, '/', '\')
-				Local $App_arguments = IniRead($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "arguments", "")
-				Local $Check_Left_1_App_arguments = StringLeft($App_arguments, 7)
-				Local $Check_Left_2_App_arguments = StringLeft($App_arguments, 10)
-				If $Check_Left_1_App_arguments = '/base \' Then $App_arguments = StringTrimLeft($App_arguments, 7)
-				If $Check_Left_2_App_arguments = '/library \' Then $App_arguments = StringTrimLeft($App_arguments, 10)
-				$App_arguments = StringReplace($App_arguments, '/', '\')
-				$App_arguments = StringReplace($App_arguments, '\\', '\')
-				$App_arguments = StringReplace($App_arguments, '"', '')
-				If StringRight($App_arguments, 1) = "\" Then $App_arguments = StringTrimRight($App_arguments, 1)
-
-				Local $Oculus_App_Path = "C:\Program Files\Oculus\Software\" & $App_arguments
-
-				If $Check_Left_1_App_arguments = '/base \' Then $Oculus_App_Path = "C:\Program Files\Oculus\Support\" & $App_arguments
-				If $Check_Left_2_App_arguments = '/library \' Then $Oculus_App_Path = "C:\Program Files\Oculus\Software\" & $App_arguments
-
-				;ShellExecute($Revive_Path & $App_binary_path, $Oculus_App_Path)
-				RunWait($Revive_Path & $App_binary_path & " " & $Oculus_App_Path, "", @SW_HIDE)
+				;_Start_Revive_Oculus_App()
 			Else
 				ShellExecute("steam://rungameid/" & $Check_AppId)
 			EndIf
@@ -9103,19 +9196,22 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 	Local $TimerDiff = TimerDiff($Timer)
 	Local $sec = Round(($TimerDiff / 1000), 2)
 
+	If $Autostart_VRUB = "true" Then
+		_Copy_To_VRUB()
+	EndIf
+
 	If WinExists("HomeLoader - Library") Then
 		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 100)
-		;_Read_from_INI_ADD_2_ListView()
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Scan finished in " & $sec & " " & "seconds")
 		_GUICtrlStatusBar_SetText($Statusbar, "" & "Scan finished in " & $sec & " " & "seconds" & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
 		GUIDelete($GUI_Loading)
 		_Restart()
-		;MsgBox(0, "$HLL_GUI", $HLL_GUI_Handle)
 		;GUIDelete($HLL_GUI_Handle)
 		;_Create_HLL_GUI()
 	EndIf
+
 EndFunc   ;==>_Button_ReScan_Steam_Library
 
 Func _Button_ReScan_Steam_Library_AutoUpdate()
@@ -9175,13 +9271,18 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 	EndIf
 
 	_Sync_Icons()
+	If $Autostart_VRUB = "true" Then
+		_Copy_To_VRUB()
+	EndIf
+
 	Local $TimerDiff = TimerDiff($Timer)
 	Local $sec = Round(($TimerDiff / 1000), 2)
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Scan finished in " & $sec & " " & "seconds")
 EndFunc   ;==>_Button_ReScan_Steam_Library_AutoUpdate
 
 Func _Button_More_Scan_Options()
-	MouseClick($MOUSE_CLICK_RIGHT)
+	;MouseClick($MOUSE_CLICK_RIGHT)
+	_HLL_Settings_GUI()
 EndFunc   ;==>_Button_More_Scan_Options
 
 
@@ -10396,6 +10497,38 @@ Func _Overlay_ApplicationList_Update()
 		EndIf
 	EndIf
 EndFunc   ;==>_Overlay_ApplicationList_Update
+
+Func _Copy_To_VRUB()
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start updating VRUB Overlay.")
+	Local $VRUB_Overlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\"
+	Local $File_1 = $Install_DIR & "WebPage\GamePage_ALL.html"
+	Local $File_2 = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+	Local $File_3 = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+	Local $File_4 = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+	Local $File_5 = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+	Local $File_6 = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+	Local $File_7 = $Install_DIR & "WebPage\GamePage_Oculus.html"
+	Local $File_8 = $Install_DIR & "WebPage\GamePage_Tags.html"
+	Local $File_9 = $Install_DIR & "WebPage\GamePage_Viveport.html"
+	Local $File_10 = $Install_DIR & "WebPage\Tags\"
+
+	If $VRUB_Folder <> "" Then
+		If FileExists($File_1) Then FileCopy($File_1, $VRUB_Overlay_Folder & "GamePage_ALL.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_2) Then FileCopy($File_2, $VRUB_Overlay_Folder & "GamePage_Custom_1.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_3) Then FileCopy($File_3, $VRUB_Overlay_Folder & "GamePage_Custom_2.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_4) Then FileCopy($File_4, $VRUB_Overlay_Folder & "GamePage_Custom_3.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_5) Then FileCopy($File_5, $VRUB_Overlay_Folder & "GamePage_Custom_4.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_6) Then FileCopy($File_6, $VRUB_Overlay_Folder & "GamePage_Non-Steam_Appl.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_7) Then FileCopy($File_7, $VRUB_Overlay_Folder & "GamePage_Oculus.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_8) Then FileCopy($File_8, $VRUB_Overlay_Folder & "GamePage_Tags.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_9) Then FileCopy($File_9, $VRUB_Overlay_Folder & "GamePage_Viveport.html", $FC_OVERWRITE + $FC_CREATEPATH)
+
+		If FileExists($File_10) Then FileCopy($File_10, $VRUB_Overlay_Folder & "Tags\", $FC_OVERWRITE + $FC_CREATEPATH)
+	EndIf
+
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " VRUB Overlay updated.")
+EndFunc
+
 #EndRegion Func OVERLAY
 
 #Region Func VR ToolBox
@@ -10579,7 +10712,7 @@ Func _Create_GamePages()
 					'<script>' & @CRLF & _
 					' ' & @CRLF & _
 					'</script>' & @CRLF & _
-					'<h1>' & $PageName & '</h1><br>' & @CRLF & _
+					'<h1>' & $PageName & '</h1><br><br><br>' & @CRLF & _
 					'<div class="icons">' & @CRLF
 
 			If $HomeApp = "VR Toolbox" Then
@@ -10595,13 +10728,13 @@ Func _Create_GamePages()
 						'      console.log(s);' & @CRLF & _
 						'    }' & @CRLF & _
 						'</script>' & @CRLF & _
-						'<h1>' & $PageName & '</h1><br>' & @CRLF & _
+						'<h1>' & $PageName & '</h1><br><br><br>' & @CRLF & _
 						'<div class="icons">' & @CRLF
 			EndIf
 
 			If $Add_Back_to_HTML_GamePage = "true" Then
 				Local $Content_Back = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-						'	<a href="file:///' & $Install_DIR_TEMP & 'WebPage/GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+						'	<a href="GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 						'</div>' & @CRLF
 
 				$HTML_Content = $HTML_Content & $Content_Back
@@ -10634,15 +10767,26 @@ Func _Create_GamePages()
 					If $StringLeft_Application_appid = "vive.htc." Then FileCopy($gfx & "Viveport.app.icon.jpg", $Install_DIR & "WebPage\images\steam.app." & $Application_appid & ".jpg", $FC_OVERWRITE + $FC_CREATEPATH)
 				EndIf
 
-				If $HomeApp = "VR Toolbox" Then
-					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
-					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'vive://runapp/" & $StringTrimLeft_Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+				If $Loop_Temp <> 2 Then
+					If $HomeApp = "VR Toolbox" Then
+						If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+						If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'vive://runapp/" & $StringTrimLeft_Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					EndIf
+
+					If $HomeApp <> "VR Toolbox" Then
+						If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+						If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="vive://runapp/' & $StringTrimLeft_Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					EndIf
+				Else
+					If $HomeApp = "VR Toolbox" Then
+						FileWriteLine($GamePage_path, '<div class="tooltip"><a onclick="VRTStartCommand(' & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					EndIf
+
+					If $HomeApp <> "VR Toolbox" Then
+						FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					EndIf
 				EndIf
 
-				If $HomeApp <> "VR Toolbox" Then
-					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
-					If $StringLeft_Application_appid = "vive.htc." Then FileWriteLine($GamePage_path, '    <div class="tooltip"><a href="vive://runapp/' & $StringTrimLeft_Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
-				EndIf
 			Next
 			Sleep(100)
 			FileWriteLine($GamePage_path, ' </div>')
@@ -10682,7 +10826,7 @@ Func _Create_GamePages()
 				'<script>' & @CRLF & _
 				' ' & @CRLF & _
 				'</script>' & @CRLF & _
-				'<h1>' & $PageName & '</h1><br>' & @CRLF & _
+				'<h1>' & $PageName & '</h1><br><br><br>' & @CRLF & _
 				'<div class="icons">' & @CRLF
 
 		If $HomeApp = "VR Toolbox" Then
@@ -10698,13 +10842,13 @@ Func _Create_GamePages()
 					'      console.log(s);' & @CRLF & _
 					'    }' & @CRLF & _
 					'</script>' & @CRLF & _
-					'<h1>' & $PageName & '</h1><br>' & @CRLF & _
+					'<h1>' & $PageName & '</h1><br><br><br>' & @CRLF & _
 					'<div class="icons">' & @CRLF
 		EndIf
 
 		If $Add_Back_to_HTML_GamePage = "true" Then
 			Local $Content_Back = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-					'	<a href="file:///' & $Install_DIR_TEMP & 'WebPage/GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+					'	<a href="GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 					'</div>' & @CRLF
 
 			$HTML_Content = $HTML_Content & $Content_Back
@@ -10829,26 +10973,30 @@ Func _Create_GamePages()
 		If FileExists($ApplicationList_TEMP) Then
 			$NR_Applications = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
 			Local $GamePage_path_temp = $Install_DIR & "WebPage\Tags\" & $FileName & ".html"
+			Local $GamePage_Tags_path_folder = $Install_DIR & "WebPage\Tags\"
 
 			If FileExists($GamePage_path_temp) Then FileDelete($GamePage_path_temp)
 
 			Local $HTML_Content = '<html>' & @CRLF & _
 					'<head>' & @CRLF & _
 					'    <title>GamePage</title>' & @CRLF & _
-					'    <link href="File:///' & $Install_DIR_TEMP & 'WebPage/css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
+					'    <link href="css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
 					'</head>' & @CRLF & _
 					'<body>' & @CRLF & _
 					'<script>' & @CRLF & _
+					' function goBack() {' & @CRLF & _
+					'    window.history.back();' & @CRLF & _
+					'}' & @CRLF & _
 					' ' & @CRLF & _
 					'</script>' & @CRLF & _
-					'<h1>' & $FileName & '</h1>' & @CRLF & _
+					'<h1>' & $FileName & '</h1><br><br><br>' & @CRLF & _
 					'<div class="icons">' & @CRLF
 
 			If $HomeApp = "VR Toolbox" Then
 				$HTML_Content = '<html>' & @CRLF & _
 						'<head>' & @CRLF & _
 						'    <title>GamePage</title>' & @CRLF & _
-						'    <link href="File:///' & $Install_DIR_TEMP & 'WebPage/css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
+						'    <link href="css/games.css" rel="stylesheet" type="text/css">' & @CRLF & _
 						'</head>' & @CRLF & _
 						'<body>' & @CRLF & _
 						'<script>' & @CRLF & _
@@ -10857,19 +11005,23 @@ Func _Create_GamePages()
 						'      console.log(s);' & @CRLF & _
 						'    }' & @CRLF & _
 						'</script>' & @CRLF & _
-						'<h1>' & $FileName & '</h1><br><br>' & @CRLF & _
+						'<h1>' & $FileName & '</h1><br><br><br>' & @CRLF & _
 						'<div class="icons">' & @CRLF
 			EndIf
 
 			If $Add_Back_to_HTML_GamePage = "true" Then
 				Local $Content_Back = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-						'	<a href="file:///' & $Install_DIR_TEMP & 'WebPage/GamePage_Tags.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+						'	<a onclick="goBack()" href="GamePage_Tags.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 						'</div>' & @CRLF
 
 				$HTML_Content = $HTML_Content & $Content_Back
 			EndIf
 
 			FileWrite($GamePage_path_temp, $HTML_Content)
+
+			Local $Back_Content = '<meta http-equiv="refresh" content="0; url=https://www.youtube.com/tv#/watch?v=2AisONDi4dE">'
+
+			FileWrite($GamePage_Tags_path_folder & "Back.html", '<meta http-equiv="refresh" content="0; url=https://www.youtube.com/tv#/watch?v=2AisONDi4dE">')
 
 			For $NR = 1 To $NR_Applications
 				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
@@ -10895,11 +11047,11 @@ Func _Create_GamePages()
 				EndIf
 
 				If $HomeApp = "VR Toolbox" Then
-					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path_temp, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="File:///' & $Install_DIR_TEMP & 'WebPage/images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path_temp, '<div class="tooltip"><a onclick="VRTStartCommand(' & "'steam://rungameid/" & $Application_appid & "');" & '">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 
 				If $HomeApp <> "VR Toolbox" Then
-					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path_temp, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="File:///' & $Install_DIR_TEMP & 'WebPage/images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
+					If $StringLeft_Application_appid <> "vive.htc." Then FileWriteLine($GamePage_path_temp, '    <div class="tooltip"><a href="steam://rungameid/' & $Application_appid & ' ">         <img class="icon" src="images/steam.app.' & $Application_appid & '.jpg" width="460" /><br>&nbsp;<span class="tooltiptext">' & $Application_name & '</span></a></div>')
 				EndIf
 			Next
 			Sleep(100)
@@ -10951,7 +11103,7 @@ Func _Create_SinglePages()
 
 	If $Add_Back_to_HTML_GamePage = "true" Then
 		Local $Content_Back = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-				'	<a href="file:///' & $Install_DIR_TEMP & 'WebPage/GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+				'	<a href="GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 				'</div><br><br><br><br><br>' & @CRLF
 
 		$HTML_Content = $HTML_Content & $Content_Back
@@ -11039,9 +11191,9 @@ Func _Create_Game_Tags_Page()
 	For $Loop_1 = 1 To 30
 		$Value_Line_Tag = FileReadLine($Tags_TXT, $Loop_1)
 
-		$Value_Line_ADD = '<a href="file:///' & $Install_DIR_Replaced & 'WebPage/Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a>&nbsp;&nbsp;&nbsp;&nbsp;'
+		$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a>&nbsp;&nbsp;&nbsp;&nbsp;'
 		If $Loop_1 = 4 Or $Loop_1 = 8 Or $Loop_1 = 12  Or $Loop_1 = 16 Or $Loop_1 = 20 Or $Loop_1 = 24 Or $Loop_1 = 28 Then
-			$Value_Line_ADD = '<a href="file:///' & $Install_DIR_Replaced & 'WebPage/Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a><br><br>'
+			$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a><br><br>'
 		EndIf
 
 		;Local $sFill = $Value_Line_Left & "|" & $Value_Line_Tag & "|" & $Value_Line_Right
@@ -11060,7 +11212,7 @@ Func _Create_Game_Tags_Page()
 	Next
 
 	Local $Content = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-					'	<a href="file:///' & $Install_DIR_Replaced & 'WebPage/GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+					'	<a href="GamePage_Menu.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 					'</div>'
 
 	FileWriteLine($Path_GamePage_Tags, $Content)
@@ -11080,7 +11232,33 @@ EndFunc
 
 #EndRegion Func Create Game Pages
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Func _Start_Revive_Oculus_App()
+	If $ScanOnlyVR = "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+	If $ScanOnlyVR <> "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+
+	Local $App_binary_path = IniRead($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "binary_path_windows", "")
+	$App_binary_path = StringReplace($App_binary_path, '/', '\')
+	Local $App_arguments = IniRead($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "arguments", "")
+	Local $Check_Left_1_App_arguments = StringLeft($App_arguments, 7)
+	Local $Check_Left_2_App_arguments = StringLeft($App_arguments, 10)
+	If $Check_Left_1_App_arguments = '/base \' Then $App_arguments = StringTrimLeft($App_arguments, 7)
+	If $Check_Left_2_App_arguments = '/library \' Then $App_arguments = StringTrimLeft($App_arguments, 10)
+	$App_arguments = StringReplace($App_arguments, '/', '\')
+	$App_arguments = StringReplace($App_arguments, '\\', '\')
+	$App_arguments = StringReplace($App_arguments, '"', '')
+	If StringRight($App_arguments, 1) = "\" Then $App_arguments = StringTrimRight($App_arguments, 1)
+
+	Local $Oculus_App_Path = "C:\Program Files\Oculus\Software\" & $App_arguments
+
+	If $Check_Left_1_App_arguments = '/base \' Then $Oculus_App_Path = "C:\Program Files\Oculus\Support\" & $App_arguments
+	If $Check_Left_2_App_arguments = '/library \' Then $Oculus_App_Path = "C:\Program Files\Oculus\Software\" & $App_arguments
+
+	MsgBox(0, "_Start_Revive_Oculus_App", $Revive_Path & $App_binary_path & " " & $Oculus_App_Path)
+
+	;ShellExecute($Revive_Path & $App_binary_path, $Oculus_App_Path)
+	RunWait($Revive_Path & $App_binary_path & " " & $Oculus_App_Path, "", @SW_HIDE)
+EndFunc
+
 
 #Region Read/Write Steam Files
 Func _Read_steamapps_vrmanifest()

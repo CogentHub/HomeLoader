@@ -1,0 +1,291 @@
+﻿body {
+  background-color: rgba(0,0,0,0.4);
+  font-family: stencil, arial;
+  font-size: 14px;
+  color: #333;
+  }
+  
+h1 {
+	color: white;
+	margin-top: 25px;
+	font-family: stencil;
+    text-align: center;
+	text-decoration: underline;
+	font-size: 900%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    } 
+
+h2 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 600%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    } 
+	
+h3 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 400%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    } 
+	
+h4 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 200%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    } 
+
+.h1 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 900%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    }
+
+.h2 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 600%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    }
+	
+.h3 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 400%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    }
+	
+.h4 {
+	color: white;
+	margin-top: 5px;
+	font-family: stencil;
+    text-align: left;
+	text-decoration: underline;
+	font-size: 200%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    }
+
+.h2_center {
+	color: white;
+	font-family: stencil;
+    text-align: center;
+	text-decoration: underline;
+	font-size: 600%;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;	
+    }
+	
+.tooltip {
+    position: relative;
+    display: inline-block;
+    line-height: 35px;
+    }
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px 0;
+    font-size: 35px;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 35px;
+    left: 10%; 
+   }
+
+.tooltip:hover .tooltiptext {
+   visibility: visible;
+  }
+  
+.tooltip_2 {
+    position: relative;
+    display: inline-block;
+    line-height: 20px;
+    }
+
+.tooltip_2 .tooltiptext_2 {
+    visibility: hidden;
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 10px 0;
+    font-size: 20px;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: 35px;
+    left: 10%; 
+   }
+   
+.tooltip_2:hover .tooltiptext {
+   visibility: visible;
+  }
+
+img {
+  vertical-align: middle;
+  display: inline-block;
+  }
+
+.icons {
+  text-align: center;
+  margin-top: -50px;
+}
+
+.icons_StartPage {
+  margin-top: 40px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.icon {
+  width: 200px;
+  margin-top: 15px;
+  margin-right: 20px;
+  margin-bottom: -25px;
+  margin-left: 1px;
+  border-radius: 25px;
+  }
+  
+  .icon2 {
+  margin-top: 10px;
+  margin-right: 20px;
+  margin-bottom: -25px;
+  margin-left: 1px;
+  border-radius: 25px;
+  }
+
+.icon3 {
+  text-align: center;
+  width: 150px;
+  margin-top: 15px;
+  margin-right: 20px;
+  margin-bottom: -25px;
+  margin-left: 1px;
+  border-radius: 25px;
+  }
+  
+ .icon4 {
+  width:1655px;
+  height:1025px;
+  text-align: center;
+  margin-top: -15px;
+  }
+  
+  .icon6 {
+  width:350px;
+  height:350px;
+  text-align: center;
+  margin-top: -15px;
+  }
+  
+  .icon7 {
+  width: 525px;
+  margin-top: 15px;
+  margin-right: 20px;
+  margin-bottom: -25px;
+  margin-left: 1px;
+  border-radius: 25px;
+  }
+  
+ .icon8 {
+  display: inline-block;
+  text-align: center;
+  margin-top: 15px;
+  margin-right: 20px;
+  margin-bottom: -25px;
+  margin-left: 1px;
+  border-radius: 25px;
+  }
+
+  .button {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+	border-radius: 10px;
+	position: relative;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 60px; 
+	width:400px;
+	height:50px;
+}
+
+.button:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+.Tag_Buttons {
+  font: bold 18px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+}
+
+

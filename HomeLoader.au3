@@ -16,8 +16,6 @@
 Opt("GUIOnEventMode", 1)
 
 
-
-
 #Region Declare Variables/Const 1
 ;Global $Install_DIR = @ScriptDir & "\"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
@@ -25,7 +23,6 @@ Opt("GUIOnEventMode", 1)
 Global $Version = IniRead($Config_INI, "Settings", "Version", "")
 ;Global $System_DIR = $Install_DIR & "System\"
 If Not FileExists($Config_INI) Then FileCopy($System_DIR & "config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
-Global $HomeLoader_StartBat = $System_DIR & "StartHomeAPP.bat"
 Global $Advanced_Settings = IniRead($Config_INI, "Settings", "Advanced_Settings", "")
 ;Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
 Global $gfx = $Install_DIR & "System\gfx\"

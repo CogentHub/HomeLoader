@@ -1,0 +1,575 @@
+﻿#game-list {
+    
+}
+
+.game {
+    border: 5px transparent;
+}
+
+.game a {
+    display: inline-block;
+}
+
+.game img:hover {
+    border: 5px solid blue;
+}
+
+#button-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+#button-list h1, #button-list h2, #button-list h3, #button-list h4, #button-list h5, #button-list h6 {
+    width: 100%;
+}
+
+#button-list a {
+    display: block;
+    margin: 10px;
+    padding: 15px;
+    font-size: 1.8em;
+}
+
+body {
+    background: linear-gradient(to left, #0E0E0E, #0D233A);
+    color: #3AA4D3;
+    font-family: sans-serif;
+    padding: 30px 50px;
+}
+
+h1,h2,h3,h4,h5 {
+    color: #e6e6e6;
+	margin-top: 9px; /* change to center it */
+	margin-bottom:5px; 
+	line-height: 100%;
+}
+
+.GamePageName {
+    color: #e6e6e6;
+	font:italic bold 55px Georgia,serif;
+}
+
+#settings-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.button {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 32px; 
+}
+
+.buttonRefresh {
+    background: linear-gradient(to bottom, #00FF00, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 35px;
+}
+
+.buttonSave {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 20px;
+}
+
+.buttonStartPage {
+    box-sizing: border-box;
+    padding: 2px 6px 7px;
+    border-width: 2px;
+    border-style: outset;
+    border-color: buttonface;
+    border-image: initial;
+    background: linear-gradient(to bottom, #163353, #0E2440);
+	background-image: url('images/icon.jpg');
+    background-size: 31px 31px;
+    height: 35px;  
+    width: 35px;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+}
+
+.button_highlighted {
+    background: linear-gradient(to bottom, #25728D, #163553);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 32px;
+}
+
+.buttonRefresh_highlighted {
+    background: linear-gradient(to bottom, #25728D, #163553);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 32px;
+}
+
+.buttonOverlay {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+    display: table;
+    margin: 0 auto;
+    width: 250px;
+    height: 30px;
+}
+
+.UpDown {
+    width: 50px;
+    height: 28px;
+    vertical-align: bottom;
+    position: relative;
+	font-size: 22px;
+}
+
+.UpDownButtonUP {
+	width: 35px;
+    height: 35px;
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+.UpDownButtonDOWN {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+}
+
+.UpDownLabel {
+	text-align: left;
+	font-size: 22px;
+}
+
+.UpDownOverlay {
+    width: 50px;
+    height: 28px;
+    vertical-align: bottom;
+    position: relative;
+	font-size: 22px;
+	display: table;
+	margin: 0 auto;
+}
+
+.UpDownButtonUPOverlay {
+	width: 35px;
+    height: 35px;
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+	display: table;
+	margin: 0 auto;
+}
+
+.UpDownButtonDOWNOverlay {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+	display: table;
+	margin: 0 auto;
+}
+
+.UpDownLabelOverlay {
+	text-align: left;
+	font-size: 22px;
+	display: table;
+	margin: 0 auto;
+}
+
+
+.InputLabel {
+	width: 250px; 
+	height: 35px;
+	text-align: left;
+	font-size: 26px
+}
+
+InputField {
+    text-indent: -15px;
+	text-align: left;
+	font-size: 26px
+}
+
+label {
+    text-indent: -15px;
+	text-align: left;
+	font-size: 26px
+}
+
+input {
+    width: 25px;
+    height: 25px;
+    vertical-align: bottom;
+	text-align: center; 
+    position: relative;
+}
+
+.button:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+.buttonRefresh:hover {
+    background: linear-gradient(to bottom, #008000, #163553)
+}
+
+.buttonSave:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+.UpDownButtonUP:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+.UpDownButtonDOWN:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+.buttonStartPage:hover {
+    border: 5px solid blue;
+}
+
+.buttonOverlay:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
+
+/* Dropdown 1  */
+/* Dropdown 1  */
+.dropbtn {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+	width: 250px; 
+	height: 50px;
+    /* padding: 16px; */
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 250px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+	font-size: 24px
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+	background-color: #23789d;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {
+	background-color: #f1f1f1;
+	font-size: 28px;
+	font-weight:bold;
+	}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdown:hover .dropbtn {
+    background: linear-gradient(to bottom, #25728D, #163553);
+	font-weight:bold;
+}
+
+
+/* Dropdown 2  */
+/* Dropdown 2  */
+.dropdownOverlaybtn {
+    background: linear-gradient(to bottom, #163353, #0E2440);
+    color: white;
+    font-size: 28px;
+    text-decoration: none;
+    text-align: center;
+	font-size: 26px;	
+    cursor: pointer;
+    display: table;
+    margin: 0 auto;
+    width: 250px;
+    height: 30px;
+}
+
+.dropdownOverlay {
+    position: relative;
+    display: table;
+    margin: 0 auto;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdownOverlay-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 200px;
+	width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+	font-size: 24px
+}
+
+/* Links inside the dropdown */
+.dropdownOverlay-content a {
+	background-color: #23789d;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdownOverlay-content a:hover {
+	background-color: #f1f1f1;
+	}
+
+/* Show the dropdown menu on hover */
+.dropdownOverlay:hover .dropdown-content {
+    display: block;
+}
+
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdownOverlay:hover .dropdownOverlaybtn {
+    background: linear-gradient(to bottom, #25728D, #163553);
+}
+
+
+#overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2;
+    cursor: pointer;
+}
+
+#text{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 30px;
+    color: white;
+    transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+}
+
+
+/* The Modal (background) */
+.modal1 {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    -webkit-animation-name: fadeIn; /* Fade in the background */
+    -webkit-animation-duration: 0.4s;
+    animation-name: fadeIn;
+    animation-duration: 0.4s
+}
+
+/* Modal Content */
+.modal1-content {
+    position: fixed;
+    bottom: 0;
+    background-color: #fefefe;
+    width: 100%;
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s
+}
+
+/* The Close Button */
+.close1 {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close1:hover,
+.close1:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal1-header {
+    padding: 2px 16px;
+    background-color: #ff6347;
+    color: white;
+}
+
+.modal1-body {
+	padding: 2px 16px;
+	font-size: 22px
+}
+
+.modal1-footer {
+    padding: 2px 16px;
+    background-color: #ff6347;
+    color: white;
+}
+
+/* Add Animation */
+@-webkit-keyframes slideIn {
+    from {bottom: -300px; opacity: 0} 
+    to {bottom: 0; opacity: 1}
+}
+
+@keyframes slideIn {
+    from {bottom: -300px; opacity: 0}
+    to {bottom: 0; opacity: 1}
+}
+
+@-webkit-keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+}
+
+
+/* The Modal (background) */
+.modal2 {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal2-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0} 
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top:-300px; opacity:0}
+    to {top:0; opacity:1}
+}
+
+/* The Close Button */
+.close2 {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close2:hover,
+.close2:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal2-header {
+    padding: 2px 16px;
+    background-color: #3399ff;
+    color: white;
+}
+
+.modal2-body {
+	padding: 2px 16px;
+	font-size: 22px
+}
+
+.modal2-footer {
+    padding: 2px 16px;
+    background-color: #3399ff;
+    color: white;
+}
+
+ 
+ .positioned_1 {
+  position: absolute;
+  background: yellow;
+  top: 700px;
+  left: 230px;
+}
+

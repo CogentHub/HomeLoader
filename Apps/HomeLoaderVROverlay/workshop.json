@@ -1,0 +1,8 @@
+{
+    "title": "HomeLoader Overlay",
+    "description": "This is the Overlay for the HomerLoader App.",
+    "type": [ "overlay" ],
+    "tags": [ "utility" ],
+    "ignore": [ ".git", ".scss", "gulpfile.json" ],
+    "preview_image": "preview_image.jpg"
+}

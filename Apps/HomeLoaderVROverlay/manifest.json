@@ -1,0 +1,21 @@
+﻿{
+	"name": "HomeLoader",
+    "key": "vrub_HomeLoader",
+    "description": "HomeLoader Overlay",
+    "author": "Cogent",
+	"overlays": [
+		"HomeLoader",
+	],
+	"themes": [
+		"default"
+	],
+	"plugins": [
+		"PersistentStore",
+        "SuperSimplePlugin",
+        "Keyboard",
+        "Haptics",
+        "AddonManagement",
+	],
+    "sudo": true,
+	"default_to_disabled": false,
+}

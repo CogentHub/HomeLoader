@@ -1,17 +1,6 @@
-Home Loader 0.61 - cogenthub@web.de - Made by Cogent
+HomeLoader - cogenthub@web.de - Made by Cogent
 GitHub Page:
 https://github.com/CogentHub/HomeLoader
-
-If you are using the 'Source .au3' Files then you also need to install Autoit. https://www.autoitscript.com/site/autoit/downloads/
-
-Changelog:
-- Changed uninstaller [it sets Home app back to SteamVR Home before uninstall starts]
-- Changed/Optimized HomeLoader functions [Advanced settings]
-- Added new 'stats_log.txt' File for Advanced settings functions 
-
-In current state Home Loader is considered as 'Pre-release'.
-Thank you for testing Home Loader.
-
 
 License:
 

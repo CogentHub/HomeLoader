@@ -1,0 +1,29 @@
+{
+    "name": "HomeLoader",
+    "description": "HomeLoader Game Page Overlay",
+    "key": "vrub_HomeLoader", /* Use something that won't collide with other overlays. */
+    "entrypoint": "addon://overlays/HomeLoader/index.html",
+    "inject": {
+        "js": [
+			/* "overlays/HomeLoader/scriptMain.js", */
+        ],
+        "css": [
+            "overlays/HomeLoader/styles.css",
+        ],
+    },
+    "plugins": [
+        "vrub_core_SteamVR_Applications",
+        "vrub_core_SteamVR_Events",
+        "vrub_core_SteamVR_Tracking",
+		"vrub_core_PersistentStore",
+		"vrub_core_Keyboard",
+        "vrub_core_Haptics",
+    ],
+    "width": 1600,
+    "height": 1000,
+	"meters": 4.5,
+    "type": "dashboard", /* Dashboard, Independent (Floating) */
+    "debug": true,
+    "keyboard": true,
+    "thumbnail": "icon.jpg",
+}

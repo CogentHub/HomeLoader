@@ -26,7 +26,7 @@ Global $font_arial = "arial"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 ;If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Config_INI = @ScriptDir & "\System\config.ini"
-Global $Version = "0.72"
+Global $Version = "0.73"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -44,7 +44,6 @@ Global $WinName = IniRead($Config_INI, "Settings_HomeAPP", "WindowName", "")
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $JanusVR_Page = $Install_DIR & "WebPage\janusvr\" & "index.html"
 ;Global $First_Start = IniRead($Config_INI, "Settings", "First_Start", "")
-Global $Update_Performed_Check = IniRead($config_ini, "TEMP", "Update", "")
 Global $Add_HomeLoader_to_VRToolbox_StartPage = IniRead($config_ini, "Settings", "Add_HomeLoader_to_VRToolbox_StartPage", "")
 Global $VRToolbox_HomeLoader_StartPage  = $Install_DIR & "Apps\VRToolBox\HomeLoader\HomeLoader_StartPage.html"
 
@@ -83,6 +82,13 @@ Global $Install_Folder_Steam_3 = IniRead($Config_INI, "Folders", "Install_Folder
 Global $Install_Folder_Steam_4 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_4", "")
 Global $Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 
+Global $VRUB_Folder = $Install_Folder_Steam_1 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_2 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_3 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_4 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = $Install_Folder_Steam_5 & "steamapps\common\VRUtilityBelt\"
+If Not FileExists($VRUB_Folder) Then $VRUB_Folder = ""
+
 Global $default_vrsettings_File = $SteamVR_Path & "resources\settings\default.vrsettings"
 If FileExists($default_vrsettings_File) Then IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", $default_vrsettings_File)
 Global $default_vrsettings_File_BAK = $default_vrsettings_File & ".bak"
@@ -93,11 +99,11 @@ If FileExists($Steam_tools_vrmanifest_File) Then IniWrite($Config_INI, "Folders"
 Global $Steam_tools_vrmanifest_File_BAK = $Steam_tools_vrmanifest_File & ".bak"
 
 Global $htc_vive_overlay_vrappconfig = $Steam_Path & "config\vrappconfig\" & "htc.vive.overlay.vrappconfig"
-
 Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+Global $HomeLoaderOverlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\"
+Global $HomeLoaderOverlay_TEMPLATE_Folder = $Install_DIR & "Apps\HomeLoaderVROverlay\"
 
 Global $Autostart_Apps = IniRead($Config_INI, "Autostart", "Autostart", "")
-
 Global $Autostart_App_1_State = IniRead($Config_INI, "Autostart", "App_1_State", "")
 Global $Autostart_App_2_State = IniRead($Config_INI, "Autostart", "App_2_State", "")
 Global $Autostart_App_3_State = IniRead($Config_INI, "Autostart", "App_3_State", "")
@@ -174,19 +180,19 @@ Func _First_Start_Check()
 	EndIf
 
 	If $First_Start = "true" Then ; Settings
-		MsgBox($MB_ICONWARNING, "Welcome to HomeLoader, by CogentRifter", "Choose your Home app, and then choose HomeLoaderLibrary" & @CRLF & _
-								"to set up your games or Start SteamVR to just jump in." & @CRLF & @CRLF & @CRLF & @CRLF & _
-								'Additional Informations:' & @CRLF & _
-								'The first time that you use HomeLoader, it will create Backups' & @CRLF & _
-								'for your "default.vrsettings" and "tools.manifest" files.' & @CRLF & _
-								"You can find them at '" & $Install_DIR & "Backups\" & "'" & @CRLF & @CRLF & _
-								'When you tell it to, HomeLoader will scan your Steam' & @CRLF & _
-								'directories for games. HomeLoader automatically finds your'  & @CRLF & _
-								'Steam directories but you can still change or add manually'  & @CRLF & _
-								'Steam Library folders in the settings. Click the "Settings" icon' & @CRLF & _
-								'in the lower right to add additional Steam Library folders.' & @CRLF & _
-								'If you changed the default installation path for Steam then' & @CRLF & _
-								'you can change it in "Settings" as well.')
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Welcome to HomeLoader, by CogentRifter", "Choose your Home app, and then choose HomeLoaderLibrary" & @CRLF & _
+												"to set up your games or Start SteamVR to just jump in." & @CRLF & @CRLF & @CRLF & @CRLF & _
+												'Additional Informations:' & @CRLF & _
+												'The first time that you use HomeLoader, it will create Backups' & @CRLF & _
+												'for your "default.vrsettings" and "tools.manifest" files.' & @CRLF & _
+												"You can find them at '" & $Install_DIR & "Backups\" & "'" & @CRLF & @CRLF & _
+												'When you tell it to, HomeLoader will scan your Steam' & @CRLF & _
+												'directories for games. HomeLoader automatically finds your'  & @CRLF & _
+												'Steam directories but you can still change or add manually'  & @CRLF & _
+												'Steam Library folders in the settings. Click the "Settings" icon' & @CRLF & _
+												'in the lower right to add additional Steam Library folders.' & @CRLF & _
+												'If you changed the default installation path for Steam then' & @CRLF & _
+												'you can change it in "Settings" as well.')
 		IniWrite($Config_INI, "Settings", "First_Start", "false")
 		_Settings_GUI()
 	EndIf
@@ -336,6 +342,7 @@ Func _Settings_GUI()
 	GUICtrlSetFont(-1, 11, 400, 1, $font_StartUp_arial)
 		GuiCtrlSetTip(-1, "If activated it will automatically start VRUB when SteamVR is launched.")
 		If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_CHECKED)
+	_RM_Selection_Contextmenu_VRUB_Checkbox()
 
 
 	; Button $AutoStart_Selection
@@ -394,7 +401,15 @@ Func _Settings_GUI()
 		GUICtrlSetOnEvent($Exit, "_Settings_Exit")
 
 	If $State_Checkbox_Autostart_VRUB = "true" Then
-		_Func_AutoStart_1_Hide()
+		If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+		If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
+		If $HomeApp = "Viveport VR" Then GUICtrlSetState($StartUp_Radio_2, $GUI_CHECKED)
+		If $HomeApp = "Bigscreen" Then GUICtrlSetState($StartUp_Radio_3, $GUI_CHECKED)
+		If $HomeApp = "VR Toolbox" Then GUICtrlSetState($StartUp_Radio_4, $GUI_CHECKED)
+		If $HomeApp = "Virtual Desktop" Then GUICtrlSetState($StartUp_Radio_5, $GUI_CHECKED)
+		If $HomeApp = "None" Then GUICtrlSetState($StartUp_Radio_6, $GUI_CHECKED)
+		If $HomeApp = "Other" And $Home_Path <> "" Then GUICtrlSetState($StartUp_Radio_9, $GUI_CHECKED)
+		;_Func_AutoStart_1_Hide()
 	Else
 		If $HomeApp = "SteamVR Home" Then GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
 		If $HomeApp = "Vive Home" Then GUICtrlSetState($StartUp_Radio_1, $GUI_CHECKED)
@@ -421,6 +436,13 @@ Func _Settings_GUI()
     ;    EndSwitch
     ;WEnd
 
+EndFunc
+
+Func _RM_Selection_Contextmenu_VRUB_Checkbox()
+	Global $contextmenu_Autostart_VRUB = GUICtrlCreateContextMenu($Checkbox_Autostart_VRUB)
+
+	Global $RM_Autostart_VRUB_Item1 = GUICtrlCreateMenuItem("Install HomeLoader VR Overlay", $contextmenu_Autostart_VRUB)
+		GUICtrlSetOnEvent(- 1, "_RM_Autostart_VRUB_Item1")
 EndFunc
 
 Func _RM_Selection_Contextmenu_SteamVR()
@@ -917,7 +939,7 @@ Func _Refresh_GUICtrlSetState()
 
 	If $State_Checkbox_Autostart_VRUB = "True" Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_CHECKED)
 	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_UNCHECKED)
-	If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_DISABLE)
+	;If Not FileExists($VRUB_HomeLoaderFile) Then GUICtrlSetState($Checkbox_Autostart_VRUB, $GUI_DISABLE)
 EndFunc
 
 #endregion
@@ -928,6 +950,11 @@ Func _StartUp_Radio_1() ; SteamVR Home
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "250820")
+
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
 
 	_ADD_2_SteamVR_Home_default()
 	$HomeAppGroup_Label = "Home app:"
@@ -944,6 +971,11 @@ Func _StartUp_Radio_2() ; Vive Home
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Vive Home")
 	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
 	Local $ViveHome_Path = $HTCVive_Path & "Updater\App\Home\win32\ViveHome.exe"
+
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
 
 	If FileExists($ViveHome_SDK_Path) Then $ViveHome_Path = $ViveHome_SDK_Path
 
@@ -978,6 +1010,11 @@ Func _StartUp_Radio_3() ; None
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
+
 	_ADD_2_SteamVR_Home_default()
 	$HomeAppGroup_Label = "Home app:"
 	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
@@ -1000,6 +1037,11 @@ Func _StartUp_Radio_3_Backup() ; Janus VR Backup
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $JanusVR_Path)
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Janus VR")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "602090")
+
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
 
 	If $Create_JanusVR_Bookmark = "true" Then
 		_RM_Create_Janus_VR_bookmarks()
@@ -1025,6 +1067,8 @@ Func _StartUp_Radio_4() ; VR Toolbox
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "488040")
 
+	IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "true")
+
 	_ADD_2_SteamVR_Home_default()
 	$HomeAppGroup_Label = "Home app:"
 	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
@@ -1042,6 +1086,12 @@ EndFunc
 Func _StartUp_Radio_5() ; Other
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Other")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
+
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
+
 	_StartUp_Add_Other_GUI()
 	_Sync_Config_INI()
 	_Settings_Set_States()
@@ -1051,6 +1101,11 @@ Func _StartUp_Radio_6() ; Viveport VR
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Setting Home App to Viveport VR:")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Viveport VR")
 	Local $Viveport_Path = $HTCVive_Path & "Updater\App\ViveportVR\VPNextApp.exe"
+
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
 
 	FileWriteLine($stats_log_FILE, "- ViveportVR Path = " & $Viveport_Path)
 
@@ -1082,6 +1137,11 @@ Func _StartUp_Radio_7() ; BIGSCREEN
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Bigscreen Beta")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "457550")
 
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
+
 	_ADD_2_SteamVR_Home_default()
 	$HomeAppGroup_Label = "Home app:"
 	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
@@ -1098,6 +1158,11 @@ Func _StartUp_Radio_8() ; Virtual Desktop
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Virtual Desktop")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "382110")
 
+	If IniRead($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "") = "true" Then
+		IniWrite($Config_INI, "Settings", "Open_HTML_GamePage_OnStart", "true")
+		IniWrite($Config_INI, "TEMP", "Open_HTML_GamePage_OnStart", "")
+	EndIf
+
 	_ADD_2_SteamVR_Home_default()
 	$HomeAppGroup_Label = "Home app:"
 	If $HomeApp <> "" Then $HomeAppGroup_Label = "Home app: " & "  [" & $HomeApp & "]"
@@ -1110,6 +1175,21 @@ EndFunc
 #endregion
 
 #Region Func RM Selection
+Func _RM_Autostart_VRUB_Item1()
+	$HomeLoaderOverlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\"
+	$HomeLoaderOverlay_TEMPLATE_Folder = $Install_DIR & "Apps\HomeLoaderVROverlay\"
+	DirCopy($HomeLoaderOverlay_TEMPLATE_Folder, $HomeLoaderOverlay_Folder, $FC_OVERWRITE)
+	Sleep(250)
+	_Copy_To_VRUB()
+	Sleep(500)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Installation complete", "The installation has been completed." & @CRLF & @CRLF & _
+										"HomeLoader Overlay has been installed in the following directory:" & @CRLF & _
+										$HomeLoaderOverlay_Folder)
+EndFunc
+
+
+
+
 Func _RM_Selection_Button()
 	MouseClick($MOUSE_CLICK_RIGHT)
 EndFunc
@@ -1386,7 +1466,6 @@ Func _RM_Add_HomeLoader_to_VRToolbox_StartPage()
 	EndIf
 EndFunc
 
-
 Func _RM_Add_Link_to_HL_StartPage_GUI()
 
 	Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Add an new Link to the VRToolbox 'HomeLoader Start Page'", "Do you want to add an new Link to the VRToolbox 'HomeLoader Start Page'?" & @CRLF & @CRLF & _
@@ -1442,7 +1521,6 @@ Func _RM_Add_Link_to_HL_StartPage_GUI()
 
 EndFunc   ;==>_Create_VRToolBox_HL_StartPage
 
-
 Func _RM_Add_Link_to_HL_StartPage()
 
 	MsgBox(0, "_RM_Add_Link_to_HL_StartPage", "_RM_Add_Link_to_HL_StartPage")
@@ -1495,8 +1573,6 @@ Func _RM_JanusVR_CheckBox_2()
 		EndIf
 	EndIf
 EndFunc
-
-
 
 Func _RM_Create_Janus_VR_bookmarks()
 	Global $JanusVR_Settings_Folder = "c:\Users\" & @UserName & "\Documents\janusvr\"
@@ -1623,14 +1699,25 @@ Func _Checkbox_Autostart_VRUB()
 
 	If $State_Checkbox = 1 Then
 		IniWrite($config_ini, "Settings", "Autostart_VRUB", "true")
-		_Func_AutoStart_1_Hide()
+		$HomeLoaderOverlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\"
+		If Not FileExists($HomeLoaderOverlay_Folder) Then
+			Local $Abfrage = MsgBox($MB_ICONQUESTION + $MB_YESNO, "HomeLoader VR Overlay not found!", "Do you want to install the HomeLoader VR Overlay?"  & @CRLF & _
+																				"Old Files will be overwritten." & @CRLF & _
+																				"" & @CRLF & @CRLF & _
+																				"Do you want to continue?")
+
+			If $Abfrage = 6 Then
+				_RM_Autostart_VRUB_Item1()
+			EndIf
+		EndIf
+		;_Func_AutoStart_1_Hide()
 	EndIf
 
 	If $State_Checkbox = 4 Then
 		IniWrite($config_ini, "Settings", "Autostart_VRUB", "false")
-		IniWrite($config_ini, "Settings", "Add_SS_per_game", "false")
-		_Func_AutoStart_1_Show()
-		_Sync_Config_INI()
+		;IniWrite($config_ini, "Settings", "Add_SS_per_game", "false")
+		;_Func_AutoStart_1_Show()
+		;_Sync_Config_INI()
 		_Refresh_GUICtrlSetState()
 	EndIf
 	_Sync_Config_INI()

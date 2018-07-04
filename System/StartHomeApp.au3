@@ -147,56 +147,17 @@ EndFunc
 
 #Region Start Funktionen
 Func _Start_actions_before()
-	Local $Start_HomeLoaderGUI = IniRead($Config_INI, "Settings", "Start_HomeLoaderGUI", "")
-	Local $Start_HomeLoaderLibrary = IniRead($Config_INI, "Settings", "Start_HomeLoaderLibrary", "")
-	Local $Start_Settings = IniRead($Config_INI, "Settings", "Start_Settings", "")
-
-	Local $Titel_HomeLoaderGUI = "HomeLoader GUI"
-	Local $Titel_HomeLoaderSettings = "HomeLoader - Settings"
-	Local $Titel_HomeLoaderLibrary = "Home Loader Library"
-
 	If $PIN_HTML_GamePage_Value = "true" Then
 		WinSetOnTop("Game Page Menu", "", $WINDOWS_ONTOP)
 	Else
 		WinSetOnTop("Game Page Menu", "", $WINDOWS_NOONTOP)
-	EndIf
-
-	If $Start_HomeLoaderGUI = "true" Then
-		If FileExists($Install_DIR & "Home Loader GUI.exe") Then
-			ShellExecute($Install_DIR & "Home Loader GUI.exe", "", $Install_DIR)
-		Else
-			ShellExecute($Install_DIR & "Home Loader GUI.au3", "", $Install_DIR)
-		EndIf
-	EndIf
-
-	If $Start_HomeLoaderLibrary = "true" Then
-		If FileExists($System_DIR & "HomeLoaderLibrary.exe") Then
-			ShellExecute($System_DIR & "HomeLoaderLibrary.exe", "", $System_DIR)
-		Else
-			ShellExecute($System_DIR & "HomeLoaderLibrary.au3", "", $System_DIR)
-		EndIf
-	EndIf
-
-	If $Start_Settings = "true" Then
-		If FileExists($System_DIR & "Settings.exe") Then
-			ShellExecute($System_DIR & "Settings.exe", "", $System_DIR)
-		Else
-			ShellExecute($System_DIR & "Settings.au3", "", $System_DIR)
-		EndIf
 	EndIf
 EndFunc
 
 Func _Start_actions_after()
 	If $Autostart_VRUB = "true" Then
 		_Read_from_VRUB_PersistentStore_File()
-		If $Add_SS_per_game = "true" Then _Compare_SteamVR_VRSettings_INI()
-		;_Start_Home_Loader()
-		_Write_config_INI_Values_to_VRUB_PersistentStore_File()
-	EndIf
-
-	Sleep(1000)
-
-	If $Autostart_VRUB = "true" Then
+		Sleep(1000)
 		If Not ProcessExists("VRUtilityBelt.exe") Then
 			ShellExecute("steam://rungameid/645370")
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
