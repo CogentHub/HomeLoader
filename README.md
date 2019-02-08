@@ -20,3 +20,5 @@ Home Loader - First Start Preview: https://youtu.be/0F6zeGrc8KA
 ![logo](preview/HomeLoader_pics_1.jpg) 
 
 ![logo](preview/Preview_0.jpg) 
+
+![logo](preview/Tut_img_0.png) 
