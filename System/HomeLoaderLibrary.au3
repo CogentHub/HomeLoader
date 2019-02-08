@@ -16,6 +16,7 @@
 #include <IE.au3>
 #include <Process.au3>
 #include <Misc.au3>
+#include "SteamVR_Environment.au3"
 #EndRegion Includes
 
 
@@ -43,14 +44,16 @@ Global $ButtonTAB_Steam_Library, $ButtonTAB_Custom_1, $ButtonTAB_Custom_2, $Butt
 Global $Added_to_Custom_Page, $Added_to_Custom_1, $Added_to_Custom_2, $Added_to_Custom_3, $Added_to_Custom_4
 Global $Checkbox_ScanVIVEApps_Value, $Checkbox_ScanOculusApps_Value, $Checkbox_Sort_Alphabetical_order_Value, $Checkbox_Allow_Multiple_Tag_Assignments_Value
 Global $Checkbox_Add_PlayersOnline_to_Icons_Value, $Checkbox_Add_SS_to_Icons_Value, $Checkbox_Add_SS_per_game_Value
-Global $Checkbox_Add_SS_per_game_Value, $Checkbox_Create_HTML_GamePage_Value, $Checkbox_DeleteHomeLoaderLibraryData_Value
+Global $Checkbox_Add_SS_per_game_Value, $Checkbox_Create_HTML_GamePage_Value, $Checkbox_DeleteHomeLoaderLibraryData_Value, $Checkbox_Create_SteamVR_Home_Panels_Value
 Global $Checkbox_Add_Apps_Tags_to_categories_Value, $Checkbox_Settings_1, $Checkbox_Settings_2, $Checkbox_Settings_3
 Global $Checkbox_Settings_4, $Checkbox_Settings_5, $Checkbox_Settings_6, $Checkbox_Settings_7, $Checkbox_Settings_8, $Checkbox_Settings_9
 Global $Checkbox_Settings_10, $Checkbox_Settings_11, $Checkbox_Settings_12, $Checkbox_Settings_13, $Checkbox_Settings_1_Label, $Checkbox_Settings_2_Label
 Global $Checkbox_Settings_3_Label, $Checkbox_Settings_4_Label, $Checkbox_Settings_5_Label, $Checkbox_Settings_6_Label, $Checkbox_Settings_7_Label, $Checkbox_Settings_8_Label
 Global $Checkbox_Settings_9_Label, $Checkbox_Settings_10_Label, $Checkbox_Settings_11_Label, $Checkbox_Settings_12_Label, $Checkbox_Settings_13_Label
+Global $Value_dvd_cover_template, $Combo_Environment_Name
 Global $font = "arial"
 Global $font_arial = "arial"
+Global $font_Consolas = "Consolas"
 
 Global $DesktopWidth = "855"
 Global $DesktopHeight = @DesktopHeight - 75
@@ -60,13 +63,15 @@ Global $oMyError = ObjEvent("AutoIt.Error", "MyErrFunc")
 #EndRegion Set Global
 
 #Region Declare Variables/Const 1
-Global $Version = "0.73"
+Global $Version = "0.75"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 ;If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 ;Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Config_INI = $System_DIR & "config.ini"
+Global $SteamVR_Home_Panel_Settings_INI = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini"
+Global $SteamVR_Home_Environment_Settings_INI = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Environment_Settings.ini"
 Global $SteamVR_VRSettings_INI = _PathFull("HomeLoader\SteamVR_VRSettings.ini", @AppDataDir)
 If Not FileExists($SteamVR_VRSettings_INI) Then FileCopy(@ScriptDir & "\SteamVR_VRSettings.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
@@ -93,10 +98,11 @@ Global $Use_Steam_Tags = IniRead($Config_INI, "Settings", "Use_Steam_Tags", "")
 Global $Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
 Global $Add_Apps_Tags_to_categories = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
 Global $Create_HTML_GamePage = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
+Global $Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
 Global $Add_Back_to_HTML_GamePage = IniRead($Config_INI, "Settings", "Add_Back_to_HTML_GamePage", "")
 Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
 Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
-Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "false")
 Global $Tags_TXT = $Install_DIR & "System\Tags.txt"
 
 Global $Path_GamePage_Tags = $Install_DIR & "WebPage\GamePage_Tags.html"
@@ -189,10 +195,203 @@ Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationLis
 
 Global $ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 
+Global $SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
+Global $Panel_Name_1 = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
+Global $Panel_Name_2 = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
+Global $Panel_Name_3 = IniRead($Config_INI, "Settings", "TAB3_Name", "Custom 1")
+Global $Panel_Name_4 = IniRead($Config_INI, "Settings", "TAB4_Name", "Custom 2")
+Global $Panel_Name_5 = IniRead($Config_INI, "Settings", "TAB5_Name", "Custom 3")
+Global $Panel_Name_6 = IniRead($Config_INI, "Settings", "TAB6_Name", "Custom 4")
+Global $Panel_Name_7 = "Viveport Applications"
+Global $Panel_Name_8 = "Oculus Applications"
+Global $Panel_Name_9 = "Tags"
+Global $Panel_Name_10 = "Panel Tool 1 - Controller"
+Global $Panel_Name_11 = "Panel Tool 2 - Projector"
+
+Global $SteamVR_Home_Panel_Icons = IniRead($Config_INI, "Settings_HomeAPP", "SteamVR_Home_Panel_Icons", "web")
+
 Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
 
 IniWrite($Config_INI, "Settings", "Version", $Version)
+
+Global $font_arial = "Arial"
+Global $font_2 = "Arial"
 #EndRegion Declare Variables/Const 1
+
+
+#Region Declare Variables CSS Color
+Local $NR_Colors = 147
+Local $aArray_Colors, $Color_Name_Value
+Local $aArray_Colors[1][2] = [["Name", "Value"]]
+
+_ArrayAdd($aArray_Colors, "AliceBlue|#F0F8FF")
+_ArrayAdd($aArray_Colors, "AntiqueWhite|#FAEBD7")
+_ArrayAdd($aArray_Colors, "Aqua|#00FFFF")
+_ArrayAdd($aArray_Colors, "Aquamarine|#7FFFD4")
+_ArrayAdd($aArray_Colors, "Azure|#F0FFFF")
+_ArrayAdd($aArray_Colors, "Beige|#F5F5DC")
+_ArrayAdd($aArray_Colors, "Bisque|#FFE4C4")
+_ArrayAdd($aArray_Colors, "Black|#000000")
+_ArrayAdd($aArray_Colors, "BlanchedAlmond|#FFEBCD")
+_ArrayAdd($aArray_Colors, "Blue|#0000FF")
+_ArrayAdd($aArray_Colors, "BlueViolet|#8A2BE2")
+_ArrayAdd($aArray_Colors, "Brown|#A52A2A")
+_ArrayAdd($aArray_Colors, "BurlyWood|#DEB887")
+_ArrayAdd($aArray_Colors, "CadetBlue|#5F9EA0")
+_ArrayAdd($aArray_Colors, "Chartreuse|#7FFF00")
+_ArrayAdd($aArray_Colors, "Chocolate|#D2691E")
+_ArrayAdd($aArray_Colors, "Coral|#FF7F50")
+_ArrayAdd($aArray_Colors, "CornflowerBlue|#6495ED")
+_ArrayAdd($aArray_Colors, "Cornsilk|#FFF8DC")
+_ArrayAdd($aArray_Colors, "Crimson|#DC143C")
+_ArrayAdd($aArray_Colors, "Cyan|#00FFFF")
+_ArrayAdd($aArray_Colors, "DarkBlue|#00008B")
+_ArrayAdd($aArray_Colors, "DarkCyan|#008B8B")
+_ArrayAdd($aArray_Colors, "DarkGoldenRod|#B8860B")
+_ArrayAdd($aArray_Colors, "DarkGray|#A9A9A9")
+_ArrayAdd($aArray_Colors, "DarkGrey|#A9A9A9")
+_ArrayAdd($aArray_Colors, "DarkGreen|#006400")
+_ArrayAdd($aArray_Colors, "DarkKhaki|#BDB76B")
+_ArrayAdd($aArray_Colors, "DarkMagenta|#8B008B")
+_ArrayAdd($aArray_Colors, "DarkOliveGreen|#556B2F")
+_ArrayAdd($aArray_Colors, "DarkOrange|#FF8C00")
+_ArrayAdd($aArray_Colors, "DarkOrchid|#9932CC")
+_ArrayAdd($aArray_Colors, "DarkRed|#8B0000")
+_ArrayAdd($aArray_Colors, "DarkSalmon|#E9967A")
+_ArrayAdd($aArray_Colors, "DarkSeaGreen|#8FBC8F")
+_ArrayAdd($aArray_Colors, "DarkSlateBlue|#483D8B")
+_ArrayAdd($aArray_Colors, "DarkSlateGray|#2F4F4F")
+_ArrayAdd($aArray_Colors, "DarkSlateGrey|#2F4F4F")
+_ArrayAdd($aArray_Colors, "DarkTurquoise|#00CED1")
+_ArrayAdd($aArray_Colors, "DarkViolet|#9400D3")
+_ArrayAdd($aArray_Colors, "DeepPink|#FF1493")
+_ArrayAdd($aArray_Colors, "DeepSkyBlue|#00BFFF")
+_ArrayAdd($aArray_Colors, "DimGray|#696969")
+_ArrayAdd($aArray_Colors, "DimGrey|#696969")
+_ArrayAdd($aArray_Colors, "DodgerBlue|#1E90FF")
+_ArrayAdd($aArray_Colors, "FireBrick|#B22222")
+_ArrayAdd($aArray_Colors, "FloralWhite|#FFFAF0")
+_ArrayAdd($aArray_Colors, "ForestGreen|#228B22")
+_ArrayAdd($aArray_Colors, "Fuchsia|#FF00FF")
+_ArrayAdd($aArray_Colors, "Gainsboro|#DCDCDC")
+_ArrayAdd($aArray_Colors, "GhostWhite|#F8F8FF")
+_ArrayAdd($aArray_Colors, "Gold|#FFD700")
+_ArrayAdd($aArray_Colors, "GoldenRod|#DAA520")
+_ArrayAdd($aArray_Colors, "Gray|#808080")
+_ArrayAdd($aArray_Colors, "Grey|#808080")
+_ArrayAdd($aArray_Colors, "Green|#008000")
+_ArrayAdd($aArray_Colors, "GreenYellow|#ADFF2F")
+_ArrayAdd($aArray_Colors, "HoneyDew|#F0FFF0")
+_ArrayAdd($aArray_Colors, "HotPink|#FF69B4")
+_ArrayAdd($aArray_Colors, "IndianRed|#CD5C5C")
+_ArrayAdd($aArray_Colors, "Indigo|#4B0082")
+_ArrayAdd($aArray_Colors, "Ivory|#FFFFF0")
+_ArrayAdd($aArray_Colors, "Khaki|#F0E68C")
+_ArrayAdd($aArray_Colors, "Lavender|#E6E6FA")
+_ArrayAdd($aArray_Colors, "LavenderBlush|#FFF0F5")
+_ArrayAdd($aArray_Colors, "LawnGreen|#7CFC00")
+_ArrayAdd($aArray_Colors, "LemonChiffon|#FFFACD")
+_ArrayAdd($aArray_Colors, "LightBlue|#ADD8E6")
+_ArrayAdd($aArray_Colors, "LightCoral|#F08080")
+_ArrayAdd($aArray_Colors, "LightCyan|#E0FFFF")
+_ArrayAdd($aArray_Colors, "LightGoldenRodYellow|#FAFAD2")
+_ArrayAdd($aArray_Colors, "LightGray|#D3D3D3")
+_ArrayAdd($aArray_Colors, "LightGrey|#D3D3D3")
+_ArrayAdd($aArray_Colors, "LightGreen|#90EE90")
+_ArrayAdd($aArray_Colors, "LightPink|#FFB6C1")
+_ArrayAdd($aArray_Colors, "LightSalmon|#FFA07A")
+_ArrayAdd($aArray_Colors, "LightSeaGreen|#20B2AA")
+_ArrayAdd($aArray_Colors, "LightSkyBlue|#87CEFA")
+_ArrayAdd($aArray_Colors, "LightSlateGray|#778899")
+_ArrayAdd($aArray_Colors, "LightSlateGrey|#778899")
+_ArrayAdd($aArray_Colors, "LightSteelBlue|#B0C4DE")
+_ArrayAdd($aArray_Colors, "LightYellow|#FFFFE0")
+_ArrayAdd($aArray_Colors, "Lime|#00FF00")
+_ArrayAdd($aArray_Colors, "LimeGreen|#32CD32")
+_ArrayAdd($aArray_Colors, "Linen|#FAF0E6")
+_ArrayAdd($aArray_Colors, "Magenta|#FF00FF")
+_ArrayAdd($aArray_Colors, "Maroon|#800000")
+_ArrayAdd($aArray_Colors, "MediumAquaMarine|#66CDAA")
+_ArrayAdd($aArray_Colors, "MediumBlue|#0000CD")
+_ArrayAdd($aArray_Colors, "MediumOrchid|#BA55D3")
+_ArrayAdd($aArray_Colors, "MediumPurple|#9370DB")
+_ArrayAdd($aArray_Colors, "MediumSeaGreen|#3CB371")
+_ArrayAdd($aArray_Colors, "MediumSlateBlue|#7B68EE")
+_ArrayAdd($aArray_Colors, "MediumSpringGreen|#00FA9A")
+_ArrayAdd($aArray_Colors, "MediumTurquoise|#48D1CC")
+_ArrayAdd($aArray_Colors, "MediumVioletRed|#C71585")
+_ArrayAdd($aArray_Colors, "MidnightBlue|#191970")
+_ArrayAdd($aArray_Colors, "MintCream|#F5FFFA")
+_ArrayAdd($aArray_Colors, "MistyRose|#FFE4E1")
+_ArrayAdd($aArray_Colors, "Moccasin|#FFE4B5")
+_ArrayAdd($aArray_Colors, "NavajoWhite|#FFDEAD")
+_ArrayAdd($aArray_Colors, "Navy|#000080")
+_ArrayAdd($aArray_Colors, "OldLace|#FDF5E6")
+_ArrayAdd($aArray_Colors, "Olive|#808000")
+;_ArrayAdd($aArray_Colors, "OliveDrab|#6B8E23")
+_ArrayAdd($aArray_Colors, "Orange|#FFA500")
+_ArrayAdd($aArray_Colors, "OrangeRed|#FF4500")
+_ArrayAdd($aArray_Colors, "Orchid|#DA70D6")
+_ArrayAdd($aArray_Colors, "PaleGoldenRod|#EEE8AA")
+_ArrayAdd($aArray_Colors, "PaleGreen|#98FB98")
+_ArrayAdd($aArray_Colors, "PaleTurquoise|#AFEEEE")
+_ArrayAdd($aArray_Colors, "PaleVioletRed|#DB7093")
+_ArrayAdd($aArray_Colors, "PapayaWhip|#FFEFD5")
+_ArrayAdd($aArray_Colors, "PeachPuff|#FFDAB9")
+_ArrayAdd($aArray_Colors, "Peru|#CD853F")
+_ArrayAdd($aArray_Colors, "Pink|#FFC0CB")
+_ArrayAdd($aArray_Colors, "Plum|#DDA0DD")
+_ArrayAdd($aArray_Colors, "PowderBlue|#B0E0E6")
+_ArrayAdd($aArray_Colors, "Purple|#800080")
+_ArrayAdd($aArray_Colors, "RebeccaPurple|#663399")
+_ArrayAdd($aArray_Colors, "Red|#FF0000")
+_ArrayAdd($aArray_Colors, "RosyBrown|#BC8F8F")
+_ArrayAdd($aArray_Colors, "RoyalBlue|#4169E1")
+_ArrayAdd($aArray_Colors, "SaddleBrown|#8B4513")
+_ArrayAdd($aArray_Colors, "Salmon|#FA8072")
+_ArrayAdd($aArray_Colors, "SandyBrown|#F4A460")
+_ArrayAdd($aArray_Colors, "SeaGreen|#2E8B57")
+_ArrayAdd($aArray_Colors, "SeaShell|#FFF5EE")
+_ArrayAdd($aArray_Colors, "Sienna|#A0522D")
+_ArrayAdd($aArray_Colors, "Silver|#C0C0C0")
+_ArrayAdd($aArray_Colors, "SkyBlue|#87CEEB")
+_ArrayAdd($aArray_Colors, "SlateBlue|#6A5ACD")
+_ArrayAdd($aArray_Colors, "SlateGray|#708090")
+_ArrayAdd($aArray_Colors, "SlateGrey|#708090")
+_ArrayAdd($aArray_Colors, "Snow|#FFFAFA")
+_ArrayAdd($aArray_Colors, "SpringGreen|#00FF7F")
+_ArrayAdd($aArray_Colors, "SteelBlue|#4682B4")
+_ArrayAdd($aArray_Colors, "Tan|#D2B48C")
+_ArrayAdd($aArray_Colors, "Teal|#008080")
+_ArrayAdd($aArray_Colors, "Thistle|#D8BFD8")
+_ArrayAdd($aArray_Colors, "Tomato|#FF6347")
+_ArrayAdd($aArray_Colors, "Turquoise|#40E0D0")
+_ArrayAdd($aArray_Colors, "Violet|#EE82EE")
+_ArrayAdd($aArray_Colors, "Wheat|#F5DEB3")
+_ArrayAdd($aArray_Colors, "White|#FFFFFF")
+_ArrayAdd($aArray_Colors, "WhiteSmoke|#F5F5F5")
+_ArrayAdd($aArray_Colors, "Yellow|#FFFF00")
+_ArrayAdd($aArray_Colors, "YellowGreen|#9ACD32")
+
+
+;_ArrayDisplay($aArray_Colors, "2D - Item delimited")
+
+
+
+;Global $Colors_ALL_Combo = "AliceBlue"&"|"&"AntiqueWhite"&"|"&"Aqua"&"|"&"Aquamarine"&"|"&"Azure"&"|"&"Beige"&"|"&"Bisque"&"|"&"Black"&"|"&"BlanchedAlmond"&"|"&"Blue"&"|"&"BlueViolet"&"|"&"Brown"&"|"&"BurlyWood"&"|"&"CadetBlue"&"|"&"Chartreuse"&"|"&"Chocolate"&"|"&"Coral"&"|"&"CornflowerBlue"&"|"&"Cornsilk"&"|"&"Crimson"&"|"&"Cyan"&"|"&"DarkBlue"&"|"&"DarkCyan"&"|"&"DarkGoldenRod"&"|"&"DarkGray"&"|"&"DarkGrey"&"|"&"DarkGreen"&"|"&"DarkKhaki"&"|"&"DarkMagenta"&"|"&"DarkOliveGreen"&"|"&"DarkOrange"&"|"&"DarkOrchid"&"|"&"DarkRed"&"|"&"DarkSalmon"&"|"&"DarkSeaGreen"&"|"&"DarkSlateBlue"&"|"&"DarkSlateGray"&"|"&"DarkSlateGrey"&"|"&"DarkTurquoise"&"|"&"DarkViolet"&"|"&"DeepPink"&"|"&"DeepSkyBlue"&"|"&"DimGray"&"|"&"DimGrey"&"|"&"DodgerBlue"&"|"&"FireBrick"&"|"&"FloralWhite"&"|"&"ForestGreen"&"|"&"Fuchsia"&"|"&"Gainsboro"&"|"&"GhostWhite"&"|"&"Gold"&"|"&"GoldenRod"&"|"&"Gray"&"|"&"Grey"&"|"&"Green"&"|"&"GreenYellow"&"|"&"HoneyDew"&"|"&"HotPink"&"|"&"IndianRed "&"|"&"Indigo "&"|"&"Ivory"&"|"&"Khaki"&"|"&"Lavender"&"|"&"LavenderBlush"&"|"&"LawnGreen"&"|"&"LemonChiffon"&"|"&"LightBlue"&"|"&"LightCoral"&"|"&"LightCyan"&"|"&"LightGoldenRodYellow"&"|"&"LightGray"&"|"&"LightGrey"&"|"&"LightGreen"&"|"&"LightPink"&"|"&"LightSalmon"&"|"&"LightSeaGreen"&"|"&"LightSkyBlue"&"|"&"LightSlateGray"&"|"&"LightSlateGrey"&"|"&"LightSteelBlue"&"|"&"LightYellow"&"|"&"Lime"&"|"&"LimeGreen"&"|"&"Linen"&"|"&"Magenta"&"|"&"Maroon"&"|"&"MediumAquaMarine"&"|"&"MediumBlue"&"|"&"MediumOrchid"&"|"&"MediumPurple"&"|"&"MediumSeaGreen"&"|"&"MediumSlateBlue"&"|"&"MediumSpringGreen"&"|"&"MediumTurquoise"&"|"&"MediumVioletRed"&"|"&"MidnightBlue"&"|"&"MintCream"&"|"&"MistyRose"&"|"&"Moccasin"&"|"&"NavajoWhite"&"|"&"Navy"&"|"&"OldLace"&"|"&"Olive"&"|"&"OliveDrab"&"|"&"Orange"&"|"&"OrangeRed"&"|"&"Orchid"&"|"&"PaleGoldenRod"&"|"&"PaleGreen"&"|"&"PaleTurquoise"&"|"&"PaleVioletRed"&"|"&"PapayaWhip"&"|"&"PeachPuff"&"|"&"Peru"&"|"&"Pink"&"|"&"Plum"&"|"&"PowderBlue"&"|"&"Purple"&"|"&"RebeccaPurple"&"|"&"Red"&"|"&"RosyBrown"&"|"&"RoyalBlue"&"|"&"SaddleBrown"&"|"&"Salmon"&"|"&"SandyBrown"&"|"&"SeaGreen"&"|"&"SeaShell"&"|"&"Sienna"&"|"&"Silver"&"|"&"SkyBlue"&"|"&"SlateBlue"&"|"&"SlateGray"&"|"&"SlateGrey"&"|"&"Snow"&"|"&"SpringGreen"&"|"&"SteelBlue"&"|"&"Tan"&"|"&"Teal"&"|"&"Thistle"&"|"&"Tomato"&"|"&"Turquoise"&"|"&"Violet"&"|"&"Wheat"&"|"&"White"&"|"&"WhiteSmoke"&"|"&"Yellow"&"|"&"YellowGreen"
+
+
+
+Global $Colors_ALL_Combo = ""
+For $Loop = 1 To $NR_Colors
+	$Colors_ALL_Combo = $Colors_ALL_Combo & $aArray_Colors[$Loop][0] & "|"
+Next
+
+;MsgBox(0, "$Colors_ALL_Combo", $Colors_ALL_Combo)
+
+
+#EndRegion
+
 
 ;MsgBox(0, "HLL 1", $First_Start & @CRLF & _
 ;					$Config_INI & @CRLF & _
@@ -429,14 +628,6 @@ Func _First_Start_Empty_Check_1()
 		EndIf
 	EndIf
 
-	$Icon_Folder_3 = IniRead($Config_INI, "Folders", "Icon_Folder_3", "")
-	If $Icon_Folder_3 = "" Then
-		If FileExists($HomeLoader_Overlay_Folder & "images\") Then
-			$Icon_Folder_3 = $HomeLoader_Overlay_Folder & "images\"
-			IniWrite($Config_INI, "Folders", "Icon_Folder_3", $Icon_Folder_3)
-		EndIf
-	EndIf
-
 
 	If $Steam_tools_vrmanifest_File = "" Then
 		If FileExists($Install_Folder_Steam_1 & "SteamApps\appmanifest_250820.acf") Then $SteamVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\SteamVR\"
@@ -568,7 +759,7 @@ Func _Create_HLL_GUI()
 	; Icon Preview
 	Global $Icon_Preview_Image = GUICtrlCreatePic($gfx & "Icon_Preview.jpg", 631, 7, 160, 75)
 
-	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 220, $DesktopHeight - 107, 100, 80, $BS_BITMAP)
+	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 215, $DesktopHeight - 107, 102, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
 	GUICtrlSetTip(-1, "Add Game to the Home Loader Library." & @CRLF & "It will show up in the Non-Library Appl. category.")
 
@@ -673,19 +864,23 @@ Func _Create_HLL_GUI()
 	GUICtrlSetFont(-1, 11, 400, 1, "arial")
 	GUICtrlSetTip(-1, "Requests Tags from the Steamdb Info database 'https://steamdb.info/...'" & @CRLF & "and adds all Games to the matching categorie during the Scan." & @CRLF)
 
-	Global $Button_More_Scan_Options = GUICtrlCreateButton("More Scan Options", 439, 62, 185, 24, $BS_BITMAP)
+	Global $Button_More_Scan_Options = GUICtrlCreateButton("More Settings", 439, 62, 185, 24, $BS_BITMAP)
 	GUICtrlSetColor(-1, "0x0000CD")
 	GUICtrlSetFont(-1, 10, 600, 2, "arial")
 	_RM_More_Scan_Options()
 
 
-	Global $Button_ResolutionScale = GUICtrlCreateButton("Resolution Scale", 430, $DesktopHeight - 107, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
+	Global $Button_ResolutionScale = GUICtrlCreateButton("Resolution Scale", 440, $DesktopHeight - 107, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_ResolutionScale, $gfx & "ResolutionScale.bmp")
 	GUICtrlSetTip(-1, "Shows the HomeLoader Resolution Scale Window.")
 
-	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 430, $DesktopHeight - 65, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
+	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 65, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
 	GUICtrlSetTip(-1, "Shows the HomeLoader Settings Window where it is possible to change the Home App.")
+
+	Global $Button_SteamVRHome_Panel_Settings = GUICtrlCreateButton("SteamVR Home Panel Setting", 539, $DesktopHeight - 107, 102, 80, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
+	_GUICtrlButton_SetImage($Button_SteamVRHome_Panel_Settings, $gfx & "SteamVRHome_Panel_Settings.bmp")
+	GUICtrlSetTip(-1, "Shows the Settings Window for the SteamVR Home panels.")
 
 	;Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 	;_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
@@ -698,6 +893,8 @@ Func _Create_HLL_GUI()
 	Global $Button_Exit = GUICtrlCreateButton("Exit", 730, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Exit, $gfx & "Exit.bmp")
 	GUICtrlSetTip(-1, "Close.")
+
+	_RM_Button_SteamVRHome_Panel_Settings()
 
 
 	Global $ButtonTAB_Steam_Library = GUICtrlCreateButton($TAB1_Label, 3, 90, 130)
@@ -763,7 +960,7 @@ Func _Create_HLL_GUI()
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
 
 
-	Global $Button_ShowGamePage_1 = GUICtrlCreateButton("Show Game Page", 325, $DesktopHeight - 107, 100, 80, $BS_BITMAP)
+	Global $Button_ShowGamePage_1 = GUICtrlCreateButton("Show Game Page", 335, $DesktopHeight - 107, 102, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_ShowGamePage_1, $gfx & "GamePageMode.bmp")
 	GUICtrlSetTip(-1, "Opens the Game Page with all Games for the current Category." & @CRLF)
 
@@ -836,7 +1033,7 @@ Func _Create_HLL_GUI()
 	GUISetOnEvent($GUI_EVENT_CLOSE, "_Exit")
 	GUICtrlSetOnEvent($Button_Restart, "_Restart")
 	GUICtrlSetOnEvent($Button_Exit, "_Exit")
-	;GUICtrlSetOnEvent($Button_Settings, "_HLL_Settings_GUI")
+	;GUICtrlSetOnEvent($Button_Settings, "_Write_ResolutionScale_OVERLAY_to_SteamVR_VRSettings")
 	GUICtrlSetOnEvent($Button_Exit_Settings_GUI, "_Button_Exit_Settings_GUI")
 
 	;GUICtrlSetOnEvent($Combo_SteamLibrary, "_Combo_SteamLibrary")
@@ -861,6 +1058,7 @@ Func _Create_HLL_GUI()
 	GUICtrlSetOnEvent($ButtonTAB_Custom_3, "_ButtonTAB_Custom_3")
 	GUICtrlSetOnEvent($ButtonTAB_Custom_4, "_ButtonTAB_Custom_4")
 
+	GUICtrlSetOnEvent($Button_SteamVRHome_Panel_Settings, "_Button_SteamVRHome_Panel_Settings")
 	GUICtrlSetOnEvent($Button_ResolutionScale, "_SS_GUI")
 	GUICtrlSetOnEvent($Button_HomeLoaderSettings, "_Button_HomeLoaderSettings")
 
@@ -887,12 +1085,53 @@ Func _Create_HLL_GUI()
 EndFunc
 
 Func _HLL_Settings_GUI()
-	Global $HEIGHT_GUI = 475
-	Global $POS_X = 5
-	Global $POS_Y_SteamLibraryFolders_Group = 5
-	Global $POS_Y_IconFolders_Group = 335
+	$Checkbox_ScanLibrary_OnStart_Value = ""
+	$Checkbox_Request_Steamdb_info_Value = ""
+	$Checkbox_Use_Steam_Tags_Value = ""
+	$Checkbox_ScanVIVEApps_Value = ""
+	$Checkbox_ScanOculusApps_Value = ""
+	$Checkbox_Sort_Alphabetical_order_Value = ""
+	$Checkbox_Add_Apps_Tags_to_categories_Value = ""
+	$Checkbox_Allow_Multiple_Tag_Assignments_Value = ""
+	$Checkbox_Add_PlayersOnline_to_Icons_Value = ""
+	$Checkbox_Add_SS_to_Icons_Value = ""
+	$Checkbox_Add_SS_per_game_Value = ""
+	$Checkbox_Create_HTML_GamePage_Value = ""
+	$Checkbox_Create_SteamVR_Home_Panels_Value = ""
+	$Checkbox_DeleteHomeLoaderLibraryData_Value = ""
 
-	Global $POS_Y_Button_Exit_Settings_GUI = 435
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
+	$Request_Steamdb_info = IniRead($Config_INI, "Settings", "Request_Steamdb_info", "")
+	$ScanOnlyVR = IniRead($Config_INI, "Settings", "ScanOnlyVR", "")
+	$ScanVIVEApps = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
+	$ScanOculusApps = IniRead($Config_INI, "Settings", "ScanOculusApps", "")
+	$Sort_Alphabetical_order = IniRead($Config_INI, "Settings", "Sort_Alphabetical_order", "")
+	$Use_Steam_Tags = IniRead($Config_INI, "Settings", "Use_Steam_Tags", "")
+	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
+	$Add_Apps_Tags_to_categories = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
+	$Create_HTML_GamePage = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
+	$Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
+	$Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
+	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
+
+	Local $Value_SSD_SetSoundDevice = IniRead($Config_INI, "Settings", "SSD_SetSoundDevice", "")
+
+	Global $HEIGHT_GUI = 705 ; 505
+	Global $POS_X_1 = 0
+	Global $POS_Y_1 = 0
+	Global $POS_Y_2 = 470
+
+	Global $POS_Y_Button_Open_SSD_SetSoundDevice = 505
+	Global $POS_Y_Button_Combo_Playback = $POS_Y_Button_Open_SSD_SetSoundDevice + 30
+	Global $POS_Y_Button_Combo_Record = $POS_Y_Button_Combo_Playback + 30
+	Global $POS_Y_Button_Exit_Settings_GUI = 665
+
+	Global $Width_Group_1 = 531
+	Global $Width_Group_2 = 531
+	Global $HEIGHT_Group_1 = 455
+	Global $HEIGHT_Group_2 = 185
 
 
 	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
@@ -902,133 +1141,209 @@ Func _HLL_Settings_GUI()
 	$HLL_Settings_GUI = GUICreate("Settings", 540, $HEIGHT_GUI, -1, -1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 
-	GUICtrlCreateGroup("Scan Options", 5, $POS_Y_SteamLibraryFolders_Group, 531, 425)
+	GUICtrlCreateGroup("Scan Options", $POS_X_1 + 5, $POS_Y_1 + 5, $Width_Group_1, $HEIGHT_Group_1)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
 
+	$POS_Y_1 = 40
 	If $ScanLibrary_OnStart_SettingValue = "true" Then $Checkbox_ScanLibrary_OnStart_Value = "a"
-	Global $Checkbox_Settings_1 = GUICtrlCreateLabel($Checkbox_ScanLibrary_OnStart_Value, 10, 40, 20, 20, 0x1201)
+	Global $Checkbox_Settings_1 = GUICtrlCreateLabel($Checkbox_ScanLibrary_OnStart_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_ScanLibrary_OnStart")
-	Global $Checkbox_Settings_1_Label = GUICtrlCreateLabel("Scan with HomeApp Start", 38, 38, 470, 28)
+	Global $Checkbox_Settings_1_Label = GUICtrlCreateLabel("Scan with HomeApp Start", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_Checkbox_ScanLibrary_OnStart")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Request_Steamdb_info = "true" Then $Checkbox_Request_Steamdb_info_Value = "a"
-	Global $Checkbox_Settings_2 = GUICtrlCreateLabel($Checkbox_Request_Steamdb_info_Value, 10, 70, 20, 20, 0x1201)
+	Global $Checkbox_Settings_2 = GUICtrlCreateLabel($Checkbox_Request_Steamdb_info_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_Request_Steamdb_info")
-	Global $Checkbox_Settings_2_Label = GUICtrlCreateLabel("Request Steamdb Info", 38, 68, 470, 28)
+	Global $Checkbox_Settings_2_Label = GUICtrlCreateLabel("Request Steamdb Info", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_Checkbox_Request_Steamdb_info")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Use_Steam_Tags = "true" Then $Checkbox_Use_Steam_Tags_Value = "a"
-	Global $Checkbox_Settings_3 = GUICtrlCreateLabel($Checkbox_Use_Steam_Tags_Value, 10, 100, 20, 20, 0x1201)
+	Global $Checkbox_Settings_3 = GUICtrlCreateLabel($Checkbox_Use_Steam_Tags_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_Use_Steam_Tags")
-	Global $Checkbox_Settings_3_Label = GUICtrlCreateLabel("Request Steamdb Tags", 38, 98, 470, 28)
+	Global $Checkbox_Settings_3_Label = GUICtrlCreateLabel("Request Steamdb Tags", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_Checkbox_Use_Steam_Tags")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $ScanVIVEApps = "true" Then $Checkbox_ScanVIVEApps_Value = "a"
-	Global $Checkbox_Settings_4 = GUICtrlCreateLabel($Checkbox_ScanVIVEApps_Value, 10, 130, 20, 20, 0x1201)
+	Global $Checkbox_Settings_4 = GUICtrlCreateLabel($Checkbox_ScanVIVEApps_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_ScanViveData")
-	Global $Checkbox_Settings_4_Label = GUICtrlCreateLabel("Scan for Viveport Apps", 38, 128, 470, 28)
+	Global $Checkbox_Settings_4_Label = GUICtrlCreateLabel("Scan for Viveport Apps", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_ScanViveData")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $ScanOculusApps = "true" Then $Checkbox_ScanOculusApps_Value = "a"
-	Global $Checkbox_Settings_5 = GUICtrlCreateLabel($Checkbox_ScanOculusApps_Value, 10, 160, 20, 20, 0x1201)
+	Global $Checkbox_Settings_5 = GUICtrlCreateLabel($Checkbox_ScanOculusApps_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_ScanOculusData")
-	Global $Checkbox_Settings_5_Label = GUICtrlCreateLabel("Scan for Oculus Apps", 38, 158, 470, 28)
+	Global $Checkbox_Settings_5_Label = GUICtrlCreateLabel("Scan for Oculus Apps", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_ScanOculusData")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Sort_Alphabetical_order = "true" Then $Checkbox_Sort_Alphabetical_order_Value = "a"
-	Global $Checkbox_Settings_6 = GUICtrlCreateLabel($Checkbox_Sort_Alphabetical_order_Value, 10, 190, 20, 20, 0x1201)
+	Global $Checkbox_Settings_6 = GUICtrlCreateLabel($Checkbox_Sort_Alphabetical_order_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Sort_Alphabetical_order")
-	Global $Checkbox_Settings_6_Label = GUICtrlCreateLabel("Sort Apps in Alphabetical order", 38, 188, 470, 28)
+	Global $Checkbox_Settings_6_Label = GUICtrlCreateLabel("Sort Apps in Alphabetical order", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Sort_Alphabetical_order")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Add_Apps_Tags_to_categories = "true" Then $Checkbox_Add_Apps_Tags_to_categories_Value = "a"
-	Global $Checkbox_Settings_7 = GUICtrlCreateLabel($Checkbox_Add_Apps_Tags_to_categories_Value, 10, 220, 20, 20, 0x1201)
+	Global $Checkbox_Settings_7 = GUICtrlCreateLabel($Checkbox_Add_Apps_Tags_to_categories_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Add_Apps_Tags_to_categories")
-	Global $Checkbox_Settings_7_Label = GUICtrlCreateLabel("Add Apps based on their tags to the categories", 38, 218, 470, 28)
+	Global $Checkbox_Settings_7_Label = GUICtrlCreateLabel("Add Apps based on their tags to the categories", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Add_Apps_Tags_to_categories")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Allow_Multiple_Tag_Assignments = "true" Then $Checkbox_Allow_Multiple_Tag_Assignments_Value = "a"
-	Global $Checkbox_Settings_8 = GUICtrlCreateLabel($Checkbox_Allow_Multiple_Tag_Assignments_Value, 10, 250, 20, 20, 0x1201)
+	Global $Checkbox_Settings_8 = GUICtrlCreateLabel($Checkbox_Allow_Multiple_Tag_Assignments_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Allow_Multiple_Tag_Assignments")
-	Global $Checkbox_Settings_8_Label = GUICtrlCreateLabel("Allow multiple Tag assigments", 38, 248, 470, 28)
+	Global $Checkbox_Settings_8_Label = GUICtrlCreateLabel("Allow multiple Tag assigments", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Allow_Multiple_Tag_Assignments")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Add_PlayersOnline_to_Icons = "true" Then $Checkbox_Add_PlayersOnline_to_Icons_Value = "a"
-	Global $Checkbox_Settings_9 = GUICtrlCreateLabel($Checkbox_Add_PlayersOnline_to_Icons_Value, 10, 280, 20, 20, 0x1201)
+	Global $Checkbox_Settings_9 = GUICtrlCreateLabel($Checkbox_Add_PlayersOnline_to_Icons_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_PlayersOnline_to_Icons")
-	Global $Checkbox_Settings_9_Label = GUICtrlCreateLabel("Add number of current Players to the game Icons", 38, 278, 470, 28)
+	Global $Checkbox_Settings_9_Label = GUICtrlCreateLabel("Add number of current Players to the game Icons", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_PlayersOnline_to_Icons")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Add_SS_to_Icons = "true" Then $Checkbox_Add_SS_to_Icons_Value = "a"
-	Global $Checkbox_Settings_10 = GUICtrlCreateLabel($Checkbox_Add_SS_to_Icons_Value, 10, 310, 20, 20, 0x1201)
+	Global $Checkbox_Settings_10 = GUICtrlCreateLabel($Checkbox_Add_SS_to_Icons_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_SS_to_Icons")
-	Global $Checkbox_Settings_10_Label = GUICtrlCreateLabel("Add the Resolution Scale Value to the game Icons", 38, 308, 490, 28)
+	Global $Checkbox_Settings_10_Label = GUICtrlCreateLabel("Add the Resolution Scale Value to the game Icons", $POS_X_1 + 38, $POS_Y_1 - 2, 490, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_SS_to_Icons")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Add_SS_per_game = "true" Then $Checkbox_Add_SS_per_game_Value = "a"
-	Global $Checkbox_Settings_11 = GUICtrlCreateLabel($Checkbox_Add_SS_per_game_Value, 10, 340, 20, 20, 0x1201)
+	Global $Checkbox_Settings_11 = GUICtrlCreateLabel($Checkbox_Add_SS_per_game_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_SS_per_game")
-	Global $Checkbox_Settings_11_Label = GUICtrlCreateLabel("Allow Read/Write of the Resolution Scale Value", 38, 338, 470, 28)
+	Global $Checkbox_Settings_11_Label = GUICtrlCreateLabel("Allow Read/Write of the Resolution Scale Value", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Add_SS_per_game")
 
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $Create_HTML_GamePage = "true" Then $Checkbox_Create_HTML_GamePage_Value = "a"
-	Global $Checkbox_Settings_12 = GUICtrlCreateLabel($Checkbox_Create_HTML_GamePage_Value, 10, 370, 20, 20, 0x1201)
+	Global $Checkbox_Settings_12 = GUICtrlCreateLabel($Checkbox_Create_HTML_GamePage_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_HTML_GamePage")
-	Global $Checkbox_Settings_12_Label = GUICtrlCreateLabel("Create HTML Game Pages", 38, 368, 470, 28)
+	Global $Checkbox_Settings_12_Label = GUICtrlCreateLabel("Create HTML Game Pages", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_HTML_GamePage")
 
+	$POS_Y_1 = $POS_Y_1 + 30
+	If $Create_SteamVR_Home_Panels = "true" Then $Checkbox_Create_SteamVR_Home_Panels_Value = "a"
+	Global $Checkbox_Settings_13 = GUICtrlCreateLabel($Checkbox_Create_SteamVR_Home_Panels_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
+	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_SteamVR_Home_Panels")
+	Global $Checkbox_Settings_13_Label = GUICtrlCreateLabel("Update all SteamVR Environment Files", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
+	GUICtrlSetFont(-1, 17, 400, 1, "arial")
+	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_SteamVR_Home_Panels")
+
+	$POS_Y_1 = $POS_Y_1 + 30
 	If $DeleteHomeLoaderLibraryData = "true" Then $Checkbox_DeleteHomeLoaderLibraryData_Value = "a"
-	Global $Checkbox_Settings_13 = GUICtrlCreateLabel($Checkbox_DeleteHomeLoaderLibraryData_Value, 10, 400, 20, 20, 0x1201)
+	Global $Checkbox_Settings_14 = GUICtrlCreateLabel($Checkbox_DeleteHomeLoaderLibraryData_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_DeleteHomeLoaderLibraryData")
-	Global $Checkbox_Settings_13_Label = GUICtrlCreateLabel("Delete old HomeLoader Library Data first", 38, 398, 470, 28)
+	Global $Checkbox_Settings_14_Label = GUICtrlCreateLabel("Delete old HomeLoader Library Data first", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_DeleteHomeLoaderLibraryData")
 
 
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 500, $POS_Y_Button_Exit_Settings_GUI, 35, 35, $BS_BITMAP)
+
+
+	GUICtrlCreateGroup("Sound Device", $POS_X_1 + 5, $POS_Y_2, $Width_Group_2, $HEIGHT_Group_2)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
+
+
+	Local $Button_Open_SSD_SetSoundDevice = GUICtrlCreateButton("Open SSD - SetSoundDevice [Create Shortcuts]", $POS_X_1 + 10, $POS_Y_Button_Open_SSD_SetSoundDevice, 380, 32, $BS_BITMAP)
+	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Button_Open_SSD_SetSoundDevice")
+
+
+	Global $Checkbox_SSD_SetSoundDevice_1_value = ""
+	If $Value_SSD_SetSoundDevice = "true" Then $Checkbox_SSD_SetSoundDevice_1_value = "a"
+	Global $Checkbox_SSD_SetSoundDevice_1 = GUICtrlCreateLabel($Checkbox_SSD_SetSoundDevice_1_value, $POS_X_1 + 10, $POS_Y_Button_Open_SSD_SetSoundDevice + 45, 20, 20, 0x1201)
+	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetOnEvent(-1, "_Checkbox_SSD_SetSoundDevice_1")
+	Global $Checkbox_SSD_SetSoundDevice_1_Label = GUICtrlCreateLabel("Set Sound Device after SteamVR has started", $POS_X_1 + 38, $POS_Y_Button_Open_SSD_SetSoundDevice + 43, 450, 28)
+	GUICtrlSetFont(-1, 17, 400, 1, "arial")
+	GUICtrlSetOnEvent(-1, "_Checkbox_SSD_SetSoundDevice_1")
+
+
+	GUICtrlCreateLabel("Playback Device", $POS_X_1 + 10, $POS_Y_Button_Open_SSD_SetSoundDevice + 80, 145, 20)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_2)
+	Global $Combo_Playback_Device = GUICtrlCreateCombo("", $POS_X_1 + 160, $POS_Y_Button_Open_SSD_SetSoundDevice + 78, 229, 20)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Combo_Playback_Device")
+
+	Local $Button_Set_Playback_Device= GUICtrlCreateButton("Set Playback Dev.", $POS_X_1 + 395, $POS_Y_Button_Open_SSD_SetSoundDevice + 77, 135, 28)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Button_Set_Playback_Device")
+
+
+	GUICtrlCreateLabel("Recording Device", $POS_X_1 + 10, $POS_Y_Button_Open_SSD_SetSoundDevice + 110, 145, 20)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_2)
+	Global $Combo_Recording_Device = GUICtrlCreateCombo("", $POS_X_1 + 160, $POS_Y_Button_Open_SSD_SetSoundDevice + 108, 229, 22)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Combo_Recording_Device")
+
+	Local $Button_Set_Recording_Device= GUICtrlCreateButton("Set Recording Dev.", $POS_X_1 + 395, $POS_Y_Button_Open_SSD_SetSoundDevice + 107, 135, 28)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Button_Set_Recording_Device")
+
+
+	Global $Button_PAYPAL_DONATE_Settings_GUI = GUICtrlCreateButton("Donate", $POS_X_1 + 5, $POS_Y_Button_Exit_Settings_GUI, 84, 35, $BS_BITMAP)
+	GUICtrlSetOnEvent(-1, "_Button_PAYPAL_DONATE_Settings_GUI")
+	_GUICtrlButton_SetImage(-1, $gfx & "Paypal_Donate.bmp")
+	GUICtrlSetTip(-1, "Closes GUI Window.")
+
+	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", $POS_X_1 + 500, $POS_Y_Button_Exit_Settings_GUI, 35, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(-1, "_Button_Exit_Settings_GUI")
 	_GUICtrlButton_SetImage(-1, $gfx & "Exit_small.bmp")
 	GUICtrlSetTip(-1, "Closes GUI Window.")
+
+	_Update_Objects_Settings_GUI()
 
 	GUISetState()
 	$Game_ID = ""
@@ -1112,65 +1427,77 @@ Func _AddGame2Library_GUI()
 EndFunc   ;==>_AddGame2Library_GUI
 
 Func _SS_GUI()
+	If Not WinExists("Resolution Scale Menu") Then
+		If $ScanOnlyVR <> "true" Then
+			$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+		Else
+			$ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+		EndIf
 
-	If $ScanOnlyVR <> "true" Then
-		$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
-	Else
-		$ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+		$SS_Settings_GUI = GUICreate("Resolution Scale Menu", 285, 200, -1, -1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
+
+		Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
+		$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+		Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+		Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview, $ListView_Selected_Row_Index)
+		Local $Steam_app_Name = $ListView_Item_Array[3]
+		Local $Game_ID = $ListView_Item_Array[2]
+
+		Local $App_NR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "NR", "")
+
+		Local $ResolutionScale_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "ResolutionScale", "100")
+		Local $motionSmoothingOverride_value = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "motionSmoothingOverride", "")
+		Local $Checkbox_motionSmoothingOverride_Value = $motionSmoothingOverride_value
+
+
+		; Group 1
+		Local $Steam_app_Name_RS = StringLeft($Steam_app_Name, 16)
+		If StringLen($Steam_app_Name) > 16 Then $Steam_app_Name_RS = $Steam_app_Name_RS & "..."
+		$ResolutionScale_Group = GUICtrlCreateGroup("Scale [%] for: " & $Steam_app_Name_RS, 5, 5, 275, 150)
+		DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+		GUICtrlSetColor(-1, "0x0000FF")
+		GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+		Global $Slider_0 = GUICtrlCreateSlider(8, 35, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
+		GUICtrlSetLimit($Slider_0, 500, 20)
+		GUICtrlSetData($Slider_0, $ResolutionScale_value)
+		GUICtrlSetOnEvent(-1, "_Slider_0")
+
+		Global $Input_ResolutionScale = GUICtrlCreateInput($ResolutionScale_value, 208, 35, 65, 30)
+		GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
+		Global $UpDown_ResolutionScale = GUICtrlCreateUpdown($Input_ResolutionScale)
+		GUICtrlSetOnEvent(-1, "_UpDown_ResolutionScale")
+
+		If $Checkbox_motionSmoothingOverride_Value = "1" Then $Checkbox_motionSmoothingOverride_Value = "a"
+		Global $SS_Checkbox_motionSmoothingOverride = GUICtrlCreateLabel($Checkbox_motionSmoothingOverride_Value, 15, 80, 20, 20, 0x1201)
+		GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
+		GUICtrlSetBkColor(-1, 0xFFFFFF)
+		GUICtrlSetOnEvent(-1, "_SS_Checkbox_motionSmoothingOverride")
+		Global $SS_Checkbox_motionSmoothingOverride_Label = GUICtrlCreateLabel("MotionSmoothingOverride", 43, 78, 230, 28)
+		GUICtrlSetFont(-1, 15, 400, 1, "arial")
+		GUICtrlSetOnEvent(-1, "_SS_Checkbox_motionSmoothingOverride")
+
+
+		Global $SAVE_Button_Group_1 = GUICtrlCreateButton("SAVE", 10, 110, 264, 30)
+		GUICtrlSetTip(-1, "Closes Settings Window.")
+		GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
+		GUICtrlSetColor(-1, "0x006600")
+		GUICtrlSetOnEvent($SAVE_Button_Group_1, "_Write_to_SteamVR_VRSettings")
+
+		Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 4, 160, 276, 35)
+		GUICtrlSetTip(-1, "Closes GUI Window.")
+		GUICtrlSetFont(-1, 17, 600, 2, $font_arial)
+		GUICtrlSetColor(-1, "0x8B0000")
+		GUICtrlSetOnEvent(-1, "_Button_Exit_SS_Settings_GUI")
+
+		GUICtrlSetData($ResolutionScale_Group, "Scale [%] for: " & $Steam_app_Name_RS)
+		;GUICtrlSetData($VRSettings_Group, "VR Settings - " & $Steam_app_Name)
+		GUICtrlSetData($Slider_0, $ResolutionScale_value)
+		GUICtrlSetData($Input_ResolutionScale, $ResolutionScale_value)
+
+		GUISetState()
 	EndIf
-
-	$SS_Settings_GUI = GUICreate("Resolution Scale Menu", 285, 155, -1, -1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
-
-	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
-	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
-	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
-
-	Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview, $ListView_Selected_Row_Index)
-	Local $Steam_app_Name = $ListView_Item_Array[3]
-	Local $Game_ID = $ListView_Item_Array[2]
-
-	Local $ResolutionScale_value = IniRead($ApplicationList_TEMP, "Application_" & $Game_ID, "ResolutionScale", "100")
-
-	; Group 1
-	Local $Steam_app_Name_RS = StringLeft($Steam_app_Name, 16)
-	If StringLen($Steam_app_Name) > 16 Then $Steam_app_Name_RS = $Steam_app_Name_RS & "..."
-	$ResolutionScale_Group = GUICtrlCreateGroup("Scale [%] for: " & $Steam_app_Name_RS, 5, 5, 275, 105)
-	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
-	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
-
-	Global $Slider_0 = GUICtrlCreateSlider(8, 35, 200, 30, BitOR($TBS_TOOLTIPS, $TBS_AUTOTICKS, $TBS_FIXEDLENGTH))
-	GUICtrlSetLimit($Slider_0, 500, 20)
-	GUICtrlSetData($Slider_0, $ResolutionScale_value)
-	GUICtrlSetOnEvent(-1, "_Slider_0")
-
-	Global $Input_ResolutionScale = GUICtrlCreateInput($ResolutionScale_value, 208, 35, 65, 30)
-	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_arial)
-	Global $UpDown_ResolutionScale = GUICtrlCreateUpdown($Input_ResolutionScale)
-	GUICtrlSetOnEvent(-1, "_UpDown_ResolutionScale")
-
-	Global $SAVE_Button_Group_1 = GUICtrlCreateButton("SAVE", 10, 70, 264, 30)
-	GUICtrlSetTip(-1, "Closes Settings Window.")
-	GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
-	GUICtrlSetColor(-1, "0x006600")
-	GUICtrlSetOnEvent($SAVE_Button_Group_1, "_Write_to_SteamVR_VRSettings")
-
-
-
-
-	Global $Button_Exit_Settings_GUI = GUICtrlCreateButton("Exit", 245, 115, 35, 35, $BS_BITMAP)
-	GUICtrlSetOnEvent(-1, "_Button_Exit_SS_Settings_GUI")
-	_GUICtrlButton_SetImage(-1, $gfx & "Exit_small.bmp")
-	GUICtrlSetTip(-1, "Closes GUI Window.")
-
-
-	GUICtrlSetData($ResolutionScale_Group, "Scale [%] for: " & $Steam_app_Name_RS)
-	;GUICtrlSetData($VRSettings_Group, "VR Settings - " & $Steam_app_Name)
-	GUICtrlSetData($Slider_0, $ResolutionScale_value)
-	GUICtrlSetData($Input_ResolutionScale, $ResolutionScale_value)
-
-
-	GUISetState()
 EndFunc   ;==>_SS_GUI
 
 Func _Update_StatusBar()
@@ -1411,27 +1738,44 @@ Func _Get_ADD_PlayersOnline_DATA()
 	If $Check_AppId <> "" Then
 		Local $URL = "https://steamdb.info/app/" & $appid & "/graphs/"
 		If WinExists("HomeLoader - Library") Then _GUICtrlStatusBar_SetText($Statusbar, "" & "Steamdb Info: Retrieving Data - " & "Nr: " & $Check_NR & " - " & "" & $Check_name & "" & "" & @TAB & "" & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
-		_INetGetSource($URL)
+		;_INetGetSource($URL)
 
 		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 		If Not @error Then
 			$WinHttpReq.Open("GET", $URL, False)
+			$WinHttpReq.SetRequestHeader("User-Agent", "Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16")
 			$WinHttpReq.SetTimeouts(50, 50, 50, 50)
 			If WinExists("HomeLoader - Library") Then _GUICtrlStatusBar_SetText($Statusbar, "" & "Steamdb Info: Retrieving URL... " & $URL & " - " & "   " & "Nr: " & $Check_NR & " - " & "" & $Check_name & "" & "" & @TAB & "" & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 			$WinHttpReq.Send()
+
+			;$DataResponse = $WinHttpReq.ResponseText
+			;MsgBox(0, "$DataResponse", $DataResponse)
 
 			If @error Then
 				MyErrFunc()
 			Else
 				If $WinHttpReq.Status <> 404 Then
 					$DataResponse = $WinHttpReq.ResponseText
+					;FileWrite(@ScriptDir & "\URL_TEST.txt", $DataResponse)
+
+					;$DataResponse = FileRead(@ScriptDir & "\URL_TEST.txt")
 
 					Local $iPosition_1 = StringInStr($DataResponse, '<li><strong>')
-					Local $iPosition_2 = StringInStr($DataResponse, '</strong><em>all-time peak')
+					Local $iPosition_2 = StringInStr($DataResponse, '</strong> all-time peak')
 					Local $iPosition_3 = $iPosition_2 - $iPosition_1
+
+					;MsgBox(0, "$iPosition_1", $iPosition_1 & @CRLF & $iPosition_2 & @CRLF & $iPosition_3)
 
 					Local $sString = StringMid($DataResponse, $iPosition_1, $iPosition_3)
 					Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
+
+					;FileWrite(@ScriptDir & "\" & "TESTTEMP.txt", $DataResponse)
+
+					;MsgBox(0, "$iPosition_1", $iPosition_1)
+					;MsgBox(0, "$iPosition_3", $iPosition_3)
+					;MsgBox(0, "$sString", $sString)
+					;MsgBox(0, "$iPosition_3", $aArray[0] & @CRLF & $aArray[1] )
+
 
 					If $aArray[0] > 1 Then
 						Global $PlayersOnline_right_now = StringSplit($aArray[2], '<')
@@ -1444,7 +1788,6 @@ Func _Get_ADD_PlayersOnline_DATA()
 						$PlayersOnline_right_now = StringReplace($PlayersOnline_right_now, ',', '.')
 						$PlayersOnline_24h_peak = StringReplace($PlayersOnline_24h_peak, ',', '.')
 						$PlayersOnline_all_time_peak = StringReplace($PlayersOnline_all_time_peak, ',', '.')
-
 
 						$ApplicationList_INI_TEMP = $ApplicationList_TEMP
 						If $ScanOnlyVR = "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
@@ -1567,6 +1910,7 @@ Func _Get_SteamGame_Tags()
 				Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 				If Not @error Then
 					$WinHttpReq.Open("GET", $URL, False)
+					$WinHttpReq.SetRequestHeader("User-Agent", "Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16")
 					$WinHttpReq.SetTimeouts(50, 50, 50, 50)
 					_GUICtrlStatusBar_SetText($Statusbar, "" & "Steam Tags: " & "Retrieving URL... " & $URL & " - " & "   " & "Nr: " & $Loop & " - " & "" & $Check_name & "" & "" & @TAB & "" & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 					$WinHttpReq.Send()
@@ -2085,6 +2429,9 @@ Func _Quit_PO_Image_2_Image()
 EndFunc   ;==>_Quit_PO_Image_2_Image
 
 Func _Get_AD_SS_Values_to_Icons()
+	Global $Check_AppId
+	$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+	If $ScanOnlyVR = "true" Then $ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
 	Local $FileList = _FileListToArray($Icons & "460x215\", "*.jpg", 1)
 
 	If $FileList <> "" Then
@@ -2094,7 +2441,7 @@ Func _Get_AD_SS_Values_to_Icons()
 			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
 			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
 
-			Local $SS_Value_Check = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "resolutionScale", "")
+			Local $SS_Value_Check = IniRead($ApplicationList_TEMP, "Application_" & $Check_AppId, "resolutionScale", "")
 			Global $Value_for_Image = $SS_Value_Check
 
 			If $Value_for_Image <> "" Then
@@ -2190,8 +2537,10 @@ Func _Get_SteamGame_Icon_32x32()
 		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 		If Not @error Then
 			$WinHttpReq.Open("GET", $URL, False)
+			$WinHttpReq.SetRequestHeader("User-Agent", "Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16")
 			$WinHttpReq.Send()
 			Local $Data = $WinHttpReq.ResponseText
+			;FileWrite(@ScriptDir & "\URL_TEST.txt", $Data)
 
 			Local $iPosition_1 = StringInStr($Data, 'clienttga</td>', $STR_CASESENSE, 1, 1000)
 			Local $iPosition_2 = StringInStr($Data, '.jpg" rel="nofollow">', $STR_CASESENSE, 1, 1000)
@@ -2238,6 +2587,7 @@ Func _Get_SteamGame_Icon_256x256()
 		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 		If Not @error Then
 			$WinHttpReq.Open("GET", $URL, False)
+			$WinHttpReq.SetRequestHeader("User-Agent", "Opera/9.80 (X11; Linux i686; Ubuntu/14.10) Presto/2.12.388 Version/12.16")
 			$WinHttpReq.Send()
 			Local $Data = $WinHttpReq.ResponseText
 
@@ -2296,7 +2646,36 @@ Func _Download_Icon_for_SteamGameID()
 EndFunc   ;==>_Download_Icon_for_SteamGameID
 
 Func _Sync_Icons()
-	Local $FileList = _FileListToArray($Icons & "460x215\", "*.jpg", 1)
+	Local $Icon_Folder_Sync
+	Local $Icon_Folder_1 = $Install_DIR & "WebPage\images\"
+	Local $Icon_Folder_2 = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\images\"
+	Local $Icon_Folder_3 = $Install_DIR & "WebPage\Tags\images\"
+	Local $Icon_Folder_4 = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\Tags\images\"
+
+	Local $NR_Icons_Folders = 2
+	If $Use_Steam_Tags = "true" Then $NR_Icons_Folders = 4
+
+	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
+	For $Loop_1 = 1 To $FileList[0]
+		For $Loop_2 = 1 To $NR_Icons_Folders
+			If $Loop_2 = 1 Then $Icon_Folder_Sync = $Icon_Folder_1
+			If $Loop_2 = 2 Then $Icon_Folder_Sync = $Icon_Folder_2
+			If $Loop_2 = 3 Then $Icon_Folder_Sync = $Icon_Folder_3
+			If $Loop_2 = 4 Then $Icon_Folder_Sync = $Icon_Folder_4
+
+			If FileExists($Icon_Folder_Sync) Then
+				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
+				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
+			EndIf
+		Next
+	Next
+EndFunc   ;==>_Sync_Icons
+
+Func _Sync_Icons_Backup()
+	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
 	For $Loop_1 = 1 To $FileList[0]
 		For $Loop_2 = 1 To 5
 			Local $Icon_Folder_Sync = IniRead($Config_INI, "Folders", "Icon_Folder_" & $Loop_2, "")
@@ -2308,6 +2687,43 @@ Func _Sync_Icons()
 				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
 			EndIf
 		Next
+
+		If $Use_Steam_Tags = "true" Then
+			$Icon_Folder_Sync = $Install_DIR & "WebPage\Tags\images\"
+			If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+			If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then
+				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
+				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
+			EndIf
+		EndIf
+
+		If $Autostart_VRUB = "true" Then
+			$Icon_Folder_Sync = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\images\"
+
+			If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+			If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then
+				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
+				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
+			EndIf
+
+			If $Use_Steam_Tags = "true" Then
+				$Icon_Folder_Sync = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\Tags\images\"
+				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+				If Not FileExists($VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\Tags\images\" & $FileList[$Loop_1]) Then
+					If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
+					If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+					If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+					If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
+					If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
+				EndIf
+			EndIf
+		EndIf
 	Next
 EndFunc   ;==>_Sync_Icons
 
@@ -3003,6 +3419,7 @@ Func _Set_States()
 	$Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
 	$Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
 
 	If $Request_Steamdb_info = "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_5, $GUI_ENABLE)
@@ -3034,24 +3451,56 @@ Func _RM_Button_Scan()
 	Global $RM_Button_Scan_Item_1_1 = GUICtrlCreateMenuItem("Scan", $contextmenu_Button_Scan)
 	GUICtrlSetOnEvent(-1, "_Button_ReScan_Steam_Library")
 	Global $RM_Button_Scan_Item_1_2 = GUICtrlCreateMenuItem("Scan Viveport Apps", $contextmenu_Button_Scan)
-	GUICtrlSetOnEvent(-1, "_ScanViveData")
+	GUICtrlSetOnEvent(-1, "_RM_Button_Scan_Item_1_2")
 	Global $RM_Button_Scan_Item_1_3 = GUICtrlCreateMenuItem("Scan Oculus Apps", $contextmenu_Button_Scan)
-	GUICtrlSetOnEvent(-1, "_ScanOculusData")
+	GUICtrlSetOnEvent(-1, "_RM_Button_Scan_Item_1_3")
 	GUICtrlCreateMenuItem("", $contextmenu_Button_Scan)
 	Global $RM_Button_Scan_Item_2 = GUICtrlCreateMenuItem("Fetch Steamdb Info", $contextmenu_Button_Scan)
-	GUICtrlSetOnEvent(-1, "_RM_Button_Scan_Get_PO_Data")
+	GUICtrlSetOnEvent(-1, "_RM_Button_Scan_Item_2")
 	Global $RM_Button_Scan_Item_3 = GUICtrlCreateMenuItem("Fetch Steamdb Tags", $contextmenu_Button_Scan)
-	GUICtrlSetOnEvent(-1, "_RM_Scan_Fetch_Steamdb_Tags")
+	GUICtrlSetOnEvent(-1, "_RM_Button_Scan_Item_3")
 	GUICtrlCreateMenuItem("", $contextmenu_Button_Scan)
 	Global $RM_Button_Scan_Item_4 = GUICtrlCreateMenuItem("Create HTML Game Pages [All Apps]", $contextmenu_Button_Scan)
 	GUICtrlSetOnEvent(-1, "_RM_Create_HTML_GamePages_All")
 	Global $RM_Button_Scan_Item_5 = GUICtrlCreateMenuItem("Create HTML Game Pages [Selected Apps]", $contextmenu_Button_Scan)
 	GUICtrlSetOnEvent(-1, "_RM_Create_HTML_GamePages_Selected")
 	GUICtrlCreateMenuItem("", $contextmenu_Button_Scan)
-	Global $RM_Button_Scan_Item_6 = GUICtrlCreateMenuItem("Delete Category Pages", $contextmenu_Button_Scan)
+	Global $RM_Button_Scan_Item_6 = GUICtrlCreateMenuItem("Update all SteamVR Environment Files", $contextmenu_Button_Scan)
+	GUICtrlSetOnEvent(-1, "_RM_SteamVR_Home_Game_Panels_ALL")
+	;Global $RM_Button_Scan_Item_7 = GUICtrlCreateMenuItem("Create SteamVR Home Game Panels [Selected Apps]", $contextmenu_Button_Scan)
+	;GUICtrlSetOnEvent(-1, "_RM_SteamVR_Home_Game_Panels_Selected")
+	GUICtrlCreateMenuItem("", $contextmenu_Button_Scan)
+	Global $RM_Button_Scan_Item_8 = GUICtrlCreateMenuItem("Delete Category Pages", $contextmenu_Button_Scan)
 	GUICtrlSetOnEvent(-1, "_RM_Delete_Category_Pages")
 	GUICtrlCreateMenuItem("", $contextmenu_Button_Scan)
 EndFunc   ;==>_RM_Button_Scan
+
+
+Func _RM_Button_Scan_Item_1_2()
+	_ScanViveData()
+	_Sync_All_INI_Files_1()
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+Func _RM_Button_Scan_Item_1_3()
+	_ScanOculusData()
+	_Sync_All_INI_Files_1()
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+Func _RM_Button_Scan_Item_2()
+	_RM_Button_Scan_Get_PO_Data()
+	_Sync_All_INI_Files_1()
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+Func _RM_Button_Scan_Item_3()
+	_RM_Scan_Fetch_Steamdb_Tags()
+	_Sync_All_INI_Files_1()
+	_Read_from_INI_ADD_2_ListView()
+EndFunc
+
+
 
 Func _RM_Button_Scan_Get_PO_Data()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding Steamdb.Info:")
@@ -3095,6 +3544,9 @@ Func _RM_Button_Scan_Get_PO_Data()
 		EndIf
 	EndIf
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding Steamdb.Info:" & " [NR of Apps: " & $NR_ApplicationsCheck & "]")
+
+	_Sync_All_INI_Files_1()
+
 EndFunc   ;==>_RM_Button_Scan_Get_PO_Data
 
 Func _RM_More_Scan_Options()
@@ -3142,7 +3594,11 @@ Func _RM_More_Scan_Options()
 	If $Autostart_VRUB = "true" Then GUICtrlSetState(-1, $GUI_DISABLE)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_HTML_GamePage")
 
-	Global $RM_More_Scan_Options_Item_9 = GUICtrlCreateMenuItem("Delete old HomeLoader Library Data first", $contextmenu_More_Scan_Options)
+	Global $RM_More_Scan_Options_Item_9 = GUICtrlCreateMenuItem("Update all SteamVR Environment Files", $contextmenu_More_Scan_Options)
+	If $Create_SteamVR_Home_Panels = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
+	GUICtrlSetOnEvent(-1, "_RM_Checkbox_Create_SteamVR_Home_Panels")
+
+	Global $RM_More_Scan_Options_Item_10 = GUICtrlCreateMenuItem("Delete old HomeLoader Library Data first", $contextmenu_More_Scan_Options)
 	If $DeleteHomeLoaderLibraryData = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
 	If $Autostart_VRUB = "true" Then GUICtrlSetState(-1, $GUI_DISABLE)
 	GUICtrlSetOnEvent(-1, "_RM_Checkbox_DeleteHomeLoaderLibraryData")
@@ -7942,12 +8398,18 @@ Func _Update_VRSettings_GUI_Items()
 	If StringLen($Steam_app_Name) > 18 Then $Steam_app_Name_RS = $Steam_app_Name_RS & "."
 	Local $Game_ID = $ListView_Item_Array[2]
 
+	Local $MotionSmoothingOverride_value = IniRead($ApplicationList_TEMP, "Application_" & $Game_ID, "motionSmoothingOverride", "")
 	Local $ResolutionScale_value = IniRead($ApplicationList_TEMP, "Application_" & $Game_ID, "ResolutionScale", "100")
 
 	GUICtrlSetData($ResolutionScale_Group, "Scale [%] for: " & $Steam_app_Name_RS)
 	GUICtrlSetData($Slider_0, $ResolutionScale_value)
 	GUICtrlSetData($Input_ResolutionScale, $ResolutionScale_value)
 
+	If $MotionSmoothingOverride_value = "1" Then
+		GUICtrlSetData($SS_Checkbox_motionSmoothingOverride, "a")
+	Else
+		GUICtrlSetData($SS_Checkbox_motionSmoothingOverride, "")
+	EndIf
 EndFunc   ;==>_Update_VRSettings_GUI_Items
 
 Func _Create_HTMLView_GUI()
@@ -8175,6 +8637,7 @@ Func _Create_HTMLGamePage_GUI() ; GamePageMode
 		Sleep(100)
 
 		Global $locationurl_old = _IEPropertyGet($oIE, "locationname")
+		Global $locationurl_old_revive = StringReplace($locationurl_old, 'steam://rungameid/', '')
 		Global $locationurl_new, $Link_old, $Link_new
 
 		Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
@@ -8256,7 +8719,9 @@ Func _Create_HTMLGamePage_GUI() ; GamePageMode
 				_Restart()
 			EndIf
 
-			If StringLeft($locationurl_new, 11) = "revive.app." And StringLeft($locationurl_old, 11) <> "revive.app." Then
+			Local $locationurl_revive_Check = StringReplace($locationurl_new, 'steam://rungameid/', '')
+			If StringLeft($locationurl_revive_Check, 11) = "revive.app." And StringLeft($locationurl_old_revive, 11) <> "revive.app." Then
+				;MsgBox(0, "$locationurl_new", $locationurl_new)
 				$oIE.navigate($IE_Adresse)
 				;MsgBox(0, "revive.app.", $Install_DIR & "WebPage\Revive\" & $locationurl_new & ".bat")
 				ShellExecute($Install_DIR & "WebPage\Revive\" & $locationurl_new & ".bat")
@@ -8837,7 +9302,9 @@ Func _Button_Add_to_Custom()
 EndFunc   ;==>_Button_Add_to_Custom
 
 Func _Button_HomeLoaderSettings()
-	_Settings_GUI()
+	If Not WinExists("HomeLoader - Settings") Then
+		_Settings_GUI()
+	EndIf
 EndFunc   ;==>_Button_HomeLoaderSettings
 
 Func _Start_ListView_Selected()
@@ -8859,24 +9326,36 @@ Func _Start_ListView_Selected()
 	Local $StringLeft_Check_HL = StringLeft($Check_AppId, 5)
 	Local $StringLeft_Check_Revive = StringLeft($Check_AppId, 11)
 
+	Local $Viveport_binary_path_windows = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	If $ScanOnlyVR = "true" Then $Viveport_binary_path_windows = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	;MsgBox(0, "1", "Application_vive.htc." & $StringTrimLeft_Check_AppID)
+
 	Local $Revive_ShellExecute = $Revive_Path & "Revive\ReviveInjector_x64.exe"
 
 	If $Check_AppId <> "" Then
 		If $StringLeft_Check_AppID = "vive.htc." Then
 			If Not ProcessExists("Vive.exe") Then
-				If FileExists($HTCVive_Path & "PCClient\Vive.exe") Then
-					ShellExecute($HTCVive_Path & "PCClient\Vive.exe")
+				If FileExists($Viveport_binary_path_windows) Then
+					ShellExecute($Viveport_binary_path_windows, "", "")
+				Else
+					If FileExists($HTCVive_Path & "PCClient\Vive.exe") Then
+						ShellExecute($HTCVive_Path & "PCClient\Vive.exe")
+						Do
+							Sleep(1000)
+						Until ProcessExists("Vive.exe")
+						Sleep(1000)
+					EndIf
 				EndIf
-				Sleep(500)
+			Else
+				ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
 			EndIf
-			ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
 		Else
 			$StringLeft_Check_AppID = StringLeft($Check_AppId, 11)
 			$StringTrimLeft_Check_AppID = StringTrimLeft($Check_AppId, 11)
 			If $StringLeft_Check_AppID = "revive.app." Then
 				;_Start_Revive_Oculus_App()
 			Else
-				ShellExecute("steam://rungameid/" & $Check_AppId)
+				ShellExecute("steam://rungameid/" & $Check_AppId & "/VR")
 			EndIf
 		EndIf
 
@@ -9106,6 +9585,23 @@ EndFunc   ;==>_Button_AddGame2Library
 
 
 Func _Button_ReScan_Steam_Library() ; Scan Button
+	;MsgBox(0, "1 - _Button_ReScan_Steam_Library", "_Button_ReScan_Steam_Library")
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
+	$Request_Steamdb_info = IniRead($Config_INI, "Settings", "Request_Steamdb_info", "")
+	$ScanOnlyVR = IniRead($Config_INI, "Settings", "ScanOnlyVR", "")
+	$ScanVIVEApps = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
+	$ScanOculusApps = IniRead($Config_INI, "Settings", "ScanOculusApps", "")
+	$Sort_Alphabetical_order = IniRead($Config_INI, "Settings", "Sort_Alphabetical_order", "")
+	$Use_Steam_Tags = IniRead($Config_INI, "Settings", "Use_Steam_Tags", "")
+	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
+	$Add_Apps_Tags_to_categories = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
+	$Create_HTML_GamePage = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
+	$Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
+	$Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
+	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
+
 	Local $Timer = TimerInit()
 
 	If WinExists("HomeLoader - Library") Then _Loading_GUI()
@@ -9152,7 +9648,7 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		EndIf
 	EndIf
 
-	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 60)
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 55)
 
 	If $ScanOculusApps = "true" Then
 		If FileExists($Revive_revive_vrmanifest_FilePath) Then
@@ -9160,17 +9656,17 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		EndIf
 	EndIf
 
-	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 65)
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 60)
 
 	If $Add_SS_per_game = "true" Then
 		_Read_SteamVR_VRSettings()
 	EndIf
 
-	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 70)
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 65)
 
 	If $Add_SS_to_Icons = "true" Then _Get_AD_SS_Values_to_Icons()
 
-	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 75)
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 70)
 
 	If $Create_HTML_GamePage = "true" Then
 		If WinExists("HomeLoader - Library") Then
@@ -9178,10 +9674,20 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		EndIf
 		_Create_GamePage_Menu_Page()
 		_Create_GamePages()
-		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 80)
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 75)
 		_Create_SinglePages()
-		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 85)
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 80)
 		_Create_Game_Tags_Page()
+	EndIf
+
+	If $Create_SteamVR_Home_Panels = "true" Then
+		If WinExists("HomeLoader - Library") Then
+			_GUICtrlStatusBar_SetText($Statusbar, "" & "Preparing SteamVR Home Environment, please wait." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		EndIf
+		;If $HomeApp = "SteamVR Home" Then
+			_Button_Panel_Settings_Apply()
+		;Endif
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 85)
 	EndIf
 
 	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 95)
@@ -9197,6 +9703,7 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 	Local $sec = Round(($TimerDiff / 1000), 2)
 
 	If $Autostart_VRUB = "true" Then
+		_Write_ALL_Categories_to_VRUB_PersistentStore_File()
 		_Copy_To_VRUB()
 	EndIf
 
@@ -9215,6 +9722,7 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 EndFunc   ;==>_Button_ReScan_Steam_Library
 
 Func _Button_ReScan_Steam_Library_AutoUpdate()
+	;MsgBox(0, "2 - _Button_ReScan_Steam_Library_AutoUpdate", "_Button_ReScan_Steam_Library_AutoUpdate")
 	Local $Timer = TimerInit()
 	If $ScanOnlyVR <> "true" Then
 		Global $Array_Library[1][1] = [["appid"]]
@@ -9270,8 +9778,15 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 		_Create_Game_Tags_Page()
 	EndIf
 
+	If $Create_SteamVR_Home_Panels = "true" Then
+		Sleep(1000)
+		_Button_Panel_Settings_Apply()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 85)
+	EndIf
+
 	_Sync_Icons()
 	If $Autostart_VRUB = "true" Then
+		_Write_ALL_Categories_to_VRUB_PersistentStore_File()
 		_Copy_To_VRUB()
 	EndIf
 
@@ -9281,8 +9796,9 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 EndFunc   ;==>_Button_ReScan_Steam_Library_AutoUpdate
 
 Func _Button_More_Scan_Options()
-	;MouseClick($MOUSE_CLICK_RIGHT)
-	_HLL_Settings_GUI()
+	If Not WinExists("Settings") Then
+		_HLL_Settings_GUI()
+	EndIf
 EndFunc   ;==>_Button_More_Scan_Options
 
 
@@ -9517,12 +10033,12 @@ Func _ScanViveData()
 		IniWrite($ApplicationList_TEMP, "Application_" & $Application_NR_new, "IconPath", $Viveport_Array_Sorted[$Loop_1][4])
 		IniWrite($ApplicationList_TEMP, "Application_" & $Application_NR_new, "binary_path_windows", $Viveport_Array_Sorted[$Loop_1][5])
 
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "NR", $Application_NR_new)
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "url", $Viveport_Array_Sorted[$Loop_1][2])
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "appid", $Viveport_Array_Sorted[$Loop_1][3])
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "name", $Viveport_Array_Sorted[$Loop_1][0])
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "IconPath", $Viveport_Array_Sorted[$Loop_1][4])
-		IniWrite($ApplicationList_TEMP, "Application_" & $appid_TEMP, "binary_path_windows", $Viveport_Array_Sorted[$Loop_1][5])
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "NR", $Application_NR_new)
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "url", $Viveport_Array_Sorted[$Loop_1][2])
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "appid", $Viveport_Array_Sorted[$Loop_1][3])
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "name", $Viveport_Array_Sorted[$Loop_1][0])
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "IconPath", $Viveport_Array_Sorted[$Loop_1][4])
+		IniWrite($ApplicationList_TEMP, "Application_" & $Viveport_Array_Sorted[$Loop_1][3], "binary_path_windows", $Viveport_Array_Sorted[$Loop_1][5])
 
 		IniWrite($ApplicationList_TEMP, "ApplicationList", "NR_Applications", $Application_NR_new)
 	Next
@@ -9958,7 +10474,7 @@ Func _RM_Add_Apps_Tags_to_categories()
 		GUICtrlSetData($Checkbox_Settings_7, "")
 		IniWrite($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "false")
 	EndIf
-	$Sort_Alphabetical_order = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
+	$Add_Apps_Tags_to_categories = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
 	_Set_States()
 EndFunc   ;==>_RM_Add_Apps_Tags_to_categories
 
@@ -9973,7 +10489,7 @@ Func _RM_Checkbox_Allow_Multiple_Tag_Assignments()
 		GUICtrlSetData($Checkbox_Settings_8, "")
 		IniWrite($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "false")
 	EndIf
-	$Sort_Alphabetical_order = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
+	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_Allow_Multiple_Tag_Assignments
 
@@ -9988,7 +10504,7 @@ Func _RM_Checkbox_Add_PlayersOnline_to_Icons()
 		GUICtrlSetData($Checkbox_Settings_9, "")
 		IniWrite($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "false")
 	EndIf
-	$Sort_Alphabetical_order = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
+	$Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_Add_PlayersOnline_to_Icons
 
@@ -10003,7 +10519,7 @@ Func _RM_Checkbox_Add_SS_to_Icons()
 		GUICtrlSetData($Checkbox_Settings_10, "")
 		IniWrite($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 	EndIf
-	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "")
+	$Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_Add_SS_to_Icons
 
@@ -10018,7 +10534,7 @@ Func _RM_Checkbox_Add_SS_per_game()
 		GUICtrlSetData($Checkbox_Settings_11, "")
 		IniWrite($Config_INI, "Settings", "Add_SS_per_game", "false")
 	EndIf
-	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_Add_SS_per_game
 
@@ -10033,32 +10549,45 @@ Func _RM_Checkbox_Create_HTML_GamePage()
 		GUICtrlSetData($Checkbox_Settings_12, "")
 		IniWrite($Config_INI, "Settings", "Create_HTML_GamePage", "false")
 	EndIf
-	$Allow_Multiple_Tag_Assignments = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
+	$Create_HTML_GamePage = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_Create_HTML_GamePage
+
+Func _RM_Checkbox_Create_SteamVR_Home_Panels()
+	Local $CheckBox = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
+	If $CheckBox <> "true" Then
+		GUICtrlSetState($RM_More_Scan_Options_Item_9, $GUI_CHECKED)
+		GUICtrlSetData($Checkbox_Settings_13, "a")
+		IniWrite($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "true")
+	Else
+		GUICtrlSetState($RM_More_Scan_Options_Item_9, $GUI_UNCHECKED)
+		GUICtrlSetData($Checkbox_Settings_13, "")
+		IniWrite($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "false")
+	EndIf
+	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
+	_Set_States()
+EndFunc   ;==>_RM_Checkbox_DeleteHomeLoaderLibraryData
 
 Func _RM_Checkbox_DeleteHomeLoaderLibraryData()
 	Local $CheckBox = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 	If $CheckBox <> "true" Then
-		GUICtrlSetState($RM_More_Scan_Options_Item_9, $GUI_CHECKED)
-		GUICtrlSetData($Checkbox_Settings_13, "a")
+		GUICtrlSetState($RM_More_Scan_Options_Item_10, $GUI_CHECKED)
+		GUICtrlSetData($Checkbox_Settings_14, "a")
 		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "true")
 	Else
-		GUICtrlSetState($RM_More_Scan_Options_Item_9, $GUI_UNCHECKED)
-		GUICtrlSetData($Checkbox_Settings_13, "")
+		GUICtrlSetState($RM_More_Scan_Options_Item_10, $GUI_UNCHECKED)
+		GUICtrlSetData($Checkbox_Settings_14, "")
 		IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "false")
 	EndIf
 	$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 	_Set_States()
 EndFunc   ;==>_RM_Checkbox_DeleteHomeLoaderLibraryData
 
-
 Func _RM_Scan_Fetch_Steamdb_Tags()
 	_RM_Delete_Category_Pages()
 	_Get_SteamGame_Tags()
 	;_Add_ApplicationList_To_Tags()
 EndFunc   ;==>_RM_Scan_Fetch_Steamdb_Tags
-
 
 Func _RM_Create_HTML_GamePages_All()
 	_Create_GamePages()
@@ -10070,6 +10599,18 @@ Func _RM_Create_HTML_GamePages_Selected()
 	_Button_Create_GamePage_selected()
 	_Button_Create_SinglePage_selected()
 EndFunc   ;==>_RM_Create_HTML_GamePages_Selected
+
+Func _RM_SteamVR_Home_Game_Panels_ALL()
+	_Button_Panel_Settings_Apply()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+	EndIf
+EndFunc   ;==>_RM_SteamVR_Home_Game_Panels_ALL
+
+;Func _RM_SteamVR_Home_Game_Panels_Selected()
+;	_Compile_SteamVR_Files()
+;EndFunc   ;==>_RM_SteamVR_Home_Game_Panels_Selected
 
 Func _RM_Delete_Category_Pages()
 	If FileExists($ApplicationList_Custom_1_INI) Then FileDelete($ApplicationList_Custom_1_INI)
@@ -10173,6 +10714,8 @@ Func _Button_SAVE_APP()
 	Local $LastAppNR = IniRead($ApplicationList_Non_Steam_Appl_INI, "ApplicationList", "NR_Applications", "")
 	Local $NewAppNR = $LastAppNR + 1
 
+	If FileExists($Value_IconPath_Folder) Then FileCopy($Value_IconPath_Folder, "steam.app." & $Value_Use_SteamID & ".jpg", $FC_CREATEPATH + $FC_OVERWRITE)
+
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "Application_" & $NewAppNR, "appid", $Value_Use_SteamID)
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "Application_" & $NewAppNR, "name", $Value_Input_Name)
 	IniWrite($ApplicationList_Non_Steam_Appl_INI, "Application_" & $NewAppNR, "installdir", $Value_GamePath_Folder)
@@ -10219,6 +10762,71 @@ EndFunc   ;==>_Button_Exit_AddGame2Library_GUI
 #EndRegion Func Add to Library GUI
 
 #Region Func Settings GUI
+
+Func _Update_Objects_Settings_GUI()
+	Local $Value, $Value_Read, $Device_Name
+	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
+
+	IniWrite($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+	IniWrite($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+	$Value_Read = IniRead($Config_INI, "Settings", "SSD_SetSoundDevice", "")
+	If $Value_Read = "true" Then GUICtrlSetState($Checkbox_SSD_SetSoundDevice_1, $GUI_CHECKED)
+
+	$Value_Read = IniRead($Config_INI, "Settings", "Audio_Playback_Device", "")
+	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SSD_SetSoundDevice\", "*.lnk", 1)
+	;_ArrayDisplay($Value_Array)
+
+	If IsArray($Value_Array) Then
+		$Value = ""
+		For $Loop = 1 To $Value_Array[0]
+			If StringInStr($Value_Array[$Loop], 'Playback') Then
+				$Device_Name = StringReplace($Value_Array[$Loop], 'SSD - ', '')
+				$Device_Name = StringReplace($Device_Name, ' Audio&Com - Hidden - ', '')
+				$Device_Name = StringReplace($Device_Name, '.lnk', '')
+				FileMove($Install_DIR & "Apps\SSD_SetSoundDevice\" & $Value_Array[$Loop], $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Device_Name & ".lnk", $FC_OVERWRITE + $FC_CREATEPATH)
+				$Value = $Value & "|" & $Device_Name
+
+				$NR_of_Playback_Devices = $NR_of_Playback_Devices + 1
+				If FileExists($SSD_INI) Then
+					IniWrite($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", $NR_of_Playback_Devices)
+				EndIf
+			EndIf
+		Next
+
+		GUICtrlSetData($Combo_Playback_Device, "")
+		GUICtrlSetData($Combo_Playback_Device, $Value, $Value_Read)
+	EndIf
+
+	$Value_Read = IniRead($Config_INI, "Settings", "Audio_Recording_Device", "")
+	;Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SSD_SetSoundDevice\", "*.lnk", 1)
+	;_ArrayDisplay($Value_Array)
+
+	If IsArray($Value_Array) Then
+		$Value = ""
+		For $Loop = 1 To $Value_Array[0]
+			If StringInStr($Value_Array[$Loop], 'Recording') Then
+				$Device_Name = StringReplace($Value_Array[$Loop], 'SSD - ', '')
+				$Device_Name = StringReplace($Device_Name, ' Audio&Com - Hidden - ', '')
+				$Device_Name = StringReplace($Device_Name, '.lnk', '')
+				FileMove($Install_DIR & "Apps\SSD_SetSoundDevice\" & $Value_Array[$Loop], $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Device_Name & ".lnk", $FC_OVERWRITE + $FC_CREATEPATH)
+				$Value = $Value & "|" & $Device_Name
+
+				$NR_of_Recording_Devices = $NR_of_Recording_Devices + 1
+				If FileExists($SSD_INI) Then
+					IniWrite($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", $NR_of_Recording_Devices)
+				EndIf
+			EndIf
+		Next
+
+		GUICtrlSetData($Combo_Recording_Device, "")
+		GUICtrlSetData($Combo_Recording_Device, $Value, $Value_Read)
+	EndIf
+EndFunc   ;==>_Update_Objects()
+
 Func _Button_Exit_Settings_GUI()
 	GUIDelete($HLL_Settings_GUI)
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -10228,8 +10836,129 @@ Func _Button_Exit_Settings_GUI()
 	$Install_Folder_Steam_5 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_5", "")
 EndFunc   ;==>_Button_Exit_Settings_GUI
 
+Func _Button_Open_SSD_SetSoundDevice()
+	Local $SSD_Path = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.exe"
+	If FileExists($SSD_Path) Then
+		ShellExecuteWait($SSD_Path)
+		_Update_Objects_Settings_GUI()
+	Else
+		FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " FilePath not found: SSD.exe" & " Path Error --> " & $SSD_Path)
+	EndIf
+EndFunc
 
 
+Func _Checkbox_SSD_SetSoundDevice_1()
+	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
+	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+	If $NR_of_Playback_Devices = "" And $NR_of_Recording_Devices = "" Then
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the audio devices that you want to use.")
+		GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
+		IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
+	Else
+		If Not FileExists($SSD_INI) Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the audio devices that you want to use.")
+			GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
+			IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
+		Else
+			Local $CheckBox = GUICtrlRead($Checkbox_SSD_SetSoundDevice_1)
+			If $CheckBox = "" Then
+				GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "a")
+				IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "true")
+			Else
+				GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
+				IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
+			EndIf
+		EndIf
+
+	EndIf
+EndFunc
+
+
+
+Func _Combo_Playback_Device()
+	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
+	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+	If $NR_of_Playback_Devices = "" Then
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the playback device that you want to use.")
+	Else
+		Local $ComboBox = GUICtrlRead($Combo_Playback_Device)
+		If $ComboBox = "" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "No playback device selected", "Select the playback device in the dropdown list.")
+		Else
+			IniWrite($Config_INI, "Settings", "Audio_Playback_Device", $ComboBox)
+		EndIf
+	EndIf
+EndFunc
+
+Func _Combo_Recording_Device()
+	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
+	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+	If $NR_of_Recording_Devices = "" Then
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the recording device that you want to use.")
+	Else
+		Local $ComboBox = GUICtrlRead($Combo_Recording_Device)
+		If $ComboBox = "" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "No recording device selected", "Select the recording device in the dropdown list.")
+		Else
+			IniWrite($Config_INI, "Settings", "Audio_Recording_Device", $ComboBox)
+		EndIf
+	EndIf
+EndFunc
+
+
+Func _Button_Set_Playback_Device()
+	Local $Sound_Device_Name = IniRead($Config_INI, "Settings", "Audio_Playback_Device", "")
+	Local $Sound_Device_Temp = $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Sound_Device_Name & ".lnk"
+
+	If Not ProcessExists("vrmonitor.exe") Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "SteamVR not running", "SteamVR is not running." & @CRLF & _
+				"The device may not be found if the headset is unplugged or if SteamVR is not running." & @CRLF & _
+				"" & @CRLF & @CRLF & _
+				'Do you still want to set the audio device?' & @CRLF)
+
+		If $Abfrage = 6 Then
+			If FileExists($Sound_Device_Temp) Then
+				ShellExecute($Sound_Device_Temp)
+				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Audio Playback Device changed to:" & $Sound_Device_Temp & " <--- " & "[" & _Now() & "]")
+			EndIf
+		EndIf
+	Else
+		If FileExists($Sound_Device_Temp) Then
+			ShellExecute($Sound_Device_Temp)
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Audio Playback Device changed to:" & $Sound_Device_Temp & " <--- " & "[" & _Now() & "]")
+		EndIf
+	EndIf
+EndFunc
+
+Func _Button_Set_Recording_Device()
+	Local $Sound_Device_Name = IniRead($Config_INI, "Settings", "Audio_Recording_Device", "")
+	Local $Sound_Device_Temp = $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Sound_Device_Name & ".lnk"
+
+	If Not ProcessExists("vrmonitor.exe") Then
+		Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "SteamVR not running", "SteamVR is not running." & @CRLF & _
+				"The device may not be found if the headset is unplugged or if SteamVR is not running." & @CRLF & _
+				"" & @CRLF & @CRLF & _
+				'Do you still want to set the audio device?' & @CRLF)
+
+		If $Abfrage = 6 Then
+			If FileExists($Sound_Device_Temp) Then
+				ShellExecute($Sound_Device_Temp)
+				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Audio Recording Device changed to:" & $Sound_Device_Temp & " <--- " & "[" & _Now() & "]")
+			EndIf
+		EndIf
+	Else
+		If FileExists($Sound_Device_Temp) Then
+			ShellExecute($Sound_Device_Temp)
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Audio Recording Device changed to:" & $Sound_Device_Temp & " <--- " & "[" & _Now() & "]")
+		EndIf
+	EndIf
+EndFunc
 
 #EndRegion Func Settings GUI
 
@@ -10246,6 +10975,42 @@ Func _UpDown_ResolutionScale()
 	GUICtrlSetData($Input_ResolutionScale, $Value_UpDown)
 	GUICtrlSetData($Slider_0, $Value_UpDown)
 EndFunc   ;==>_UpDown_ResolutionScale
+
+Func _SS_Checkbox_motionSmoothingOverride()
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	IniWrite($Config_INI, "TEMP", "GameID", $Game_ID)
+
+	Local $App_NR = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "NR", "")
+
+	Local $CheckBox = GUICtrlRead($SS_Checkbox_motionSmoothingOverride)
+	If $CheckBox = "" Then
+		GUICtrlSetData($SS_Checkbox_motionSmoothingOverride, "a")
+		;MsgBox(0, $CheckBox, "true")
+		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $App_NR, "motionSmoothingOverride", "1")
+		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "motionSmoothingOverride", "1")
+		$App_NR = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Game_ID, "NR", "")
+		IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $App_NR, "motionSmoothingOverride", "1")
+		IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Game_ID, "motionSmoothingOverride", "1")
+	Else
+		GUICtrlSetData($SS_Checkbox_motionSmoothingOverride, "")
+		;MsgBox(0, $CheckBox, "false")
+		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $App_NR, "motionSmoothingOverride", "")
+		IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "motionSmoothingOverride", "")
+		$App_NR = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Game_ID, "NR", "")
+		IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $App_NR, "motionSmoothingOverride", "")
+		IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Game_ID, "motionSmoothingOverride", "")
+	EndIf
+	;$ScanLibrary_OnStart_SettingValue = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Settings", "motionSmoothingOverride", "")
+	_Sync_All_INI_Files_1()
+	_Set_States()
+EndFunc
 
 Func _Button_Save_Settings_GUI()
 	$Input_ResolutionScale = GUICtrlRead($Input_ResolutionScale)
@@ -10264,6 +11029,8 @@ Func _Button_Save_Settings_GUI()
 	;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $Game_ID, "resolutionScale", $Input_ResolutionScale)
 	IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Game_ID, "resolutionScale", $Input_ResolutionScale)
 	IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $App_NR, "resolutionScale", $Input_ResolutionScale)
+	_Sync_All_INI_Files_1()
+	_Set_States()
 EndFunc   ;==>_Button_Save_Settings_GUI
 
 Func _Button_Exit_SS_Settings_GUI()
@@ -10291,6 +11058,14 @@ Func _Exit_Check()
 		FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Exit Check: SteamVR is not running --> Exit [HomeLoaderLibrary]" & " '_Exit_Check()'")
 		Exit
 	EndIf
+EndFunc   ;==>_Exit_Check
+
+Func _Exit_Check_VRUB()
+	If Not ProcessExists("VRUtilityBelt.exe") Then
+		FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Exit Check: VRUB is not running --> Exit [HomeLoaderLibrary]" & " '_Exit_Check()'")
+		Exit
+	EndIf
+	_Exit_Check()
 EndFunc   ;==>_Exit_Check
 
 Func _Exit()
@@ -10501,29 +11276,29 @@ EndFunc   ;==>_Overlay_ApplicationList_Update
 Func _Copy_To_VRUB()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start updating VRUB Overlay.")
 	Local $VRUB_Overlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\"
-	Local $File_1 = $Install_DIR & "WebPage\GamePage_ALL.html"
-	Local $File_2 = $Install_DIR & "WebPage\GamePage_Custom_1.html"
-	Local $File_3 = $Install_DIR & "WebPage\GamePage_Custom_2.html"
-	Local $File_4 = $Install_DIR & "WebPage\GamePage_Custom_3.html"
-	Local $File_5 = $Install_DIR & "WebPage\GamePage_Custom_4.html"
-	Local $File_6 = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
-	Local $File_7 = $Install_DIR & "WebPage\GamePage_Oculus.html"
+	;Local $File_1 = $Install_DIR & "WebPage\GamePage_ALL.html"
+	;Local $File_2 = $Install_DIR & "WebPage\GamePage_Custom_1.html"
+	;Local $File_3 = $Install_DIR & "WebPage\GamePage_Custom_2.html"
+	;Local $File_4 = $Install_DIR & "WebPage\GamePage_Custom_3.html"
+	;Local $File_5 = $Install_DIR & "WebPage\GamePage_Custom_4.html"
+	;Local $File_6 = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
+	;Local $File_7 = $Install_DIR & "WebPage\GamePage_Oculus.html"
 	Local $File_8 = $Install_DIR & "WebPage\GamePage_Tags.html"
-	Local $File_9 = $Install_DIR & "WebPage\GamePage_Viveport.html"
+	;Local $File_9 = $Install_DIR & "WebPage\GamePage_Viveport.html"
 	Local $File_10 = $Install_DIR & "WebPage\Tags\"
 
 	If $VRUB_Folder <> "" Then
-		If FileExists($File_1) Then FileCopy($File_1, $VRUB_Overlay_Folder & "GamePage_ALL.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_2) Then FileCopy($File_2, $VRUB_Overlay_Folder & "GamePage_Custom_1.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_3) Then FileCopy($File_3, $VRUB_Overlay_Folder & "GamePage_Custom_2.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_4) Then FileCopy($File_4, $VRUB_Overlay_Folder & "GamePage_Custom_3.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_5) Then FileCopy($File_5, $VRUB_Overlay_Folder & "GamePage_Custom_4.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_6) Then FileCopy($File_6, $VRUB_Overlay_Folder & "GamePage_Non-Steam_Appl.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_7) Then FileCopy($File_7, $VRUB_Overlay_Folder & "GamePage_Oculus.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_1) Then FileCopy($File_1, $VRUB_Overlay_Folder & "GamePage_ALL.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_2) Then FileCopy($File_2, $VRUB_Overlay_Folder & "GamePage_Custom_1.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_3) Then FileCopy($File_3, $VRUB_Overlay_Folder & "GamePage_Custom_2.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_4) Then FileCopy($File_4, $VRUB_Overlay_Folder & "GamePage_Custom_3.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_5) Then FileCopy($File_5, $VRUB_Overlay_Folder & "GamePage_Custom_4.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_6) Then FileCopy($File_6, $VRUB_Overlay_Folder & "GamePage_Non-Steam_Appl.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_7) Then FileCopy($File_7, $VRUB_Overlay_Folder & "GamePage_Oculus.html", $FC_OVERWRITE + $FC_CREATEPATH)
 		If FileExists($File_8) Then FileCopy($File_8, $VRUB_Overlay_Folder & "GamePage_Tags.html", $FC_OVERWRITE + $FC_CREATEPATH)
-		If FileExists($File_9) Then FileCopy($File_9, $VRUB_Overlay_Folder & "GamePage_Viveport.html", $FC_OVERWRITE + $FC_CREATEPATH)
+		;If FileExists($File_9) Then FileCopy($File_9, $VRUB_Overlay_Folder & "GamePage_Viveport.html", $FC_OVERWRITE + $FC_CREATEPATH)
 
-		If FileExists($File_10) Then FileCopy($File_10, $VRUB_Overlay_Folder & "Tags\", $FC_OVERWRITE + $FC_CREATEPATH)
+		If FileExists($File_10) Then DirCopy($File_10, $VRUB_Overlay_Folder & "Tags\", $FC_OVERWRITE)
 	EndIf
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " VRUB Overlay updated.")
@@ -11191,9 +11966,9 @@ Func _Create_Game_Tags_Page()
 	For $Loop_1 = 1 To 30
 		$Value_Line_Tag = FileReadLine($Tags_TXT, $Loop_1)
 
-		$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a>&nbsp;&nbsp;&nbsp;&nbsp;'
+		$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="Tag_button">' & $Value_Line_Tag & '</a>&nbsp;&nbsp;&nbsp;&nbsp;'
 		If $Loop_1 = 4 Or $Loop_1 = 8 Or $Loop_1 = 12  Or $Loop_1 = 16 Or $Loop_1 = 20 Or $Loop_1 = 24 Or $Loop_1 = 28 Then
-			$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="button">' & $Value_Line_Tag & '</a><br><br>'
+			$Value_Line_ADD = '<a href="Tags/' & $Value_Line_Tag & '.html' & '" class="Tag_button">' & $Value_Line_Tag & '</a><br><br><br>'
 		EndIf
 
 		;Local $sFill = $Value_Line_Left & "|" & $Value_Line_Tag & "|" & $Value_Line_Right
@@ -11230,6 +12005,1266 @@ Func _Create_Game_Tags_Page()
 	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
 EndFunc
 
+#EndRegion Func Create Game Pages
+
+#Region Func Create SteamVR_Home Pages / Game Pages
+Func _Button_SteamVRHome_Panel_Settings()
+	If Not WinExists("HomeLoader - SteamVR Environment Settings") Then
+		Local $SteamVR_Environment_Name_Check = "homeloader"
+		Local $SteamVR_EnvironmentPath_Check = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name_Check & "\"
+
+		If FileExists($SteamVR_EnvironmentPath_Check) Then
+			_Create_SteamVRHome_Environment_Settings_GUI()
+			_Set_SteamVR_Home_Panel_GUI_Data()
+			GUISetState(@SW_SHOW)
+		Else
+			Local $Abfrage = MsgBox($MB_YESNO + $MB_ICONQUESTION, "Attention", "" & @CRLF & _
+																	"HomeLoader SteamVR Home Workshop Environment is not prepared for use." & @CRLF & @CRLF & _
+																	"Do you want to prepare the downloaded HomeLoader SteamVR Home Workshop Environment for use with HomeLoader?" & @CRLF)
+
+			If $Abfrage = 6 Then
+				_Create_HomeLoader_Environment_Files_Folders()
+			Else
+
+			EndIf
+		EndIf
+	EndIf
+EndFunc
+
+Func _Create_SteamVRHome_Environment_Settings_GUI()
+	$Panel_Name_1 = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
+	$Panel_Name_2 = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
+	$Panel_Name_3 = IniRead($Config_INI, "Settings", "TAB3_Name", "Custom 1")
+	$Panel_Name_4 = IniRead($Config_INI, "Settings", "TAB4_Name", "Custom 2")
+	$Panel_Name_5 = IniRead($Config_INI, "Settings", "TAB5_Name", "Custom 3")
+	$Panel_Name_6 = IniRead($Config_INI, "Settings", "TAB6_Name", "Custom 4")
+
+	Global $SteamVR_Home_Panels_GUI = GUICreate("HomeLoader - SteamVR Environment Settings", 1014, 734, -1, -1, BitOR($WS_BORDER, $WS_CAPTION, $WS_SYSMENU))
+	Local $hMenu = _GUICtrlMenu_GetSystemMenu($SteamVR_Home_Panels_GUI)
+	Local $iMenuItemCount = _GUICtrlMenu_GetItemCount($hMenu)
+	_GUICtrlMenu_RemoveMenu($hMenu, $iMenuItemCount - 1, $MF_BYPOSITION)
+
+	Local $Pos_X_1 = 10
+	Local $Pos_X_2= 315
+	Local $Pos_X_3= 755
+	Local $Pos_X_4= 710
+	Local $Pos_X_5= 710
+	Local $Pos_Y = 65
+	Local $Pos_Y_2 = 55
+	Local $Pos_Y_3 = 75
+	Local $Pos_Y_4 = 65
+	Local $Pos_Y_5 = 55
+
+
+
+	GUICtrlCreateLabel("SteamVR Home Environment: ", $Pos_X_1, $Pos_Y - 52, 300, 20)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 17, 500, 1, $font_arial)
+
+	$Combo_Environment_Name = GUICtrlCreateCombo("", $Pos_X_1 + 305, $Pos_Y - 55, 386, 33, $CBS_DROPDOWNLIST)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_Consolas)
+	GUICtrlSetOnEvent(-1, "_Combo_Environment_Name")
+
+	Global $contextmenu_Combo_Environment_Name = GUICtrlCreateContextMenu($Combo_Environment_Name)
+	Global $RM_Combo_Environment_Name_1 = GUICtrlCreateMenuItem("Prepare new SteamVR Home Workshop Environment for use with HomeLoader", $contextmenu_Combo_Environment_Name)
+	GUICtrlSetOnEvent(-1, "_RM_Combo_Environment_Name_1")
+
+	;Global $Button_Prepare_Environment = GUICtrlCreateButton("Prepare new SteamVR Home Workshop Environment", $Pos_X_1 + 505, $Pos_Y - 56, 490, 31)
+	;GuiCtrlSetTip(-1, "Closes Settings Window.")
+	;GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
+	;GUICtrlSetColor(-1, "0x006600")
+	;GUICtrlSetOnEvent(-1, "_Button_Prepare_Environment")
+
+	#Region X 1
+	GUICtrlCreateLabel("Enable/Disable SteamVR Home Panels:", $Pos_X_1, $Pos_Y - 10, 400, 20)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_1, $Pos_Y + 07, 295, 295)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+	Global $Checkbox_Panel_1 = GUICtrlCreateCheckbox(" Panel 1 [" & $Panel_Name_1 & "]", $Pos_X_1 + 5, $Pos_Y + 25, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_1")
+
+	Global $Checkbox_Panel_2 = GUICtrlCreateCheckbox(" Panel 2 [" & $Panel_Name_2 & "]", $Pos_X_1 + 5, $Pos_Y + 45, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_2")
+
+	Global $Checkbox_Panel_3 = GUICtrlCreateCheckbox(" Panel 3 [" & $Panel_Name_3 & "]", $Pos_X_1 + 5, $Pos_Y + 65, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_3")
+
+	Global $Checkbox_Panel_4 = GUICtrlCreateCheckbox(" Panel 4 [" & $Panel_Name_4 & "]", $Pos_X_1 + 5, $Pos_Y + 85, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_4")
+
+	Global $Checkbox_Panel_5 = GUICtrlCreateCheckbox(" Panel 5 [" & $Panel_Name_5 & "]", $Pos_X_1 + 5, $Pos_Y + 105, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_5")
+
+	Global $Checkbox_Panel_6 = GUICtrlCreateCheckbox(" Panel 6 [" & $Panel_Name_6 & "]", $Pos_X_1 + 5, $Pos_Y + 125, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_6")
+
+	Global $Checkbox_Panel_7 = GUICtrlCreateCheckbox(" Panel 7 [" & $Panel_Name_7 & "]", $Pos_X_1 + 5, $Pos_Y + 145, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_7")
+
+	Global $Checkbox_Panel_8 = GUICtrlCreateCheckbox(" Panel 8 [" & $Panel_Name_8 & "]", $Pos_X_1 + 5, $Pos_Y + 165, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_8")
+
+	Global $Checkbox_Panel_9 = GUICtrlCreateCheckbox(" Panel 9 [" & $Panel_Name_9 & "]", $Pos_X_1 + 5, $Pos_Y + 185, 280, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_9")
+
+	Global $Checkbox_Panel_10 = GUICtrlCreateCheckbox(" Panel 10 [" & $Panel_Name_10 & "]", $Pos_X_1 + 5, $Pos_Y + 205, 280, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_10")
+
+	Global $Checkbox_Panel_11 = GUICtrlCreateCheckbox(" Panel 11 [" & $Panel_Name_11 & "]", $Pos_X_1 + 5, $Pos_Y + 225, 280, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_11")
+
+	Global $Checkbox_Panel_Tutorials = GUICtrlCreateCheckbox(" Show Tutorial Panels", $Pos_X_1 + 5, $Pos_Y + 275, 280, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Panel_Turorials")
+	#endregion
+
+
+	#Region X 2
+	GUICtrlCreateLabel("Tool Panel Selection:", $Pos_X_1, $Pos_Y_2 + 325, 350, 20)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_1, $Pos_Y_2 + 342, 295, 282)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+	GUICtrlCreateLabel($Panel_Name_10, $Pos_X_1 + 5, $Pos_Y_2 + 365, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Tool_1 = GUICtrlCreateCombo("", $Pos_X_1 + 148, $Pos_Y_2 + 362, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Tool_1")
+
+	GUICtrlCreateLabel($Panel_Name_11, $Pos_X_1 + 5, $Pos_Y_2 + 388, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Tool_2 = GUICtrlCreateCombo("", $Pos_X_1 + 148, $Pos_Y_2 + 385, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Tool_2")
+	#endregion
+
+
+	#Region X 3
+	GUICtrlCreateLabel("Panel Appearance:", $Pos_X_2 + 5, $Pos_Y_3 - 20, 205, 20)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_2, $Pos_Y_3 - 03, 387, 607)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+	GUICtrlCreateLabel("Panel Nr.", $Pos_X_2 + 5, $Pos_Y_3 + 20, 65, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Panel_Nr_Selection_Input = GUICtrlCreateInput("", $Pos_X_2 + 160, $Pos_Y_3 + 17, 50, 20)
+	GUICtrlSetBkColor(-1, 0xD3D3D3)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Panel_Nr_Selection_Updown = GUICtrlCreateUpdown($Panel_Nr_Selection_Input)
+	GUICtrlSetOnEvent(-1, "_Panel_Nr_Selection_Updown")
+	Global $Panel_Nr_Selection_Input_Name = GUICtrlCreateInput("", $Pos_X_2 + 215, $Pos_Y_3 + 17, 165, 20)
+	GUICtrlSetBkColor(-1, 0xD3D3D3)
+
+
+	GUICtrlCreateLabel("Panel width:", $Pos_X_2 + 5, $Pos_Y_3 + 48, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_width = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 45, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_width")
+
+	GUICtrlCreateLabel("Panel height:", $Pos_X_2 + 5, $Pos_Y_3 + 71, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_height = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 68, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_height")
+
+	GUICtrlCreateLabel("Background color:", $Pos_X_2 + 5, $Pos_Y_3 + 94, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_background_color = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 91, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_background_color")
+
+	GUICtrlCreateLabel("Border:", $Pos_X_2 + 5, $Pos_Y_3 + 117, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_border = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 114, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_border")
+
+	GUICtrlCreateLabel("Border color:", $Pos_X_2 + 5, $Pos_Y_3 + 140, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_border_color = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 137, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_border_color")
+
+	GUICtrlCreateLabel("Border radius:", $Pos_X_2 + 5, $Pos_Y_3 + 163, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_border_radius = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 160, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_border_radius")
+
+	GUICtrlCreateLabel("Saturation:", $Pos_X_2 + 5, $Pos_Y_3 + 186, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_saturation = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 183, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_saturation")
+
+	GUICtrlCreateLabel("Scale:", $Pos_X_2 + 5, $Pos_Y_3 + 209, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_scale = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 206, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_scale")
+
+	GUICtrlCreateLabel("Text size:", $Pos_X_2 + 5, $Pos_Y_3 + 232, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Text_size = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 229, 165, 55)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Text_size")
+
+	GUICtrlCreateLabel("Text color:", $Pos_X_2 + 5, $Pos_Y_3 + 255, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Text_Color = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 252, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Text_Color")
+
+	GUICtrlCreateLabel("Text position:", $Pos_X_2 + 5, $Pos_Y_3 + 278, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_text_position = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 275, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_text_position")
+
+	GUICtrlCreateLabel("Text distance to the upper edge:", $Pos_X_2 + 5, $Pos_Y_3 + 301, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Text_distance = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 298, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Text_distance")
+
+	GUICtrlCreateLabel("Icon distance to the upper edge:", $Pos_X_2 + 5, $Pos_Y_3 + 324, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_distance = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 321, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_distance")
+
+	GUICtrlCreateLabel("Icon width:", $Pos_X_2 + 5, $Pos_Y_3 + 347, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_width = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 344, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_width")
+
+	GUICtrlCreateLabel("Icon height:", $Pos_X_2 + 5, $Pos_Y_3 + 370, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_height = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 367, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_height")
+
+	GUICtrlCreateLabel("Icon radius:", $Pos_X_2 + 5, $Pos_Y_3 + 393, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_radius = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 390, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_radius")
+
+
+	GUICtrlCreateLabel("Icon border (hover):", $Pos_X_2 + 5, $Pos_Y_3 + 416, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_border_hover = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 413, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_border_hover")
+
+	GUICtrlCreateLabel("Icon border color (hover):", $Pos_X_2 + 5, $Pos_Y_3 + 439, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_border_color_hover = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 436, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_border_color_hover")
+
+	GUICtrlCreateLabel("Icon border radius (hover):", $Pos_X_2 + 5, $Pos_Y_3 + 462, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Icon_border_radius_hover = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 459, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Icon_border_radius_hover")
+
+	GUICtrlCreateLabel("Scroll button position:", $Pos_X_2 + 5, $Pos_Y_3 + 485, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Scroll_button_position = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 482, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Scroll_button_position")
+
+	GUICtrlCreateLabel("Scroll button width:", $Pos_X_2 + 5, $Pos_Y_3 + 508, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Scroll_button_width = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 505, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Scroll_button_width")
+
+	GUICtrlCreateLabel("Scroll button height:", $Pos_X_2 + 5, $Pos_Y_3 + 531, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Scroll_button_height = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 528, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Scroll_button_height")
+
+	GUICtrlCreateLabel("Scroll button color:", $Pos_X_2 + 5, $Pos_Y_3 + 554, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Scroll_button_color = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 551, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Scroll_button_color")
+
+	GUICtrlCreateLabel("Scroll button border radius:", $Pos_X_2 + 5, $Pos_Y_3 + 577, 205, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	Global $Combo_Panel_Scroll_button_border_radius = GUICtrlCreateCombo("", $Pos_X_2 + 215, $Pos_Y_3 + 574, 165, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Scroll_button_border_radius")
+	#endregion
+
+	#Region X 4
+	GUICtrlCreateLabel("DVD Case Model:", $Pos_X_4, $Pos_Y_4 - 10, 350, 20)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_4, $Pos_Y_4 + 07, 295, 295)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+
+	Global $Checkbox_DVD_Case_1 = GUICtrlCreateCheckbox(" Enable DVD Case", $Pos_X_4 + 5, $Pos_Y_4 + 25, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_DVD_Case_1")
+
+	GUICtrlCreateLabel("DVD Cover Template: ", $Pos_X_4 + 5, $Pos_Y_4 + 50, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	Global $Combo_DVD_Cover_Template = GUICtrlCreateCombo("", $Pos_X_4 + 138, $Pos_Y_4 + 48, 150, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_DVD_Cover_Template")
+	#endregion
+
+	#Region X 5
+	GUICtrlCreateLabel("Arcade Machine Model:", $Pos_X_5, $Pos_Y_5 + 325, 350, 20)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_5, $Pos_Y_5 + 342, 295, 282)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+	Global $Checkbox_Arcade_Machine_1 = GUICtrlCreateCheckbox(" Enable Arcade Machine", $Pos_X_4 + 5, $Pos_Y_4 + 350, 230, 20)
+	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Arcade_Machine_1")
+	GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_DISABLE)
+
+	;GUICtrlCreateLabel($Panel_Name_11, $Pos_X_5 + 5, $Pos_Y_5 + 387, 140, 20)
+	;GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	;Global $Combo_Panel_Tool_2 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 385, 140, 20)
+	;GUICtrlSetOnEvent(-1, "_Combo_Panel_Tool_2")
+	#endregion
+
+	Local $Button_Panel_Settings_Apply = GUICtrlCreateButton("Apply", $Pos_X_1, $Pos_Y_3 +615, 155, 32, $BS_BITMAP)
+	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Button_Panel_Settings_Apply")
+
+	Global $Combo_Panel_Layout = GUICtrlCreateCombo("", $Pos_X_1 + 305, $Pos_Y_3 + 616, 386, 33, $CBS_DROPDOWNLIST)
+	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_Consolas)
+	;GUICtrlSetFont(-1, 14, Default, Default, "Consolas")
+	GUICtrlSetOnEvent(-1, "_Combo_Panel_Layout")
+	Global $contextmenu_Combo_Panel_Layout = GUICtrlCreateContextMenu($Combo_Panel_Layout)
+	Global $RM_Combo_Panel_Layout_1 = GUICtrlCreateMenuItem("Save Environment Layout Settings", $contextmenu_Combo_Panel_Layout)
+	GUICtrlSetOnEvent(-1, "_RM_Combo_Panel_Layout_1")
+
+
+	;GUICtrlSetFont(-1, 10, Default, Default, "Consolas") ; <<<<<<<<<<<<<<<< From above https reference thread.
+	;GUISetState()
+
+
+
+	Local $Button_Panel_Settings_Close = GUICtrlCreateButton("Close", $Pos_X_1 + 840, $Pos_Y_3 + 615, 155, 32, $BS_BITMAP)
+	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Close_Button_SteamVRHome_Panel_Settings_GUI")
+EndFunc
+
+
+
+Func _RM_Button_SteamVRHome_Panel_Settings()
+	Global $contextmenu_Button_SteamVRHome_Panel_Settings = GUICtrlCreateContextMenu($Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_1 = GUICtrlCreateMenuItem("Update all Environment Files", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_2 = GUICtrlCreateMenuItem("Update Game panels", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_3 = GUICtrlCreateMenuItem("Update DVD Case Models", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	;Global $RM_Button_SteamVRHome_Panel_Settings_4 = GUICtrlCreateMenuItem("Update Arcade Machine", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings)
+
+	;GUICtrlSetState($RM_Button_SteamVRHome_Panel_Settings_4, $GUI_DISABLE)
+
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_1, "_RM_Button_SteamVRHome_Panel_Settings_1")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_2, "_RM_Button_SteamVRHome_Panel_Settings_2")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_3, "_RM_Button_SteamVRHome_Panel_Settings_3")
+	;GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_4, "_RM_Button_SteamVRHome_Panel_Settings_4")
+EndFunc
+
+Func _RM_Combo_Panel_Layout_1()
+	Local $InputBox_Name = InputBox("Enter Layout Name", "Enter Layout Name and continue with 'OK'", "", "", 270, 140)
+	Sleep(500)
+	If $InputBox_Name <> "" Then
+		Local $FilePath_Layout = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\Layout_" & $InputBox_Name & ".ini"
+
+		If FileExists($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini") Then
+			FileCopy($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini", $FilePath_Layout, $FC_OVERWRITE + $FC_CREATEPATH)
+		EndIf
+	EndIf
+	Sleep(500)
+	MsgBox($MB_OK + $MB_ICONINFORMATION, "Environment Layout Settings saved", "Environment Layout Settings saved." & @CRLF)
+	_Set_SteamVR_Home_Panel_GUI_Data()
+EndFunc
+
+Func _Set_SteamVR_Home_Panel_GUI_Data()
+	Local $Value, $Value_Panel_NR, $Panel_Name_temp, $Combo_BK_color
+
+	$SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
+	If $SteamVR_Environment_Name = "" Then $SteamVR_Environment_Name = "homeloader"
+	Local $Value_Array = _FileListToArray($SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\", "*", $FLTA_FOLDERS)
+	$Value = ""
+	For $Loop = 1 To $Value_Array[0]
+		If $Value_Array[$Loop] <> "addon_template" Then
+			$Value = $Value & "|" & $Value_Array[$Loop]
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Environment_Name, $Value, $SteamVR_Environment_Name)
+
+
+
+	$Value_Panel_NR = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	GUICtrlSetData($Panel_Nr_Selection_Input, $Value_Panel_NR)
+
+	If $Value_Panel_NR = "1" Then $Panel_Name_temp = $Panel_Name_1
+	If $Value_Panel_NR = "2" Then $Panel_Name_temp = $Panel_Name_2
+	If $Value_Panel_NR = "3" Then $Panel_Name_temp = $Panel_Name_3
+	If $Value_Panel_NR = "4" Then $Panel_Name_temp = $Panel_Name_4
+	If $Value_Panel_NR = "5" Then $Panel_Name_temp = $Panel_Name_5
+	If $Value_Panel_NR = "6" Then $Panel_Name_temp = $Panel_Name_6
+	If $Value_Panel_NR = "7" Then $Panel_Name_temp = $Panel_Name_7
+	If $Value_Panel_NR = "8" Then $Panel_Name_temp = $Panel_Name_8
+	If $Value_Panel_NR = "9" Then $Panel_Name_temp = $Panel_Name_9
+	If $Value_Panel_NR = "10" Then $Panel_Name_temp = $Panel_Name_10
+	If $Value_Panel_NR = "11" Then $Panel_Name_temp = $Panel_Name_11
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_1", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_1, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_2", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_2, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_3", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_3, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_4", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_4, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_5", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_5, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_6", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_6, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_7", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_7, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_8", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_8, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_9", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_9, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_10", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_10, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_11", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_11, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Turorials", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Panel_Tutorials, $GUI_CHECKED)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_1", "")
+	GUICtrlSetData($Combo_Panel_Tool_1, "")
+	GUICtrlSetData($Combo_Panel_Tool_1, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]|" & "Panel 10 [" & $Panel_Name_10 & "]|"& "Panel 11 [" & $Panel_Name_11 & "]", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_2", "")
+	GUICtrlSetData($Combo_Panel_Tool_2, "")
+	GUICtrlSetData($Combo_Panel_Tool_2, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]|" & "Panel 10 [" & $Panel_Name_10 & "]|"& "Panel 11 [" & $Panel_Name_11 & "]", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Panel_width", "")
+	GUICtrlSetData($Combo_Panel_width, "")
+	GUICtrlSetData($Combo_Panel_width, "100%|95%|90%|85%|80%|75%|70%|65%|60%|65%|60%|55%|50%|45%|40%|35%|30%|25%|20%|15%|10%", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Panel_height", "")
+	GUICtrlSetData($Combo_Panel_height, "")
+	GUICtrlSetData($Combo_Panel_height, "100%|95%|90%|85%|80%|75%|70%|65%|60%|65%|60%|55%|50%|45%|40%|35%|30%|25%|20%|15%|10%", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Background_color_1", "")
+	Local $Combo_BK_color_Name = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][1] Then
+			$Combo_BK_color_Name =  $aArray_Colors[$Loop][0]
+			ExitLoop
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Panel_background_color, "")
+	GUICtrlSetData($Combo_Panel_background_color, "Transparent|" & $Colors_ALL_Combo, $Combo_BK_color_Name)
+	$Combo_BK_color = "0x" & StringRight($Value, StringLen($Value) - 1)
+	GUICtrlSetBkColor($Combo_Panel_background_color, $Combo_BK_color)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Border", "")
+	GUICtrlSetData($Combo_Panel_border, "Transparent|1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Border_color", "")
+	Local $Combo_BK_color_Name = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][1] Then
+			$Combo_BK_color_Name =  $aArray_Colors[$Loop][0]
+			ExitLoop
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Panel_border_color, "")
+	GUICtrlSetData($Combo_Panel_border_color, "Transparent|" & $Colors_ALL_Combo, $Combo_BK_color_Name)
+	$Combo_BK_color = "0x" & StringRight($Value, StringLen($Value) - 1)
+	GUICtrlSetBkColor($Combo_Panel_border_color, $Combo_BK_color)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Border_radius", "")
+	GUICtrlSetData($Combo_Panel_border_radius, "")
+	GUICtrlSetData($Combo_Panel_border_radius, "1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Saturation", "")
+	GUICtrlSetData($Combo_Panel_saturation, "")
+	GUICtrlSetData($Combo_Panel_saturation, "0.10|0.15|0.20|0.25|0.30|0.35|0.40|0.45|0.50|0.55|0.60|0.65|0.70|0.75|0.80|0.85|0.90|0.95|1.00", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scale", "")
+	GUICtrlSetData($Combo_Panel_scale, "")
+	GUICtrlSetData($Combo_Panel_scale, "0.10|0.15|0.20|0.25|0.30|0.35|0.40|0.45|0.50|0.55|0.60|0.65|0.70|0.75|0.80|0.85|0.90|0.95|1.00", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Text_size", "")
+	GUICtrlSetData($Combo_Panel_Text_size, "")
+	GUICtrlSetData($Combo_Panel_Text_size, "5px|10px|15px|20px|25px|30px|35px|40px|45px|50px|55px|60px|65px|70px|75px|80px|85px|90px|100px|105px|110px|115px|120px|125px|130px|135px|140px|145px|150px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Text_color", "")
+	;MsgBox(0, "$Value", $Value)
+	Local $Combo_BK_color_Name = ""
+	For $Loop = 1 To $NR_Colors
+		;MsgBox(0, "2", $Value & @CRLF & $aArray_Colors[$Loop][1])
+		If $Value = $aArray_Colors[$Loop][1] Then
+			$Combo_BK_color_Name =  $aArray_Colors[$Loop][0]
+			ExitLoop
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Panel_Text_Color, "")
+	GUICtrlSetData($Combo_Panel_Text_Color, $Colors_ALL_Combo, $Combo_BK_color_Name)
+	$Combo_BK_color = "0x" & StringRight($Value, StringLen($Value) - 1)
+	GUICtrlSetBkColor($Combo_Panel_Text_Color, $Combo_BK_color)
+	;MsgBox(0, "1", $Combo_BK_color_Name & @CRLF & $Combo_BK_color)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Text_position", "")
+	GUICtrlSetData($Combo_Panel_text_position, "")
+	GUICtrlSetData($Combo_Panel_text_position, "50px|45px|40px|35px|30px|25px|20px|15px|10px|05px|0px|-05px|-10px|-15px|-20px|-25px|-30px|-35px|-40px|-45px|-50px|-55px|-60px|-65px|-70px|-75px|-80px|-85px|-90px|-95px|-100px|-105px|-110px|-115px|-120px|-125px|-130px|-135px|-140px|-145px|-150px|-155px|-160px|-165px|-170px|-175px|-180px|-185px|-190px|-195px|-200px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Text_distance", "")
+	GUICtrlSetData($Combo_Panel_Text_distance, "")
+	GUICtrlSetData($Combo_Panel_Text_distance, "50px|45px|40px|35px|30px|25px|20px|15px|10px|05px|0px|-05px|-10px|-15px|-20px|-25px|-30px|-35px|-40px|-45px|-50px|-55px|-60px|-65px|-70px|-75px|-80px|-85px|-90px|-95px|-100px|-105px|-110px|-115px|-120px|-125px|-130px|-135px|-140px|-145px|-150px|-155px|-160px|-165px|-170px|-175px|-180px|-185px|-190px|-195px|-200px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_distance", "")
+	GUICtrlSetData($Combo_Panel_Icon_distance, "")
+	GUICtrlSetData($Combo_Panel_Icon_distance, "-100px|-95px|-90px|-85px|-80px|-75px|-70px|-65px|-60px|-55px|-50px|-45px|-40px|-35px|-30px|-25px|-20px|-15px|-10px|-05px|0px|10px|20px|30px|40px|50px|60px|70px|80px|90px|100px|110px|120px|130px|140px|150px|160px|170px|180px|190px|200px|210px|220px|230px|240px|250px|260px|270px|280px|290px|300px|310px|320px|330px|340px|350px|360px|370px|380px|390px|400px|410px|420px|430px|440px|450px|460px|470px|480px|490px|500px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_width", "")
+	GUICtrlSetData($Combo_Panel_Icon_width, "")
+	GUICtrlSetData($Combo_Panel_Icon_width, "460px|190px|180px|170px|160px|150px|140px|130px|120px|110px|100px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_height", "")
+	GUICtrlSetData($Combo_Panel_Icon_height, "")
+	GUICtrlSetData($Combo_Panel_Icon_height, "215px|95px|90px|85px|80px|75px|70px|65px|60px|55px|50px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_radius", "")
+	GUICtrlSetData($Combo_Panel_Icon_radius, "")
+	GUICtrlSetData($Combo_Panel_Icon_radius, "1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+
+
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_border_hover", "")
+	GUICtrlSetData($Combo_Panel_Icon_border_hover, "")
+	GUICtrlSetData($Combo_Panel_Icon_border_hover, "0px|1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_border_color_hover", "")
+	;MsgBox(0, "$Value", $Value)
+	Local $Combo_BK_color_Name = ""
+	For $Loop = 1 To $NR_Colors
+		;MsgBox(0, "2", $Value & @CRLF & $aArray_Colors[$Loop][1])
+		If $Value = $aArray_Colors[$Loop][1] Then
+			$Combo_BK_color_Name =  $aArray_Colors[$Loop][0]
+			ExitLoop
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Panel_Icon_border_color_hover, "")
+	GUICtrlSetData($Combo_Panel_Icon_border_color_hover, $Colors_ALL_Combo, $Combo_BK_color_Name)
+	$Combo_BK_color = "0x" & StringRight($Value, StringLen($Value) - 1)
+	GUICtrlSetBkColor($Combo_Panel_Icon_border_color_hover, $Combo_BK_color)
+
+
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Icon_border_radius_hover", "")
+	GUICtrlSetData($Combo_Panel_Icon_border_radius_hover, "")
+	GUICtrlSetData($Combo_Panel_Icon_border_radius_hover, "0px|1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scroll_button_position", "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_position, "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_position, "top_left|top_center|top_right|bottom_left|bottom_center|bottom_right", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scroll_button_width", "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_width, "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_width, "10px|20px|30px|40px|50px|60px|70px|80px|90px|100px|110px|120px|130px|140px|150px|160px|170px|180px|190px|200px|210px|220px|230px|240px|250px|260px|270px|280px|290px|300px|310px|320px|330px|340px|350px|360px|370px|380px|390px|400px|410px|420px|430px|440px|450px|460px|470px|480px|490px|500px", $Value)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scroll_button_height", "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_height, "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_height, "10px|20px|30px|40px|50px|60px|70px|80px|90px|100px|110px|120px|130px|140px|150px|160px|170px|180px|190px|200px|210px|220px|230px|240px|250px|260px|270px|280px|290px|300px|310px|320px|330px|340px|350px|360px|370px|380px|390px|400px|410px|420px|430px|440px|450px|460px|470px|480px|490px|500px", $Value)
+
+
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scroll_button_color", "")
+	Local $Combo_BK_color_Name = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][1] Then
+			$Combo_BK_color_Name =  $aArray_Colors[$Loop][0]
+			ExitLoop
+		EndIf
+	Next
+	GUICtrlSetData($Combo_Panel_Scroll_button_color, "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_color, $Colors_ALL_Combo, $Combo_BK_color_Name)
+	$Combo_BK_color = "0x" & StringRight($Value, StringLen($Value) - 1)
+	GUICtrlSetBkColor($Combo_Panel_Scroll_button_color, $Combo_BK_color)
+	;MsgBox(0, "3", $Combo_BK_color_Name & @CRLF & $Combo_BK_color)
+
+	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Scroll_button_border_radius", "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_border_radius, "")
+	GUICtrlSetData($Combo_Panel_Scroll_button_border_radius, "0px|1px|2px|3px|4px|5px|6px|7px|8px|9px|10px|11px|12px|13px|14px|15px|16px|17px|18px|19px|20px|21px|22px|23px|24px|25px|26px|27px|28px|29px|30px", $Value)
+
+
+
+	GUICtrlSetData($Panel_Nr_Selection_Input_Name, $Panel_Name_temp)
+	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\", "*.ini", 1)
+
+	$Value = "Custom Layout"
+	For $Loop = 1 To $Value_Array[0]
+		$Value = $Value & "|" & $Value_Array[$Loop]
+	Next
+	GUICtrlSetData($Combo_Panel_Layout, "")
+	GUICtrlSetData($Combo_Panel_Layout, $Value, "Custom Layout")
+
+	GUICtrlSetState($Combo_Panel_background_color, $GUI_FOCUS)
+	GUICtrlSetState($Combo_Panel_border_color, $GUI_FOCUS)
+	GUICtrlSetState($Combo_Panel_Text_Color, $GUI_FOCUS)
+	GUICtrlSetState($Combo_Panel_Icon_border_color_hover, $GUI_FOCUS)
+	GUICtrlSetState($Combo_Panel_Scroll_button_color, $GUI_FOCUS)
+	GUICtrlSetState($Panel_Nr_Selection_Input, $GUI_FOCUS)
+
+
+	$Value = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", "")
+	If $Value = "true" Then
+		GUICtrlSetState($Checkbox_DVD_Case_1, $GUI_CHECKED)
+		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_DISABLE)
+	EndIf
+
+	$Value_dvd_cover_template = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "dvd_cover_template", "")
+	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Templates\", "*.jpg", 1)
+	$Value = ""
+	For $Loop = 1 To $Value_Array[0]
+		$Value = $Value & "|" & $Value_Array[$Loop]
+	Next
+	GUICtrlSetData($Combo_DVD_Cover_Template, $Value, $Value_dvd_cover_template)
+
+
+	$Value = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", "")
+	If $Value = "true" Then GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_CHECKED)
+
+
+EndFunc
+
+
+Func _Checkbox_Panel_1()
+	Local $Value = GUICtrlRead($Checkbox_Panel_1)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_1", $Value)
+EndFunc
+
+Func _Checkbox_Panel_2()
+	Local $Value = GUICtrlRead($Checkbox_Panel_2)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_2", $Value)
+EndFunc
+
+Func _Checkbox_Panel_3()
+	Local $Value = GUICtrlRead($Checkbox_Panel_3)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_3", $Value)
+EndFunc
+
+Func _Checkbox_Panel_4()
+	Local $Value = GUICtrlRead($Checkbox_Panel_4)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_4", $Value)
+EndFunc
+
+Func _Checkbox_Panel_5()
+	Local $Value = GUICtrlRead($Checkbox_Panel_5)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_5", $Value)
+EndFunc
+
+Func _Checkbox_Panel_6()
+	Local $Value = GUICtrlRead($Checkbox_Panel_6)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_6", $Value)
+EndFunc
+
+Func _Checkbox_Panel_7()
+	Local $Value = GUICtrlRead($Checkbox_Panel_7)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_7", $Value)
+EndFunc
+
+Func _Checkbox_Panel_8()
+	Local $Value = GUICtrlRead($Checkbox_Panel_8)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_8", $Value)
+EndFunc
+
+Func _Checkbox_Panel_9()
+	Local $Value = GUICtrlRead($Checkbox_Panel_9)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_9", $Value)
+EndFunc
+
+Func _Checkbox_Panel_10()
+	Local $Value = GUICtrlRead($Checkbox_Panel_10)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_10", $Value)
+EndFunc
+
+Func _Checkbox_Panel_11()
+	Local $Value = GUICtrlRead($Checkbox_Panel_11)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_11", $Value)
+EndFunc
+
+Func _Checkbox_Panel_Turorials()
+	Local $Value = GUICtrlRead($Checkbox_Panel_Tutorials)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Turorials", $Value)
+EndFunc
+
+Func _Combo_Panel_Tool_1()
+	Local $Value = GUICtrlRead($Combo_Panel_Tool_1)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_1", $Value)
+EndFunc
+
+Func _Combo_Panel_Tool_2()
+	Local $Value = GUICtrlRead($Combo_Panel_Tool_2)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_2", $Value)
+EndFunc
+
+Func _Panel_Nr_Selection_Updown()
+	Local $Value = GUICtrlRead($Panel_Nr_Selection_Input)
+	If $Value > 11 Then $Value = 11
+	If $Value < 1 Then $Value = 1
+	GUICtrlSetData($Panel_Nr_Selection_Input, $Value)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", $Value)
+	_Set_SteamVR_Home_Panel_GUI_Data()
+EndFunc
+
+Func _Combo_Panel_width()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_width)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Panel_width", $Value)
+EndFunc
+
+Func _Combo_Panel_height()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_height)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Panel_height", $Value)
+EndFunc
+
+Func _Combo_Panel_background_color()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_background_color)
+
+	Local $Combo_BK_color = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][0] Then
+			$Combo_BK_color =  $aArray_Colors[$Loop][1]
+			ExitLoop
+		EndIf
+	Next
+
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Background_color_1", $Combo_BK_color)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Background_color_2", $Combo_BK_color)
+
+	If $Combo_BK_color <> "" Then
+		$Combo_BK_color = "0x" & StringRight($Combo_BK_color, StringLen($Combo_BK_color) - 1)
+		GUICtrlSetBkColor($Combo_Panel_background_color, $Combo_BK_color)
+	EndIf
+EndFunc
+
+Func _Combo_Panel_border()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_border)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Border", $Value)
+EndFunc
+
+Func _Combo_Panel_border_color()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_border_color)
+
+	Local $Combo_BK_color = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][0] Then
+			$Combo_BK_color =  $aArray_Colors[$Loop][1]
+			ExitLoop
+		EndIf
+	Next
+
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Border_color", $Combo_BK_color)
+
+	If $Combo_BK_color <> "" Then
+		$Combo_BK_color = "0x" & StringRight($Combo_BK_color, StringLen($Combo_BK_color) - 1)
+		GUICtrlSetBkColor($Combo_Panel_border_color, $Combo_BK_color)
+	EndIf
+EndFunc
+
+Func _Combo_Panel_border_radius()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead(_Combo_Panel_border_radius)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Border_radius", $Value)
+EndFunc
+
+Func _Combo_Panel_saturation()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_saturation)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Saturation", $Value)
+EndFunc
+
+Func _Combo_Panel_scale()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_scale)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scale", $Value)
+EndFunc
+
+Func _Combo_Panel_Text_size()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Text_size)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_size", $Value)
+EndFunc
+
+Func _Combo_Panel_Text_Color()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Text_Color)
+
+	Local $Combo_BK_color = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][0] Then
+			$Combo_BK_color =  $aArray_Colors[$Loop][1]
+			ExitLoop
+		EndIf
+	Next
+
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_color", $Combo_BK_color)
+
+	If $Combo_BK_color <> "" Then
+		$Combo_BK_color = "0x" & StringRight($Combo_BK_color, StringLen($Combo_BK_color) - 1)
+		GUICtrlSetBkColor($Combo_Panel_Text_Color, $Combo_BK_color)
+	EndIf
+EndFunc
+
+Func _Combo_Panel_text_position()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_text_position)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_position", $Value)
+EndFunc
+
+Func _Combo_Panel_Text_distance()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Text_distance)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_distance", $Value)
+EndFunc
+
+Func _Combo_Panel_Icon_distance()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_distance)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_distance", $Value)
+EndFunc
+
+Func _Combo_Panel_Icon_width()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_width)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_width", $Value)
+EndFunc
+
+Func _Combo_Panel_Icon_height()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_height)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_height", $Value)
+EndFunc
+
+Func _Combo_Panel_Icon_radius()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_radius)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_radius", $Value)
+EndFunc
+
+
+Func _Combo_Panel_Icon_border_hover()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_hover)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_border_hover", $Value)
+EndFunc
+
+Func _Combo_Panel_Icon_border_color_hover()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_color_hover)
+
+	Local $Combo_BK_color = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][0] Then
+			$Combo_BK_color =  $aArray_Colors[$Loop][1]
+			ExitLoop
+		EndIf
+	Next
+
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_border_color_hover", $Combo_BK_color)
+
+	If $Combo_BK_color <> "" Then
+		$Combo_BK_color = "0x" & StringRight($Combo_BK_color, StringLen($Combo_BK_color) - 1)
+		GUICtrlSetBkColor($Combo_Panel_Icon_border_color_hover, $Combo_BK_color)
+	EndIf
+EndFunc
+
+Func _Combo_Panel_Icon_border_radius_hover()
+		Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_radius_hover)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_border_radius_hover", $Value)
+EndFunc
+
+Func _Combo_Panel_Scroll_button_position()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_position)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_position", $Value)
+EndFunc
+
+Func _Combo_Panel_Scroll_button_width()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_width)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_width", $Value)
+EndFunc
+
+Func _Combo_Panel_Scroll_button_height()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_height)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_height", $Value)
+EndFunc
+
+Func _Combo_Panel_Scroll_button_color()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_color)
+
+	Local $Combo_BK_color = ""
+	For $Loop = 1 To $NR_Colors
+		If $Value = $aArray_Colors[$Loop][0] Then
+			$Combo_BK_color =  $aArray_Colors[$Loop][1]
+			ExitLoop
+		EndIf
+	Next
+
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_color", $Combo_BK_color)
+
+	If $Combo_BK_color <> "" Then
+		$Combo_BK_color = "0x" & StringRight($Combo_BK_color, StringLen($Combo_BK_color) - 1)
+		GUICtrlSetBkColor($Combo_Panel_Scroll_button_color, $Combo_BK_color)
+	EndIf
+EndFunc
+
+Func _Combo_Panel_Scroll_button_border_radius()
+	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
+	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_border_radius)
+	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_border_radius", $Value)
+EndFunc
+
+
+Func _Combo_Environment_Name()
+	Local $Value = GUICtrlRead($Combo_Environment_Name)
+	IniWrite($Config_INI, "Settings", "SteamVR_Environment_Name", $Value)
+	$SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
+EndFunc
+
+Func _Checkbox_DVD_Case_1()
+	Local $Value = GUICtrlRead($Checkbox_DVD_Case_1)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_DISABLE)
+	EndIf
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", $Value)
+EndFunc
+
+Func _Combo_DVD_Cover_Template()
+	Local $Value = GUICtrlRead($Combo_DVD_Cover_Template)
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "dvd_cover_template", $Value)
+EndFunc
+
+Func _Checkbox_Arcade_Machine_1()
+	Local $Value = GUICtrlRead($Checkbox_Arcade_Machine_1)
+	If $Value = 1 Then
+		$Value = "true"
+	Else
+		$Value = "false"
+	EndIf
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", $Value)
+EndFunc
+
+
+
+Func _Button_Panel_Settings_Apply()
+	Local $SteamVR_Home_Environment_Enable_DVD_Case = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", "")
+
+	;If $HomeApp = "SteamVR Home" Then
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment started.")
+		If WinExists("HomeLoader - Library") Then
+			_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment [1/2], please wait..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		EndIf
+
+		If WinExists("HomeLoader - Library") Then
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+		EndIf
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[1]")
+		_Create_SteamVR_Home_GamePages()
+
+		If WinExists("HomeLoader - Library") Then
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
+		EndIf
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[2]")
+		_Create_Panel_CSS()
+
+		If $SteamVR_Home_Environment_Enable_DVD_Case = "true" Then
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 40)
+			EndIf
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[3]")
+			_Create_LUA_Files()
+			_Create_Map_Script_LUA()
+
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
+			EndIf
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[4]")
+			_Add_DVD_Case_Models()
+
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+			EndIf
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[5]")
+			_Add_DVD_Case_Materials()
+
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 80)
+			EndIf
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[6]")
+			_Create_DVD_Case_Cover_JPG()
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+			EndIf
+		EndIf
+
+
+		If WinExists("HomeLoader - Library") Then
+			_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment [2/2], please wait..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+			Sleep(1000)
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		EndIf
+
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[7]")
+		_Compile_SteamVR_Files()
+
+		If WinExists("HomeLoader - Library") Then
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 95)
+		EndIf
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[8]")
+		;_Copy_Compile_To_SteamVR_Environment_Folder()
+		Sleep(1000)
+
+		If WinExists("HomeLoader - Library") Then
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		EndIf
+		If WinExists("HomeLoader - Library") Then
+			_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		EndIf
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment finished.")
+		Sleep(500)
+	;Else
+		;If WinExists("HomeLoader - Library") Then
+		;	_GUICtrlStatusBar_SetText($Statusbar, "Attention: Home App needs to be set to 'SteamVR Home'" & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		;EndIf
+	;EndIf
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+	EndIf
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_1()
+	Local $Timer = TimerInit()
+	_Button_Panel_Settings_Apply()
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_2()
+	Local $Timer = TimerInit()
+	If WinExists("HomeLoader - Library") Then
+		_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment...please wait..." & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[1]")
+	_Create_SteamVR_Home_GamePages()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 40)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[2]")
+	_Create_Panel_CSS()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+	EndIf
+	_Compile_Panels()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		Sleep(500)
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+		_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	EndIf
+
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_3()
+	Local $Timer = TimerInit()
+	If WinExists("HomeLoader - Library") Then
+		_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment...please wait..." & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[3]")
+	_Create_LUA_Files()
+	_Create_Map_Script_LUA()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 30)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[4]")
+	_Add_DVD_Case_Models()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[5]")
+	_Add_DVD_Case_Materials()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[6]")
+	_Create_DVD_Case_Cover_JPG()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 70)
+	EndIf
+	_Compile_DVD_Case_Models()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		Sleep(500)
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+		_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	EndIf
+
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_4()
+	MsgBox(0, "_RM_Button_SteamVRHome_Panel_Settings_4()", "_RM_Button_SteamVRHome_Panel_Settings_4()")
+EndFunc
+
+
+Func _Combo_Panel_Layout()
+	Local $Value = GUICtrlRead($Combo_Panel_Layout)
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Layout", $Value)
+	$SteamVR_Home_Environment_Settings_INI = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Layout", "")
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\" & $Value & ".ini") Then
+		FileCopy($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\" & $Value & ".ini", $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini", $FC_OVERWRITE + $FC_CREATEPATH)
+	EndIf
+	_Set_SteamVR_Home_Panel_GUI_Data()
+EndFunc
+
+Func _Close_Button_SteamVRHome_Panel_Settings_GUI()
+	GUIDelete($SteamVR_Home_Panels_GUI)
+EndFunc
 #EndRegion Func Create Game Pages
 
 Func _Start_Revive_Oculus_App()
@@ -11357,89 +13392,131 @@ Func _Read_SteamVR_VRSettings()
 	Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
 	_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
 
-	$Loop_End_1 = $Steamvr_vrsettings_Array[0]
+	If FileExists($Steamvr_vrsettings_FilePath) Then
+		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
 
-	For $Loop = 1 To $Loop_End_1
-		$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$Loop], '"', '"', $STR_ENDNOTSTART)
+		For $Loop = 1 To $Loop_End_1
+			$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$Loop], '"', '"', $STR_ENDNOTSTART)
 
-		If $Steamvr_vrsettings_aArray <> 0 Then
+			If $Steamvr_vrsettings_aArray <> 0 Then
+				If $Steamvr_vrsettings_aArray[0] <> "" Then
+					Local $StringInString_Check = StringInStr($Steamvr_vrsettings_aArray[0], 'steam.app.')
 
-			If $Steamvr_vrsettings_aArray[0] <> "" Then
-				Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
-				Local $Check_Right = StringTrimLeft($Steamvr_vrsettings_aArray[0], 10)
+					Local $SteamAppID_TEMP = ""
+					Local $motionSmoothingOverride_TEMP = ""
+					Local $ResolutionScale_TEMP = ""
 
-				If $Check_Left = "steam.app." Then
-					$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$Loop + 1], '"', '"', $STR_ENDNOTSTART)
-					$ResolutionScale_TEMP = StringRight($Steamvr_vrsettings_Array[$Loop + 2], 3)
-					$ResolutionScale_TEMP = StringReplace($ResolutionScale_TEMP, ' ', '')
-					Local $SteamAppID_TEMP = $Check_Right
+					If $StringInString_Check <> 0 Then
+						$Steam_app_Name_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop + 1], '      "appName" : "', '')
+						$Steam_app_Name_TEMP = StringReplace($Steam_app_Name_TEMP, '",', '')
 
-					$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+						Local $SteamAppID_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop], '   "steam.app.', '')
+						$SteamAppID_TEMP = StringReplace($SteamAppID_TEMP, '" : {', '')
 
-					If $ScanOnlyVR = "true" Then
-						$ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
-					EndIf
-
-					Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "NR", "")
-
-					If WinExists("HomeLoader - Library") Then
-						_GUICtrlStatusBar_SetText($Statusbar, "" & "Read SteamVR VRSettings: " & "Resolution Scale: " & $ResolutionScale_TEMP & " - " & "Name: " & $Steam_app_Name_TEMP & " - " & "SteamAppID: " & $SteamAppID_TEMP & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
-					EndIf
-
-					;IniWrite($ApplicationList_INI_TEMP, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
-					;IniWrite($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-					IniWrite($ApplicationList_INI_TEMP, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					IniWrite($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-
-					Local $Check_NR_Custom = IniRead($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-					If $Check_NR_Custom <> "" Then
-						;IniWrite($ApplicationList_Custom_1_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
-						;IniWrite($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-						IniWrite($ApplicationList_Custom_1_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
-						IniWrite($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					EndIf
-
-					Local $Check_NR_Custom = IniRead($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-					If $Check_NR_Custom <> "" Then
-						;IniWrite($ApplicationList_Custom_2_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
-						;IniWrite($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-						IniWrite($ApplicationList_Custom_2_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
-						IniWrite($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					EndIf
-
-					Local $Check_NR_Custom = IniRead($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-					If $Check_NR_Custom <> "" Then
-						;IniWrite($ApplicationList_Custom_3_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
-						;IniWrite($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-						IniWrite($ApplicationList_Custom_3_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
-						IniWrite($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					EndIf
-
-					Local $Check_NR_Custom = IniRead($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-					If $Check_NR_Custom <> "" Then
-						;IniWrite($ApplicationList_Custom_4_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
-						;IniWrite($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-						IniWrite($ApplicationList_Custom_4_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
-						IniWrite($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					EndIf
-
-					For $Loop_1 = 0 To 30
-						Local $Tag_Temp = FileReadLine($Tags_TXT, $Loop_1)
-						Local $ApplicationList_Tag_INI = $ApplicationList_Folder & "Tags\" & $Tag_Temp & ".ini"
-						If FileExists($ApplicationList_Tag_INI) Then
-							Local $Check_App_Exists = IniRead($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-							If $Check_App_Exists <> "" Then
-								;IniWrite($ApplicationList_Tag_INI, "Application_" & $Check_App_Exists, "name", $Steam_app_Name_TEMP[1])
-								;IniWrite($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-								IniWrite($ApplicationList_Tag_INI, "Application_" & $Check_App_Exists, "resolutionScale", $ResolutionScale_TEMP)
-								IniWrite($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						If StringInStr($Steamvr_vrsettings_Array[$Loop + 2], 'motionSmoothingOverride') <> 0 Then
+							$motionSmoothingOverride_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop + 2], '      "motionSmoothingOverride" : ', '')
+							$motionSmoothingOverride_TEMP = StringReplace($motionSmoothingOverride_TEMP, ',', '')
+						Else
+							If StringInStr($Steamvr_vrsettings_Array[$Loop + 3], 'motionSmoothingOverride') <> 0 Then
+								$motionSmoothingOverride_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop + 3], '      "motionSmoothingOverride" : ', '')
+								$motionSmoothingOverride_TEMP = StringReplace($motionSmoothingOverride_TEMP, ',', '')
 							EndIf
 						EndIf
-					Next
+
+						If StringInStr($Steamvr_vrsettings_Array[$Loop + 2], 'resolutionScale') <> 0 Then
+							$ResolutionScale_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop + 2], '      "resolutionScale" : ', '')
+							$ResolutionScale_TEMP = StringReplace($ResolutionScale_TEMP, ',', '')
+						Else
+							If StringInStr($Steamvr_vrsettings_Array[$Loop + 3], 'resolutionScale') <> 0 Then
+								$ResolutionScale_TEMP = StringReplace($Steamvr_vrsettings_Array[$Loop + 3], '      "resolutionScale" : ', '')
+								$ResolutionScale_TEMP = StringReplace($ResolutionScale_TEMP, ',', '')
+							EndIf
+						EndIf
+
+						;MsgBox(0, "2", $Steam_app_Name_TEMP & @CRLF & $SteamAppID_TEMP & @CRLF & $motionSmoothingOverride_TEMP & @CRLF & $ResolutionScale_TEMP)
+
+						$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+
+						If $ScanOnlyVR = "true" Then
+							$ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+						EndIf
+
+						Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "NR", "")
+
+						If WinExists("HomeLoader - Library") Then
+							_GUICtrlStatusBar_SetText($Statusbar, "" & "Read SteamVR VRSettings: " & "Resolution Scale: " & $ResolutionScale_TEMP & " - " & "Name: " & $Steam_app_Name_TEMP & " - " & "SteamAppID: " & $SteamAppID_TEMP & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+						EndIf
+
+						;IniWrite($ApplicationList_INI_TEMP, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
+						;IniWrite($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+						IniWrite($ApplicationList_INI_TEMP, "Application_" & $ApplicationList_NR_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+						IniWrite($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+						IniWrite($ApplicationList_INI_TEMP, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						IniWrite($ApplicationList_INI_TEMP, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+
+						Local $Check_NR_Custom = IniRead($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+						If $Check_NR_Custom <> "" Then
+							;IniWrite($ApplicationList_Custom_1_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
+							;IniWrite($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_Custom_1_INI, "Application_" & $Check_NR_Custom, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_1_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_Custom_1_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						EndIf
+
+						Local $Check_NR_Custom = IniRead($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+						If $Check_NR_Custom <> "" Then
+							;IniWrite($ApplicationList_Custom_2_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
+							;IniWrite($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_Custom_2_INI, "Application_" & $Check_NR_Custom, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_2_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_Custom_2_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						EndIf
+
+						Local $Check_NR_Custom = IniRead($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+						If $Check_NR_Custom <> "" Then
+							;IniWrite($ApplicationList_Custom_3_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
+							;IniWrite($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_Custom_3_INI, "Application_" & $Check_NR_Custom, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_3_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_Custom_3_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						EndIf
+
+						Local $Check_NR_Custom = IniRead($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+						If $Check_NR_Custom <> "" Then
+							;IniWrite($ApplicationList_Custom_4_INI, "Application_" & $Check_NR_Custom, "name", $Steam_app_Name_TEMP[1])
+							;IniWrite($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+							IniWrite($ApplicationList_Custom_4_INI, "Application_" & $Check_NR_Custom, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+							IniWrite($ApplicationList_Custom_4_INI, "Application_" & $Check_NR_Custom, "resolutionScale", $ResolutionScale_TEMP)
+							IniWrite($ApplicationList_Custom_4_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						EndIf
+
+						For $Loop_1 = 0 To 30
+							Local $Tag_Temp = FileReadLine($Tags_TXT, $Loop_1)
+							Local $ApplicationList_Tag_INI = $ApplicationList_Folder & "Tags\" & $Tag_Temp & ".ini"
+							If FileExists($ApplicationList_Tag_INI) Then
+								Local $Check_App_Exists = IniRead($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+								If $Check_App_Exists <> "" Then
+									;IniWrite($ApplicationList_Tag_INI, "Application_" & $Check_App_Exists, "name", $Steam_app_Name_TEMP[1])
+									;IniWrite($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+									IniWrite($ApplicationList_Tag_INI, "Application_" & $Check_App_Exists, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+									IniWrite($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "motionSmoothingOverride", $motionSmoothingOverride_TEMP)
+									IniWrite($ApplicationList_Tag_INI, "Application_" & $Check_App_Exists, "resolutionScale", $ResolutionScale_TEMP)
+									IniWrite($ApplicationList_Tag_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+								EndIf
+							EndIf
+						Next
+					EndIf
 				EndIf
 			EndIf
-		EndIf
-	Next
+		Next
+	EndIf
+	If WinExists("HomeLoader - Library") Then
+		_GUICtrlStatusBar_SetText($Statusbar, "Read SteamVR VRSettings: " & "Finished " & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	EndIf
 EndFunc   ;==>_Read_SteamVR_VRSettings
 
 Func _Write_to_SteamVR_VRSettings()
@@ -11453,7 +13530,7 @@ Func _Write_to_SteamVR_VRSettings()
 		If $ButtonTAB_State = "5" Then $listview_TEMP = $listview_5
 		If $ButtonTAB_State = "6" Then $listview_TEMP = $listview_6
 
-		If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+		;If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
 		Local $SteamAppExist = "false"
 		Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview_TEMP)
 		$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
@@ -11469,40 +13546,46 @@ Func _Write_to_SteamVR_VRSettings()
 		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
 		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
 
+		$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+
+		If $ScanOnlyVR = "true" Then
+			$ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+		EndIf
+
+		Local $Steam_app_Name_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "name", "")
+		Local $motionSmoothingOverride_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "motionSmoothingOverride", "")
+		Local $ResolutionScale_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "resolutionScale", "")
+
 		For $Loop = 1 To $Loop_End_1
-			$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$Loop], '"', '"', $STR_ENDNOTSTART)
-			If $Steamvr_vrsettings_aArray <> "" Then
-				If $Steamvr_vrsettings_aArray <> 0 Then
-					If $Steamvr_vrsettings_aArray[0] <> "" Then
-						Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
-						Local $Check_Right = $Game_ID
+			If StringInStr($Steamvr_vrsettings_Array[$Loop], "steam.app." & $Game_ID) <> 0 Then
+				$SteamAppExist = "true"
+				$SteamAppID_TEMP = $Game_ID
 
-						If $Steamvr_vrsettings_aArray[0] = "steam.app." & $Check_Right Then
-							$SteamAppExist = "true"
-							$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$Loop + 1], '"', '"', $STR_ENDNOTSTART)
-							$ResolutionScale_TEMP = StringRight($Steamvr_vrsettings_Array[$Loop + 2], 3)
-							$ResolutionScale_TEMP = GUICtrlRead($Input_ResolutionScale)
-							Local $SteamAppID_TEMP = $Check_Right
-							Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop + 1])
+				If $motionSmoothingOverride_TEMP <> "" Then FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "motionSmoothingOverride" : ' & $motionSmoothingOverride_TEMP & ',')
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP)
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+				$Loop = $Loop + 3
+				If $motionSmoothingOverride_TEMP <> "" Then $Loop = $Loop + 4
 
-							;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "appName", $Steam_app_Name_TEMP[1])
-							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
-							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
+				For $Loop_Temp = 1 To 6
+					If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
+					If $Loop_Temp = 2 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamVRLibrary_ALL_INI
+					If $Loop_Temp = 3 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_1_INI
+					If $Loop_Temp = 4 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_2_INI
+					If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
+					If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
+					Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
+					Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "appid", "")
 
-							;IniWrite($SteamVR_VRSettings_INI, "steam.app." & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP[1] & '",')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
-							$Loop = $Loop + 3
-						Else
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
-						EndIf
+					If $ID_Exist_Check_1 <> "" Then
+						;IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
+						IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
+						IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
 					EndIf
-				EndIf
+				Next
 			Else
 				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
 			EndIf
@@ -11510,26 +13593,18 @@ Func _Write_to_SteamVR_VRSettings()
 
 		If $SteamAppExist = "false" Then
 			If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
-			Local $SteamAppID_TEMP = $Game_ID
-			Local $Steam_app_Name_TEMP = $Steam_app_Name
-			Local $ResolutionScale_TEMP = GUICtrlRead($Input_ResolutionScale)
 
 			For $Loop = 1 To $Loop_End_1 - 2
 				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
 			Next
 
-			Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $SteamAppID_TEMP, "NR", "")
-			Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
-
-			If $ButtonTAB_State = "1" Then
-				If $ScanOnlyVR = "true" Then $ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
-				If $ScanOnlyVR <> "true" Then $ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
-			EndIf
-			If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
-			If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
-			If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
-			If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
-			If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
+			If $motionSmoothingOverride_TEMP <> "" Then FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "motionSmoothingOverride" : ' & $motionSmoothingOverride_TEMP & ',')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP)
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
 
 			For $Loop_Temp = 1 To 6
 				If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
@@ -11539,24 +13614,17 @@ Func _Write_to_SteamVR_VRSettings()
 				If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
 				If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
 				Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
-
 				Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "appid", "")
 
 				If $ID_Exist_Check_1 <> "" Then
-					IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP)
+					;IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
 					IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP)
+					IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
 					IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
 				EndIf
 			Next
-
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
 		EndIf
+
 		If FileExists($Steamvr_vrsettings_FilePath) Then FileDelete($Steamvr_vrsettings_FilePath)
 		FileMove($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_FilePath)
 		_Read_from_INI_ADD_2_ListView()
@@ -11568,10 +13636,8 @@ EndFunc   ;==>_Write_to_SteamVR_VRSettings
 
 Func _RM_Write_to_SteamVR_VRSettings()
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
+	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	If $Add_SS_per_game = "true" Then
-		If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
-		Local $SteamAppExist = "false"
-
 		$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 		If $ButtonTAB_State = "1" Then $listview_TEMP = $listview
 		If $ButtonTAB_State = "2" Then $listview_TEMP = $listview_2
@@ -11580,6 +13646,8 @@ Func _RM_Write_to_SteamVR_VRSettings()
 		If $ButtonTAB_State = "5" Then $listview_TEMP = $listview_5
 		If $ButtonTAB_State = "6" Then $listview_TEMP = $listview_6
 
+		;If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
+		Local $SteamAppExist = "false"
 		Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview_TEMP)
 		$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
 		Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
@@ -11588,92 +13656,79 @@ Func _RM_Write_to_SteamVR_VRSettings()
 		Local $Steam_app_Name = $ListView_Item_Array[3]
 		$Game_ID = $ListView_Item_Array[2]
 
-		;MsgBox(0, "11724", $Steam_app_Name & @CRLF & $Game_ID)
+		;MsgBox(0, "11580", $Steam_app_Name & @CRLF & $Game_ID)
 
 		Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
 		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
 		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
 
+		$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+
+		If $ScanOnlyVR = "true" Then
+			$ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+		EndIf
+
+		Local $Steam_app_Name_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "name", "")
+		Local $motionSmoothingOverride_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "motionSmoothingOverride", "")
+		;Local $ResolutionScale_TEMP = IniRead($ApplicationList_INI_TEMP, "Application_" & $Game_ID, "resolutionScale", "")
+
+
+
 		For $Loop = 1 To $Loop_End_1
-			$Steamvr_vrsettings_aArray = _StringBetween($Steamvr_vrsettings_Array[$Loop], '"', '"', $STR_ENDNOTSTART)
-			If $Steamvr_vrsettings_aArray <> "" Then
-				If $Steamvr_vrsettings_aArray <> 0 Then
-					If $Steamvr_vrsettings_aArray[0] <> "" Then
-						Local $Check_Left = StringLeft($Steamvr_vrsettings_aArray[0], 10)
-						Local $Check_Right = $Game_ID
+			If StringInStr($Steamvr_vrsettings_Array[$Loop], "steam.app." & $Game_ID) <> 0 Then
+				$SteamAppExist = "true"
+				$SteamAppID_TEMP = $Game_ID
 
-						If $Steamvr_vrsettings_aArray[0] = "steam.app." & $Check_Right Then
-							$SteamAppExist = "true"
-							$Steam_app_Name_TEMP = _StringBetween($Steamvr_vrsettings_Array[$Loop + 1], '"', '"', $STR_ENDNOTSTART)
-							Local $SteamAppID_TEMP = $Check_Right
 
-							Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop + 1])
+				If $motionSmoothingOverride_TEMP <> "" Then FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "motionSmoothingOverride" : ' & $motionSmoothingOverride_TEMP & ',')
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP)
+				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+				$Loop = $Loop + 3
+				If $motionSmoothingOverride_TEMP <> "" Then $Loop = $Loop + 4
 
-							If $ButtonTAB_State = "1" Then
-								If $ScanOnlyVR = "true" Then $ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
-								If $ScanOnlyVR <> "true" Then $ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
-							EndIf
-							If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
-							If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
-							If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
-							If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
-							If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+				For $Loop_Temp = 1 To 6
+					If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
+					If $Loop_Temp = 2 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamVRLibrary_ALL_INI
+					If $Loop_Temp = 3 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_1_INI
+					If $Loop_Temp = 4 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_2_INI
+					If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
+					If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
 
-							For $Loop_Temp = 1 To 6
-								If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
-								If $Loop_Temp = 2 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamVRLibrary_ALL_INI
-								If $Loop_Temp = 3 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_1_INI
-								If $Loop_Temp = 4 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_2_INI
-								If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
-								If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
-								Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
+					Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "appid", "")
 
-								Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "appid", "")
-
-								;MsgBox(0, "11766", $Steam_app_Name_TEMP[1] & @CRLF & $ResolutionScale_TEMP)
-
-								If $ID_Exist_Check_1 <> "" Then
-									IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP[1])
-									IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-									IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP[1])
-									IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-								EndIf
-							Next
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP[1] & '",')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
-							$Loop = $Loop + 3
-						Else
-							FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
-						EndIf
+					If $ID_Exist_Check_1 <> "" Then
+						Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
+						;IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
+						;IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
+						IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+						;MsgBox(0, $SteamAppExist, $Game_ID & @CRLF & $ResolutionScale_TEMP)
 					EndIf
-				EndIf
+				Next
 			Else
 				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
 			EndIf
 		Next
 
+		;MsgBox(0, "1" & " " & $SteamAppExist, $Game_ID & @CRLF & $ResolutionScale_TEMP)
+
 		If $SteamAppExist = "false" Then
+			$SteamAppID_TEMP = $Game_ID
 			If FileExists($Steamvr_vrsettings_FilePath & ".new") Then FileDelete($Steamvr_vrsettings_FilePath & ".new")
-			Local $SteamAppID_TEMP = $Game_ID
-			Local $Steam_app_Name_TEMP = $Steam_app_Name
 
 			For $Loop = 1 To $Loop_End_1 - 2
 				FileWriteLine($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_Array[$Loop])
 			Next
 
-			Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
-
-			If $ButtonTAB_State = "1" Then
-				If $ScanOnlyVR = "true" Then $ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
-				If $ScanOnlyVR <> "true" Then $ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
-			EndIf
-			If $ButtonTAB_State = "2" Then $ApplicationList_TEMP = $ApplicationList_Non_Steam_Appl_INI
-			If $ButtonTAB_State = "3" Then $ApplicationList_TEMP = $ApplicationList_Custom_1_INI
-			If $ButtonTAB_State = "4" Then $ApplicationList_TEMP = $ApplicationList_Custom_2_INI
-			If $ButtonTAB_State = "5" Then $ApplicationList_TEMP = $ApplicationList_Custom_3_INI
-			If $ButtonTAB_State = "6" Then $ApplicationList_TEMP = $ApplicationList_Custom_4_INI
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
+			If $motionSmoothingOverride_TEMP <> "" Then FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "motionSmoothingOverride" : ' & $motionSmoothingOverride_TEMP & ',')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP)
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
+			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
 
 			For $Loop_Temp = 1 To 6
 				If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
@@ -11682,35 +13737,72 @@ Func _RM_Write_to_SteamVR_VRSettings()
 				If $Loop_Temp = 4 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_2_INI
 				If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
 				If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
-				Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
 
 				Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "appid", "")
 
 				If $ID_Exist_Check_1 <> "" Then
-					IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steam_app_Name_TEMP)
+					Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "NR", "")
+					;IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
+					;IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steamvr_vrsettings_Array[$Loop + 1])
 					IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
-					IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "name", $Steam_app_Name_TEMP)
 					IniWrite($ApplicationList_TEMP_RS, "Application_" & $SteamAppID_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+					;MsgBox(0, $SteamAppExist, $Game_ID & @CRLF & $ResolutionScale_TEMP)
 				EndIf
 			Next
-
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   },')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   "steam.app.' & $SteamAppID_TEMP & '" : {')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "appName" : "' & $Steam_app_Name_TEMP & '",')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '      "resolutionScale" : ' & $ResolutionScale_TEMP & '')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '   }')
-			FileWriteLine($Steamvr_vrsettings_FilePath & ".new", '}')
 		EndIf
+
 		If FileExists($Steamvr_vrsettings_FilePath) Then FileDelete($Steamvr_vrsettings_FilePath)
 		FileMove($Steamvr_vrsettings_FilePath & ".new", $Steamvr_vrsettings_FilePath)
 		_Read_from_INI_ADD_2_ListView()
 	Else
 		MsgBox($MB_ICONINFORMATION, "Attention!", "Read/Write Resolution Scale is disabled." & @CRLF & _
-				"Enable it in the Settings to be able to use this function.")
+													"Enable it in the Settings to be able to use this function.")
 	EndIf
 EndFunc   ;==>_RM_Write_to_SteamVR_VRSettings
 
 #EndRegion Read/Write Steam Files
+
+
+Func _Sync_All_INI_Files_1()
+	Local $GameID_Temp = IniRead($Config_INI, "TEMP", "GameID", "")
+
+	If $ScanOnlyVR = "true" Then
+		$ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
+	Else
+		$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
+	EndIf
+
+	Local $MotionSmoothingOverride_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "motionSmoothingOverride", "")
+	Local $ResolutionScale_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "resolutionScale", "")
+
+	;MsgBox(0, "", $ApplicationList_TEMP)
+
+	If $GameID_Temp <> "" Then
+		For $Loop_Temp = 1 To 6
+			If $Loop_Temp = 1 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamLibrary_ALL_INI
+			If $Loop_Temp = 2 Then $ApplicationList_TEMP_RS = $ApplicationList_SteamVRLibrary_ALL_INI
+			If $Loop_Temp = 3 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_1_INI
+			If $Loop_Temp = 4 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_2_INI
+			If $Loop_Temp = 5 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_3_INI
+			If $Loop_Temp = 6 Then $ApplicationList_TEMP_RS = $ApplicationList_Custom_4_INI
+
+			Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "NR", "")
+			Local $ID_Exist_Check_1 = IniRead($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "appid", "")
+
+			;MsgBox(0, $GameID_Temp, $ID_Exist_Check_1 & @CRLF & @CRLF & $ApplicationList_NR_TEMP)
+
+			If $ID_Exist_Check_1 <> "" Then
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "motionSmoothingOverride", $MotionSmoothingOverride_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "motionSmoothingOverride", $MotionSmoothingOverride_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "resolutionScale", $ResolutionScale_TEMP)
+			EndIf
+		Next
+	EndIf
+	IniWrite($Config_INI, "TEMP", "GameID", "")
+EndFunc
+
+
 
 #Region ERROR handler
 Func MyErrFunc()

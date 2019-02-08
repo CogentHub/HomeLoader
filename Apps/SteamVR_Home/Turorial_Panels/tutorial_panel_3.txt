@@ -1,0 +1,3 @@
+HomeLoader Environment Information [3/4]
+HomeLoader Desktop Application:
+HomeLoader Desktop Application is needed. It will scan your game libraries and update the game panels and other content like the dvd case models. The Layout of the panels can also be customized using HomeLoader.

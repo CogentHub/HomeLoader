@@ -1,0 +1,5 @@
+HomeLoader Environment Information [2/4]
+Acknowledgments:
+ - Scripted Item Test Range by Rectus
+
+Scripted Item Test Range environment motivated me to try and create something and I also use a few of the examples in the environment. He did a great job and has already created other nice things. Visit his SteamVR environment if not already done and have some fun. I will add more of his tools so that there is something else to do besides loading games ;-)

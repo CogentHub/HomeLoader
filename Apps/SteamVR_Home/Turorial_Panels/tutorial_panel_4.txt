@@ -1,0 +1,6 @@
+HomeLoader Environment Information [4/4]
+Create/Add your own environment:
+You can use the game panels, dvd cases and all the other stuff in your own environment if you want. Create a copy of the HomeLoader environment using the Steam Workshop tools and use it as a base to create your own environment. Use the settings menu in HomeLoader to change the environment name and the layout of your panels. The Categories names and some other options can be changed in HomeLoader as well.
+
+I hope everything was correct and understandable, do not hesitate to contact me or to post any comments.
+HomeLoader by Cogent, cogenthub@web.de.

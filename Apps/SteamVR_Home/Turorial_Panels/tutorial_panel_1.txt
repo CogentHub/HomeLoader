@@ -1,0 +1,7 @@
+HomeLoader Environment Information [1/4]
+You will need a program called HomeLoader to use this environment. It can be downloaded from GitHub and is needed for most of the functions of this environment.
+
+GitHub Page:
+https://github.com/CogentHub/HomeLoader
+
+After the installation start HomeLoader and on its first start it will ask you if you want to scan your game libraries. Now open the SteamVR Home Environment Settings and HomeLoader will unpack the downloaded HomeLoader SteamVR Environment from its Steam Workshop location. This only has to be done once.

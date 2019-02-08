@@ -67,15 +67,27 @@ Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "Applic
 Global $Steam_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Valve\Steam\', "SteamPath")
 Global $Steam_Path = StringReplace($Steam_Path_REG, '/', '\') & "\"
 
+Global $ApplicationList_SteamVRLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamVRLibrary_ALL.ini"
+Global $ApplicationList_SteamLibrary_ALL_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+Global $ApplicationList_Non_Steam_Appl_INI = $ApplicationList_Folder & "ApplicationList_Non-Steam_Appl.ini"
+Global $ApplicationList_Custom_1_INI = $ApplicationList_Folder & "ApplicationList_Custom_1.ini"
+Global $ApplicationList_Custom_2_INI = $ApplicationList_Folder & "ApplicationList_Custom_2.ini"
+Global $ApplicationList_Custom_3_INI = $ApplicationList_Folder & "ApplicationList_Custom_3.ini"
+Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationList_Custom_4.ini"
+
+Global $SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
+
 Global $SteamVR_stats_log = $Steam_Path & "logs\stats_log.txt"
 #endregion
+
+
 
 
 Func _StartHomeApp()
 
 	$stats_log_FILE = @ScriptDir & "\System\Logs\stats_log.txt"
 	;MsgBox(0, "$stats_log_FILE 2", $stats_log_FILE)
-	#region Start LOG
+#region Start LOG
 	FileWrite($stats_log_FILE, @CRLF & "[Start _StartHomeApp: " & _Now() & "]" & @CRLF & _
 									"- Home App: " & $HomeApp & @CRLF & _
 									"- Home App Path: " & $Home_Path & @CRLF & _
@@ -110,7 +122,7 @@ Func _StartHomeApp()
 									"- Add_SS_per_game: " & $Add_SS_per_game & @CRLF & _
 									"- Autostart VRUB: " & $State_Checkbox_Autostart_VRUB & @CRLF & _
 									"- HomeLoader Overlay SteamID: " & $HomeLoaderOverlaySteamID & @CRLF)
-
+#endregion
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Home APP:")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Home APP = " & $HomeApp)
@@ -130,6 +142,10 @@ Func _StartHomeApp()
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Home APP '" & $HomeApp & "' started - " & "Path: '" & $Home_Path & "'")
 
+	If $Autostart_VRUB = "true" Then
+		_Read_from_VRUB_PersistentStore_File()
+	EndIf
+
 	If $HomeApp <> "SteamVR Home" Then
 		Sleep(6000)
 	Else
@@ -139,29 +155,68 @@ Func _StartHomeApp()
 	;_Exit_Check()
 	_Start_actions_after()
 
-	If $Open_HTML_GamePage_OnStart = "true" Then
-		;_Keep_HomeLoader_Allive_Check()
+	If $Autostart_VRUB = "true" Then
+		_Write_Settings_to_VRUB_PersistentStore_File()
+		;_Write_ALL_Categories_to_VRUB_PersistentStore_File()
+		If Not ProcessExists("VRUtilityBelt.exe") Then
+			ShellExecute("steam://rungameid/645370")
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
+			Sleep(3000)
+			_Start_HomeLoader_VROverlay()
+		EndIf
+	EndIf
+
+	;If $Open_HTML_GamePage_OnStart = "true" Or $HomeApp = "SteamVR Home" Then
+	;	_Keep_HomeLoader_Allive_Check()
+	;EndIf
+
+	;MsgBox(0, "", $Open_HTML_GamePage_OnStart & @CRLF & $HomeApp)
+
+	If $Open_HTML_GamePage_OnStart = "true" Or $HomeApp = "SteamVR Home" Then
+		_Keep_HomeLoader_SteamVR_Home_Allive_Check()
 	EndIf
 EndFunc
 
 
 #Region Start Funktionen
 Func _Start_actions_before()
-	If $PIN_HTML_GamePage_Value = "true" Then
-		WinSetOnTop("Game Page Menu", "", $WINDOWS_ONTOP)
-	Else
-		WinSetOnTop("Game Page Menu", "", $WINDOWS_NOONTOP)
+	If WinExists("Game Page Menu") Then
+		If $PIN_HTML_GamePage_Value = "true" Then
+			WinSetOnTop("Game Page Menu", "", $WINDOWS_ONTOP)
+		Else
+			WinSetOnTop("Game Page Menu", "", $WINDOWS_NOONTOP)
+		EndIf
 	EndIf
 EndFunc
 
 Func _Start_actions_after()
+	;MsgBox(0, "SteamVR_was_started", $SteamVR_was_started)
+	;If $SteamVR_was_started = "true" Then
+		Local $Value_SSD_SetSoundDevice = IniRead($Config_INI, "Settings", "SSD_SetSoundDevice", "")
+		If $Value_SSD_SetSoundDevice = "true" Then
+			_Button_Set_Playback_Device()
+			Sleep(1500)
+			_Button_Set_Recording_Device()
+			Sleep(1000)
+			$SteamVR_was_started = "false"
+		EndIf
+	;EndIf
+
 	If $Autostart_VRUB = "true" Then
-		_Read_from_VRUB_PersistentStore_File()
-		Sleep(1000)
+		If ProcessExists("VRUtilityBelt.exe") Then ProcessClose("VRUtilityBelt.exe")
+		Do
+			Sleep(500)
+			_Exit_Check()
+		Until Not ProcessExists("VRUtilityBelt.exe")
+		Sleep(500)
+		_Write_Settings_to_VRUB_PersistentStore_File()
+		;_Write_ALL_Categories_to_VRUB_PersistentStore_File()
+		Sleep(500)
 		If Not ProcessExists("VRUtilityBelt.exe") Then
 			ShellExecute("steam://rungameid/645370")
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
 			Sleep(3000)
+			_Start_HomeLoader_VROverlay()
 		EndIf
 	EndIf
 
@@ -217,58 +272,456 @@ Func _Start_actions_after()
 EndFunc
 
 
+Func _RELOAD_Keep_HomeLoader_Allive_Check()
+	Sleep(3000)
+	_Check_VRUB_PersistentStore_TEMP_Files()
+	_Start_HomeLoader_VROverlay()
+	Exit
+EndFunc
 
 Func _Keep_HomeLoader_Allive_Check()
-	If $HomeApp = "None" Then Exit
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " OVERLAY: Start HomeLoader Overlay.")
 	Do
-		_Exit_Check()
-		Local $NR_FileCountLines = _FileCountLines($SteamVR_stats_log)
-		Local $Check_HomeApp_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
-		Local $HomeApp_ID = StringReplace($Check_HomeApp_Path, 'steam://rungameid/', '')
-		Local $Check_HomeApp_ID = IniRead($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
-		If $Check_HomeApp_ID <> "" Then
-			$HomeApp_ID = $Check_HomeApp_ID
-		EndIf
+		#Region VRUB Check
+		Local $HLOS_Temp_Check = IniRead($Config_INI, "TEMP", "HLOS", "")
+		Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
+		Local $sText = FileRead($filePath)
+		Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
 
-		Local $Check_AppID_Running = FileReadLine($SteamVR_stats_log, $NR_FileCountLines)
-		Local $Check_AppID_Last = FileReadLine($SteamVR_stats_log, $NR_FileCountLines - 1)
-		Local $iPosition = StringInStr($Check_AppID_Running, "AppID")
-		Local $Check_AppID_1 = StringTrimLeft($Check_AppID_Running, $iPosition - 2)
-		Local $Check_AppID_2 = StringLeft($Check_AppID_1, 14)
-		Local $Check_AppID_3 = StringReplace($Check_AppID_2, 'AppID', '')
-		Local $Check_AppID_4 = StringReplace($Check_AppID_3, ' ', '')
-		Local $Check_AppID_5 = StringReplace($Check_AppID_4, '[', '')
-		Local $Check_AppID_6 = StringReplace($Check_AppID_5, ']', '')
+		For $i2 = 1 To $aArray[0]
+			Local $StringReplaced1 = StringReplace($aArray[$i2], '{', '')
+			Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
+			Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
+			Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
 
-		Local $Current_ID = $Check_AppID_6
+			If $StringSplit[1] = "AppIDLoaded" Then
+				If $StringSplit[2] <> "" Then
+					;MsgBox(0, "266 - AppIDLoaded", $StringSplit[2])
 
-		Local $NewAppStarted = "false"
-		If $Current_ID <> $HomeApp_ID Then $NewAppStarted = "true"
-		;If $Current_ID <> $HomeApp_ID Then MsgBox(0, "Exit GamePageMode", $NewAppStarted & @CRLF & @CRLF & $Current_ID & @CRLF & $HomeApp_ID)
+					Global $Check_VIVE_Oculus = StringReplace($StringReplaced3, 'AppIDLoaded:', '')
+					;MsgBox(0, "$Check_Oculus", $Check_VIVE_Oculus)
 
-		For $Loop = 1 To 9
-			Local $AutostartApp_ID = IniRead($Config_INI, "Autostart", "App_" & $Loop & "_Path", "")
-			$AutostartApp_ID = StringReplace($AutostartApp_ID, 'steam://rungameid/', '')
-			If $AutostartApp_ID <> "" Then
-				If $AutostartApp_ID = $Current_ID Then $NewAppStarted = "false"
+					If StringLeft($Check_VIVE_Oculus, 4) = "vive" Then
+						If $HLOS_Temp_Check <> "vive" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start Viveport App." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "vive")
+							_Start_Vive_Oculus_App()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					$Check_VIVE_Oculus = StringReplace($Check_VIVE_Oculus, 'steam://rungameid/', '')
+					If StringLeft($Check_VIVE_Oculus, 11) = "revive.app." Then
+						If $HLOS_Temp_Check <> "revive.app." Then
+							;MsgBox(0, "$HLOS_Temp_Check", $HLOS_Temp_Check)
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start Oculus App." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "revive.app.")
+							_Start_Vive_Oculus_App()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					$Check_VIVE_Oculus = StringReplace($Check_VIVE_Oculus, 'steam://rungameid/', '')
+					If StringLeft($Check_VIVE_Oculus, 5) = "HLNSG" Then
+						If $HLOS_Temp_Check <> "HLNSG" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start HLNSG App." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "HLNSG")
+							_Start_Vive_Oculus_App()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+				EndIf
 			EndIf
+
+			If $StringSplit[1] = "FuncLoaded" Then
+				If $StringSplit[2] <> "" Then
+					If $StringSplit[2] = "Save" Then
+						If $HLOS_Temp_Check <> "Save" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Save Settings." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Save")
+							_Read_from_VRUB_PersistentStore_File()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Save_ResolutionScale" Then
+						If $HLOS_Temp_Check <> "Save_ResolutionScale" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Save ResolutionScale." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Save_ResolutionScale")
+							_Write_ResolutionScale_OVERLAY_to_SteamVR_VRSettings()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Start_HomeApp" Then
+						If $HLOS_Temp_Check <> "Start_HomeApp" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start HomeApp." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Start_HomeApp")
+							_StartHomeApp()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Start_Discord" Then
+						If $HLOS_Temp_Check <> "Start_Discord" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start Discord." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Start_Discord")
+							;MsgBox(0, "Start_Discord", "Start_Discord")
+							_Start_Discord()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Start_OBS" Then
+						If $HLOS_Temp_Check <> "Start_OBS" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start OBS." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Start_OBS")
+							;MsgBox(0, "Start_OBS", "Start_OBS")
+							_Start_OBS()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "OBS_Record_Start" Then
+						;MsgBox(0, "1 OBS_Record_Start", "OBS_Record_Start")
+						If $HLOS_Temp_Check <> "OBS_Record_Start" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Start Recording." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "OBS_Record_Start")
+							;MsgBox(0, "2 OBS_Record_Start", "OBS_Record_Start")
+							_Start_OBS_Record_Start()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "OBS_Record_Stop" Then
+						;MsgBox(0, "1 OBS_Record_Stop", "OBS_Record_Stop")
+						If $HLOS_Temp_Check <> "OBS_Record_Stop" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Stop Recording" & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "OBS_Record_Stop")
+							;MsgBox(0, "2 OBS_Record_Stop", "OBS_Record_Stop")
+							_Start_OBS_Record_Stop()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Discord_Microphone_on_off" Then
+						;MsgBox(0, "1 OBS_Record_Stop", "OBS_Record_Stop")
+						If $HLOS_Temp_Check <> "Discord_Microphone_on_off" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Discord Microphone on/off" & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Discord_Microphone_on_off")
+							;MsgBox(0, "2 OBS_Record_Stop", "OBS_Record_Stop")
+							_Start_Discord_Microphone_on_off()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Discord_Speakers_on_off" Then
+						;MsgBox(0, "1 OBS_Record_Stop", "OBS_Record_Stop")
+						If $HLOS_Temp_Check <> "Discord_Speakers_on_off" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Discord Speakers on/off" & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Discord_Speakers_on_off")
+							;MsgBox(0, "2 OBS_Record_Stop", "OBS_Record_Stop")
+							_Start_Discord_Speakers_on_off()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+
+					If $StringSplit[2] = "Restart_HomeApp" Then
+						If $HLOS_Temp_Check <> "Restart_HomeApp" Then
+							FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Restart HomeApp." & @CRLF)
+							IniWrite($Config_INI, "TEMP", "HLOS", "Restart_HomeApp")
+							_Restart_HomeApp()
+							_RELOAD_Keep_HomeLoader_Allive_Check()
+						EndIf
+					EndIf
+				EndIf
+			EndIf
+
 		Next
+		#endregion
 
-		If $Check_HomeApp_ID = "" Then Exit
-		If $HomeApp = "None" Then Exit
 
+		#Region config Check
+
+
+
+		#endregion
+
+		_Exit_Check_VRUB()
 		Sleep(1000)
 
-	Until $NewAppStarted = "true"
+	Until Not ProcessExists("VRUtilityBelt.exe")
+
+
 	_Exit_Check()
 
-	ProcessClose("HomeLoaderLibrary.exe")
-	IniWrite($Config_INI, "TEMP", "GamePageMenu", "Exit")
-	FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Exit Game Check: Game Page Closed.")
+	;ProcessClose("HomeLoaderLibrary.exe")
+	FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " OVERLAY: Exit HomeLoader Overlay.")
 	Sleep(1000)
 	Exit
 EndFunc
 
+Func _Keep_HomeLoader_SteamVR_Home_Allive_Check()
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " SteamVR Home, Steamtours Check 1.")
+
+	If Not ProcessExists("steamtours.exe") Then Sleep(1000)
+	If Not ProcessExists("steamtours.exe") Then Sleep(1000)
+	If Not ProcessExists("steamtours.exe") Then Sleep(1000)
+	If Not ProcessExists("steamtours.exe") Then Sleep(1000)
+	If Not ProcessExists("steamtours.exe") Then Sleep(1000)
+
+	Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+	FileDelete($Check_File)
+	Do
+		Local $Content_File = FileRead($Check_File)
+		;MsgBox(0, "$Content_File", $Content_File)
+		Local $Steam_appid_temp = StringReplace($Content_File, 'Steam.appid=', '')
+		;Local $Viveport_appid_temp = StringReplace($Content_File, 'Steam.appid=', '')
+		;Local $Oculus_appid_temp = StringReplace($Content_File, 'Steam.appid=', '')
+		If StringLeft($Content_File, 11) = "Steam.appid" Then
+			;MsgBox(0, $Steam_appid_temp, "Start:" & @CRLF & "steam://rungameid/" & $Steam_appid_temp & '"')
+			ShellExecute("steam://rungameid/" & $Steam_appid_temp & '"')
+			Sleep(500)
+			FileDelete($Check_File)
+		EndIf
+		If StringLeft($Content_File, 14) = "Viveport.appid" Then
+			ShellExecute("steam://rungameid/645370")
+		EndIf
+		If StringLeft($Content_File, 12) = "Oculus.appid" Then
+			ShellExecute("steam://rungameid/645370")
+		EndIf
+		_Exit_Check()
+		Sleep(500)
+	Until Not ProcessExists("steamtours.exe")
+
+	_Exit_Check()
+
+	FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " SteamVR Home, Steamtours Check 2.")
+	Sleep(1000)
+	Exit
+EndFunc
+
+Func _Start_Vive_Oculus_App_BACKUP()
+	Local $Check_AppId = $Check_VIVE_Oculus
+	Local $StringLeft_Check_AppID = StringLeft($Check_AppId, 14)
+	Local $StringTrimLeft_Check_AppID = StringTrimLeft($Check_AppId, 14)
+	Local $StringLeft_Check_HL = StringLeft($Check_AppId, 5)
+	Local $StringLeft_Check_Revive = StringLeft($Check_AppId, 11)
+	Local $Viveport_binary_path_windows = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	If $ScanOnlyVR = "true" Then $Viveport_binary_path_windows = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	;MsgBox(0, "1", "Application_vive.htc." & $StringTrimLeft_Check_AppID)
+
+	Local $Revive_ShellExecute = $Revive_Path & "Revive\ReviveInjector_x64.exe"
+
+	;MsgBox(0, "_Start_Vive_Oculus_App", $Check_AppId & @CRLF & $StringLeft_Check_AppID & @CRLF & $StringTrimLeft_Check_AppID & @CRLF & $StringLeft_Check_HL & @CRLF & $StringLeft_Check_Revive & @CRLF & $Revive_ShellExecute & @CRLF)
+
+	If $Check_AppId <> "" Then
+		If $StringLeft_Check_AppID = "vive://runapp/" Then
+			If Not ProcessExists("Vive.exe") Then
+				If FileExists($Viveport_binary_path_windows) Then
+					ShellExecute($Viveport_binary_path_windows)
+				Else
+					If FileExists($HTCVive_Path & "PCClient\Vive.exe") Then
+						ShellExecute($HTCVive_Path & "PCClient\Vive.exe")
+						Do
+							Sleep(1000)
+							_Exit_Check()
+						Until ProcessExists("Vive.exe")
+						Sleep(1000)
+						ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
+					EndIf
+				EndIf
+			Else
+				ShellExecute("vive://runapp/" & $StringTrimLeft_Check_AppID)
+			EndIf
+		EndIf
+
+		If $StringLeft_Check_Revive = "revive.app." Then
+			ShellExecute($Install_DIR & "WebPage\Revive\" & $Check_AppId & ".bat")
+		EndIf
+
+		If $StringLeft_Check_HL = "HLNSG" Then
+			Local $HLNSG_installdir = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $Check_AppId, "installdir", "")
+			ShellExecute($HLNSG_installdir)
+		EndIf
+
+		Sleep(200)
+		;_Beenden()
+	EndIf
+EndFunc
+
+Func _Start_Vive_Oculus_App()
+	Local $Check_AppId = $Check_VIVE_Oculus
+	Local $StringLeft_Check_AppID = StringLeft($Check_AppId, 14)
+	Local $StringTrimLeft_Check_AppID = StringTrimLeft($Check_AppId, 14) ;;;;;;;;
+	Local $StringLeft_Check_HL = StringLeft($Check_AppId, 5)
+	Local $StringLeft_Check_Revive = StringLeft($Check_AppId, 11)
+	Local $Viveport_binary_path_windows = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	If $ScanOnlyVR = "true" Then $Viveport_binary_path_windows = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+	;MsgBox(0, "1", "Application_vive.htc." & $StringTrimLeft_Check_AppID)
+
+	Local $Revive_ShellExecute = $Revive_Path & "Revive\ReviveInjector_x64.exe"
+
+	;MsgBox(0, "_Start_Vive_Oculus_App", $Check_AppId & @CRLF & $StringLeft_Check_AppID & @CRLF & $StringTrimLeft_Check_AppID & @CRLF & $StringLeft_Check_HL & @CRLF & $StringLeft_Check_Revive & @CRLF & $Revive_ShellExecute & @CRLF)
+
+	If $Check_AppId <> "" Then
+		If $StringLeft_Check_AppID = "vive://runapp/" Then
+			Local $ViveportAppPath = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+			Local $ViveportAppDirPath = StringReplace(IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "IconPath", ""), 'Thumbnail-square.jpg', '')
+			If $ScanOnlyVR = "true" Then
+				$ViveportAppPath = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "binary_path_windows", "")
+				$ViveportAppDirPath = StringReplace(IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_vive.htc." & $StringTrimLeft_Check_AppID, "IconPath", ""), 'Thumbnail-square.jpg', '')
+			EndIf
+
+			MsgBox(0, "Application_vive.htc." & $StringTrimLeft_Check_AppID, $ViveportAppDirPath & @CRLF & @CRLF & $ViveportAppPath)
+
+			If FileExists($ViveportAppPath) Then ShellExecute($ViveportAppPath, "", $ViveportAppDirPath)
+		EndIf
+
+		If $StringLeft_Check_Revive = "revive.app." Then
+			ShellExecute($Install_DIR & "WebPage\Revive\" & $Check_AppId & ".bat")
+		EndIf
+
+		If $StringLeft_Check_HL = "HLNSG" Then
+			Local $HLNSG_installdir = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $Check_AppId, "installdir", "")
+			ShellExecute($HLNSG_installdir)
+		EndIf
+
+		Sleep(200)
+		;_Beenden()
+	EndIf
+EndFunc
+
+Func _Restart_HomeApp()
+	If ProcessExists("VRUtilityBelt.exe") Then ProcessClose("VRUtilityBelt.exe")
+	If ProcessExists("vrmonitor.exe") Then ProcessClose("vrmonitor.exe")
+	Do
+		Sleep(1000)
+	Until Not ProcessExists("vrmonitor.exe")
+	Sleep(500)
+	_Write_Settings_to_VRUB_PersistentStore_File()
+	If FileExists($Install_DIR & "HomeLoader.exe") Then
+		ShellExecute($Install_DIR & "HomeLoader.exe", "StartHomeLoaderHomeApp", $Install_DIR)
+	Else
+		ShellExecute($Install_DIR & "HomeLoader.au3", "StartHomeLoaderHomeApp", $Install_DIR)
+	EndIf
+	;_StartHomeApp()
+	;Exit
+EndFunc
+
+
+Func _Start_Discord()
+	If FileExists("C:\Users\Cogent\AppData\Local\Discord\Update.exe") Then
+		ShellExecute("C:\Users\Cogent\AppData\Local\Discord\Update.exe", "--processStart Discord.exe", "")
+	Else
+		;ShellExecute($Install_DIR & "HomeLoader.au3", "StartHomeLoaderHomeApp", $Install_DIR)
+	EndIf
+EndFunc
+
+Func _Start_OBS()
+	; "C:\Program Files(x86)\OBS\OBS.exe" -multi -portable -profile "QuickSync 30fps" -scenecollection "games" -start
+	If FileExists(@ProgramFilesDir & "\obs-studio\bin\64bit\obs64.exe") Then
+		ShellExecute(@ProgramFilesDir & "\obs-studio\bin\64bit\obs64.exe", '', @ProgramFilesDir & "\obs-studio\bin\64bit\")
+	Else
+		;ShellExecute($Install_DIR & "HomeLoader.au3", "StartHomeLoaderHomeApp", $Install_DIR)
+	EndIf
+EndFunc
+
+Func _Start_OBS_Record_Start()
+	Opt("WinTitleMatchMode",4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("obs32.exe") or ProcessExists("obs64.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{A down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{A up}")
+	EndIf
+EndFunc
+
+Func _Start_OBS_Record_Stop()
+	Opt("WinTitleMatchMode", 4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("obs32.exe") or ProcessExists("obs64.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{S down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{S up}")
+	EndIf
+EndFunc
+
+Func _Start_Discord_PushToTalk_on_off()
+	Opt("WinTitleMatchMode",4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("Discord.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{NUMPAD1 down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{NUMPAD1 up}")
+	EndIf
+EndFunc
+
+Func _Start_Discord_PushToMute_on_off()
+	Opt("WinTitleMatchMode",4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("Discord.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{NUMPAD2 down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{NUMPAD2 up}")
+	EndIf
+EndFunc
+
+Func _Start_Discord_Microphone_on_off()
+	Opt("WinTitleMatchMode",4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("Discord.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{NUMPAD3 down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{NUMPAD3 up}")
+	EndIf
+EndFunc
+
+Func _Start_Discord_Speakers_on_off()
+	Opt("WinTitleMatchMode",4)
+	Local $windowTitle = WinGetTitle("[ACTIVE]")
+	WinActivate($windowTitle)
+
+	If ProcessExists("Discord.exe") Then
+		Send("{CTRLDOWN}")
+		Send("{ALTDOWN}")
+		Send("{NUMPAD4 down}")
+		Sleep(100)
+		Send("{CTRLUP}")
+		Send("{ALTUP}")
+		Send("{NUMPAD4 up}")
+	EndIf
+EndFunc
 
 
 #endregion

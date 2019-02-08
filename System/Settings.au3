@@ -26,7 +26,7 @@ Global $font_arial = "arial"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 ;If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 Global $Config_INI = @ScriptDir & "\System\config.ini"
-Global $Version = "0.73"
+Global $Version = "0.75"
 Global $Auto_CheckUpdates = IniRead($Config_INI, "Settings", "Auto_CheckUpdates", "")
 Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
@@ -788,38 +788,59 @@ Func _StartUp_Button_HomeLoader()
 EndFunc
 
 Func _ADD_2_SteamVR_Home_default()
+	Local $Line_NR_binary_path_windows
 	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	Local $Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
 	;Local $NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/System/StartHomeLoader.exe"
 	Local $NewHomePath = $Install_DIR_StringReplace & "HomeLoader.exe"
 	;If Not FileExists($NewHomePath) Then $NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/System/StartHomeLoader.au3"
 	_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
+	If @error Then
+		FileWriteLine($stats_log_FILE, "@error! --> [" & _Now() & "]" & " : " & '_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)')
+		FileWriteLine($stats_log_FILE, "@error! --> [" & _Now() & "]" & " : " & "Start '_Restore_Default_SteamVR_Home()'")
+		_Restore_Default_SteamVR_Home()
+		$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+		$Install_DIR_StringReplace = StringReplace($Install_DIR, '\', '/')
+		;$NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/System/StartHomeLoader.exe"
+		$NewHomePath = $Install_DIR_StringReplace & "HomeLoader.exe"
+		;If Not FileExists($NewHomePath) Then $NewHomePath = StringTrimRight($Install_DIR_StringReplace, 1) & "/System/StartHomeLoader.au3"
+		_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)
+		If @error Then
+			FileWriteLine($stats_log_FILE, "@error! --> [" & _Now() & "]" & " : " & '_FileReadToArray($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File)')
+			_Restore_Default_SteamVR_Home()
+		EndIf
+
+	EndIf
+	;MsgBox(0, "798 - $Steam_tools_vrmanifest_File", $Steam_tools_vrmanifest_File)
+	;_ArrayDisplay($Array_tools_vrmanifest_File)
 
 	If Not FileExists($Steam_tools_vrmanifest_File_BAK) Then FileCopy($Steam_tools_vrmanifest_File, $Steam_tools_vrmanifest_File_BAK)
 	FileDelete($Steam_tools_vrmanifest_File)
 
-    For $LOOP_vrmanifest = 1 To $Array_tools_vrmanifest_File[0]
-		Local $ReadLine_tools_vrmanifest = $Array_tools_vrmanifest_File[$LOOP_vrmanifest]
-		If $ReadLine_tools_vrmanifest = '			"app_key": "openvr.tool.steamvr_environments",' Then
-			Local $Line_NR_binary_path_windows = $LOOP_vrmanifest + 3
-			Local $Line_NR_arguments = $LOOP_vrmanifest + 6
-		EndIf
-
-		If $LOOP_vrmanifest = $Line_NR_binary_path_windows Then
-			Local $NewLine = '			"binary_path_windows" : "' & $NewHomePath & '",'
-			If $HomeApp = "Default SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
-			FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
-		Else
-			If $LOOP_vrmanifest = $Line_NR_arguments Then
-				Local $NewLine_2 = '			"arguments": "StartHomeLoaderHomeApp",'
-				If $HomeApp = "Default SteamVR Home" Then $NewLine_2 = '			"arguments": "-vr -retail -useappid SteamVRAppID -nowindow -vconport 29009",'
-				FileWriteLine($Steam_tools_vrmanifest_File, $NewLine_2)
-			Else
-				FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])
+	If IsArray($Array_tools_vrmanifest_File) Then
+		For $LOOP_vrmanifest = 1 To $Array_tools_vrmanifest_File[0]
+			Local $ReadLine_tools_vrmanifest = $Array_tools_vrmanifest_File[$LOOP_vrmanifest]
+			If $ReadLine_tools_vrmanifest = '			"app_key": "openvr.tool.steamvr_environments",' Then
+				Local $Line_NR_binary_path_windows = $LOOP_vrmanifest + 3
+				Local $Line_NR_arguments = $LOOP_vrmanifest + 6
 			EndIf
-		EndIf
-    Next
-	_Create_StartHomeAPP_BAT_File()
+
+			If $LOOP_vrmanifest = $Line_NR_binary_path_windows Then
+				Local $NewLine = '			"binary_path_windows" : "' & $NewHomePath & '",'
+				If $HomeApp = "Default SteamVR Home" Then $NewLine = '			"binary_path_windows" : "' & 'steamvr_environments/game/bin/win64/steamtours.exe' & '",'
+				FileWriteLine($Steam_tools_vrmanifest_File, $NewLine)
+			Else
+				If $LOOP_vrmanifest = $Line_NR_arguments Then
+					Local $NewLine_2 = '			"arguments": "StartHomeLoaderHomeApp",'
+					If $HomeApp = "Default SteamVR Home" Then $NewLine_2 = '			"arguments": "-vr -retail -useappid SteamVRAppID -nowindow -vconport 29009",'
+					FileWriteLine($Steam_tools_vrmanifest_File, $NewLine_2)
+				Else
+					FileWriteLine($Steam_tools_vrmanifest_File, $Array_tools_vrmanifest_File[$LOOP_vrmanifest])
+				EndIf
+			EndIf
+		Next
+	EndIf
+	;_Create_StartHomeAPP_BAT_File()
 EndFunc
 
 Func _Create_StartHomeAPP_BAT_File()
@@ -919,6 +940,7 @@ Func _Restore_Default_SteamVR_Home()
     Next
 
 	GUICtrlSetState($StartUp_Radio_0, $GUI_CHECKED)
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " " & "SteamVR Files sucessfully restored.")
 	;MsgBox($MB_OK + $MB_ICONINFORMATION, "SteamVR Files restored", "SteamVR Files sucessfully restored. You can now restart SteamVR or set a new Home App.")
 EndFunc
 
@@ -946,6 +968,7 @@ EndFunc
 
 #Region Func Radio Selection
 Func _StartUp_Radio_1() ; SteamVR Home
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "SteamVR Home")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtours.exe")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "SteamVR Home")
@@ -964,9 +987,11 @@ Func _StartUp_Radio_1() ; SteamVR Home
 	_StartUp_Button_HomeLoader()
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_2() ; Vive Home
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Setting Home App to Vive Home:")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Vive Home")
 	Local $ViveHome_SDK_Path = $Install_DIR & "Apps\ViveHome\ViveHomeSDKTestbed.exe"
@@ -1001,9 +1026,11 @@ Func _StartUp_Radio_2() ; Vive Home
 	EndIf
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_3() ; None
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	$HomeApp = "None"
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "None")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "None")
@@ -1023,9 +1050,11 @@ Func _StartUp_Radio_3() ; None
 	_StartUp_Button_HomeLoader()
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_3_Backup() ; Janus VR Backup
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Janus VR")
 	Global $JanusVR_Path = ""
 	If FileExists($Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe") Then $JanusVR_Path = $Install_Folder_Steam_1 & "SteamApps\common\Janus VR\janusvr.exe"
@@ -1059,9 +1088,11 @@ Func _StartUp_Radio_3_Backup() ; Janus VR Backup
 	_StartUp_Button_HomeLoader()
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_4() ; VR Toolbox
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "VR Toolbox")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/488040")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "VR Toolbox")
@@ -1080,10 +1111,11 @@ Func _StartUp_Radio_4() ; VR Toolbox
 		_Start_HomeLoaderLibrary_UpdateStartPage()
 	EndIf
 	_Settings_Set_States()
-	_Start_Create_HTML_GamePages_All()
+	If $Old_HomeApp <> "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_5() ; Other
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Other")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeAppSteamID", "")
 
@@ -1095,9 +1127,11 @@ Func _StartUp_Radio_5() ; Other
 	_StartUp_Add_Other_GUI()
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_6() ; Viveport VR
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Setting Home App to Viveport VR:")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Viveport VR")
 	Local $Viveport_Path = $HTCVive_Path & "Updater\App\ViveportVR\VPNextApp.exe"
@@ -1129,9 +1163,11 @@ Func _StartUp_Radio_6() ; Viveport VR
 	EndIf
 	_Sync_Config_INI()
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_7() ; BIGSCREEN
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Bigscreen")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/457550")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Bigscreen Beta")
@@ -1150,9 +1186,11 @@ Func _StartUp_Radio_7() ; BIGSCREEN
 	_Sync_Config_INI()
 	MsgBox($MB_OK + $MB_ICONINFORMATION, "SteamVR Home App", "'Bigscreen' app was set as Home app.")
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 
 Func _StartUp_Radio_8() ; Virtual Desktop
+	Local $Old_HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 	IniWrite($Config_INI, "Settings_HomeAPP", "HomeApp", "Virtual Desktop")
 	IniWrite($config_ini, "Settings_HomeAPP", "Home_Path", "steam://rungameid/382110")
 	IniWrite($config_ini, "Settings_HomeAPP", "WindowName", "Virtual Desktop")
@@ -1171,6 +1209,7 @@ Func _StartUp_Radio_8() ; Virtual Desktop
 	_Sync_Config_INI()
 	MsgBox($MB_OK + $MB_ICONINFORMATION, "SteamVR Home App", "'Virtual Desktop' app was set as Home app.")
 	_Settings_Set_States()
+	If $Old_HomeApp = "VR Toolbox" Then _Start_Create_HTML_GamePages_All()
 EndFunc
 #endregion
 
@@ -1796,7 +1835,7 @@ Func _Button_Start_HomeLoaderLibrary()
 EndFunc
 
 Func _Sync_Config_INI()
-	FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
+	;FileCopy($Config_INI, $System_DIR & "config.ini", $FC_OVERWRITE)
 EndFunc
 
 Func _Start_HomeLoaderLibrary_UpdateStartPage()

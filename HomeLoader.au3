@@ -2,10 +2,8 @@
 #Region Includes
 #include "System\StartSteamVRHome.au3"
 #include "System\StartHomeApp.au3"
-
 ;#include "System\HomeLoaderLibrary.au3"
 #include "System\Settings.au3"
-
 #include <GuiButton.au3>
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
@@ -14,7 +12,6 @@
 #endregion
 
 Opt("GUIOnEventMode", 1)
-
 
 #Region Declare Variables/Const 1
 ;Global $Install_DIR = @ScriptDir & "\"
@@ -47,6 +44,8 @@ Global $Home_Loader_GUI, $contextmenu, $RM_Item0, $RM_Item1, $RM_Item2, $RM_Item
 Global $font = "arial"
 #endregion
 
+
+
 ;MsgBox(0, "HLG 1", $First_Start & @CRLF & _
 ;					$Config_INI & @CRLF & _
 ;					$Install_DIR & @CRLF & _
@@ -77,7 +76,13 @@ EndIf
 If $First_Start = "true" Then
 	_First_Start_Check()
 Else
+	;_Keep_HomeLoader_SteamVR_Home_Allive_Check()
+	;Exit
+	_Loading_GUI()
 	_Create_HLL_GUI()
+	If WinExists("Loading...please wait...") Then
+		GUIDelete($GUI_Loading)
+	EndIf
 EndIf
 #endregion
 
@@ -384,6 +389,11 @@ Func _Start_HomeLoader_HomeApp()
 	Else
 		ShellExecute($Install_DIR & "HomeLoader.au3", "StartSteamVRHome")
 	EndIf
+
+	If $ScanLibrary_OnStart_SettingValue = "true" Then
+		_Start_HomeLoader_UpdateLibrary()
+	EndIf
+
 	Exit
 EndFunc
 

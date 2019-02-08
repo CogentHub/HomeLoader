@@ -1,7 +1,7 @@
 ﻿body {
   background-color: rgba(0,0,0,0.4);
   font-family: stencil, arial;
-  font-size: 14px;
+  font-size: 10px;
   color: #333;
   }
   
@@ -260,7 +260,7 @@ img {
   border-radius: 25px;
   }
 
-  .button {
+ .button {
     background: linear-gradient(to bottom, #163353, #0E2440);
 	border-radius: 10px;
 	position: relative;
@@ -270,14 +270,33 @@ img {
 	font-size: 60px; 
 	width:400px;
 	height:50px;
+	font-size: 70px;
 }
 
 .button:hover {
     background: linear-gradient(to bottom, #25728D, #163553)
 }
 
+
+ .Tag_button {
+    background: linear-gradient(to bottom, #163353, #3498DB);
+	border-radius: 10px;
+	position: relative;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+	font-size: 60px; 
+	width:400px;
+	height:50px;
+	font-size: 70px;
+}
+
+.Tag_button:hover {
+    background: linear-gradient(to bottom, #25728D, #163553)
+}
+
 .Tag_Buttons {
-  font: bold 18px Arial;
+  font: bold 38px Arial;
   text-decoration: none;
   background-color: #EEEEEE;
   color: #333333;
