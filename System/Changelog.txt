@@ -1,4 +1,11 @@
-Changelog:
-- Optimized code
-- Removed some duplicate functions
-- Code cleanup
+HomeLoader 0.77 Changelog:
+- Added new HomeLoader Menu to the Environment Files
+- Added new Update function, can be set to check for updates on HomeLoader start
+- Added new Log Files, they are needed for troubleshooting
+- Fixed an bug that caused the default SteamVR Home app was not set correctly
+- Changed the first start procedure
+- Renamed the 'Change Home App' Windows to 'SteamVR Start Settings'
+- Moved the 'VR Utility Belt' auto start checkbox to 'the auto start Button
+- Number of players online are now updated on HomeLoader start
+- Added some more Error Handler that are helpfull for me
+- Added "Debug Mode" that creates much more log output, can be activated in config.ini File Key "Debug_Mode=true"
