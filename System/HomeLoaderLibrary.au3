@@ -1,17 +1,17 @@
 
 #Region Includes
-#include <GuiButton.au3>
+;#include <GuiButton.au3>
 #include <FontConstants.au3>
 #include <GuiListView.au3>
 #include <GuiImageList.au3>
-#include <File.au3>
+;#include <File.au3>
 #include <GuiMenu.au3>
 #include <GuiStatusBar.au3>
 #include <GUIConstants.au3>
 #include <GDIPlus.au3>
 #include <Inet.au3>
-#include <Array.au3>
-#include <String.au3>
+;#include <Array.au3>
+;#include <String.au3>
 #include "_GDIPlus_WTOB.au3"
 #include <IE.au3>
 #include <Process.au3>
@@ -50,7 +50,10 @@ Global $Checkbox_Settings_4, $Checkbox_Settings_5, $Checkbox_Settings_6, $Checkb
 Global $Checkbox_Settings_10, $Checkbox_Settings_11, $Checkbox_Settings_12, $Checkbox_Settings_13, $Checkbox_Settings_1_Label, $Checkbox_Settings_2_Label
 Global $Checkbox_Settings_3_Label, $Checkbox_Settings_4_Label, $Checkbox_Settings_5_Label, $Checkbox_Settings_6_Label, $Checkbox_Settings_7_Label, $Checkbox_Settings_8_Label
 Global $Checkbox_Settings_9_Label, $Checkbox_Settings_10_Label, $Checkbox_Settings_11_Label, $Checkbox_Settings_12_Label, $Checkbox_Settings_13_Label
-Global $Value_dvd_cover_template, $Combo_Environment_Name
+Global $Value_dvd_cover_template, $Combo_Environment_Name, $Checkbox_Update_Check_OnStart_Value, $Array_Result, $AtError_Result, $appid_TEMP
+Global $INetGetSource_Check, $ScriptLineNumber_Temp, $GUI_Preparing, $contextmenu_Prepare_Environment_Button, $RM_Prepare_Environment_Item_1
+Global $RM_Prepare_Environment_Item_2, $RM_Prepare_Environment_Item_3, $RM_Prepare_Environment_Item_4, $RM_Prepare_Environment_Item_5, $RM_Prepare_Environment_Item_6
+Global $HomeLoader_Map_Image
 Global $font = "arial"
 Global $font_arial = "arial"
 Global $font_Consolas = "Consolas"
@@ -63,13 +66,15 @@ Global $oMyError = ObjEvent("AutoIt.Error", "MyErrFunc")
 #EndRegion Set Global
 
 #Region Declare Variables/Const 1
-Global $Version = "0.75"
 Global $Install_DIR = @ScriptDir & "\"
 Global $System_DIR = $Install_DIR & "System\"
 ;Global $Config_INI = _PathFull("HomeLoader\config.ini", @AppDataDir)
 ;If Not FileExists($Config_INI) Then FileCopy(@ScriptDir & "\config.ini", $Config_INI, $FC_CREATEPATH + $FC_OVERWRITE)
 ;Global $Config_INI = @ScriptDir & "\config.ini"
 Global $Config_INI = $System_DIR & "config.ini"
+Global $Version = IniRead($Config_INI, "Settings", "Version", "")
+Global $Update_Check = IniRead($Config_INI, "Settings", "Update_Check", "")
+Global $Debug_Mode = IniRead($Config_INI, "Settings", "Debug_Mode", "")
 Global $SteamVR_Home_Panel_Settings_INI = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini"
 Global $SteamVR_Home_Environment_Settings_INI = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Environment_Settings.ini"
 Global $SteamVR_VRSettings_INI = _PathFull("HomeLoader\SteamVR_VRSettings.ini", @AppDataDir)
@@ -104,11 +109,13 @@ Global $Add_PlayersOnline_to_Icons = IniRead($Config_INI, "Settings", "Add_Playe
 Global $Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 Global $Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "false")
 Global $Tags_TXT = $Install_DIR & "System\Tags.txt"
-
 Global $Path_GamePage_Tags = $Install_DIR & "WebPage\GamePage_Tags.html"
 
 Global $gfx = $Install_DIR & "System\gfx\"
 Global $Icons = $Install_DIR & "Icons\"
+
+Global $HomeLoader_Map_Folder = $Install_DIR & "Apps\SteamVR_Home\Maps\"
+Global $HomeLoader_Map_Image_Template = $gfx & "Environment_Map.jpg"
 
 Global $HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 Global $Home_Path = IniRead($Config_INI, "Settings_HomeAPP", "Home_Path", "")
@@ -133,6 +140,9 @@ Global $VRToolBox_Steam_Folder = $Steam_Path & "steamapps\common\VRToolbox\"
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
 Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
+
+Global $Viveport_Bat_File_Folder = $installdir & "WebPage\Viveport\"
+If Not FileExists($Viveport_Bat_File_Folder) Then DirCreate($Viveport_Bat_File_Folder)
 
 Global $Oculus_Default_Library_REG = RegRead('HKEY_CURRENT_USER\Software\Oculus VR, LLC\Oculus\Libraries\', "DefaultLibrary")
 Global $Oculus_Path_REG = RegRead('HKEY_CURRENT_USER\Software\Oculus VR, LLC\Oculus\Libraries\' & $Oculus_Default_Library_REG, "Path")
@@ -195,6 +205,7 @@ Global $ApplicationList_Custom_4_INI = $ApplicationList_Folder & "ApplicationLis
 
 Global $ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 
+Global $SteamVR_Environment_URL = "steam://openurl/https://steamcommunity.com/sharedfiles/filedetails/?id=1620667283"
 Global $SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
 Global $Panel_Name_1 = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
 Global $Panel_Name_2 = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
@@ -210,7 +221,22 @@ Global $Panel_Name_11 = "Panel Tool 2 - Projector"
 
 Global $SteamVR_Home_Panel_Icons = IniRead($Config_INI, "Settings_HomeAPP", "SteamVR_Home_Panel_Icons", "web")
 
+Global $Use_unpacked_workshop_environment = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Use_unpacked_workshop_environment", "true")
+
 Global $stats_log_FILE = $System_DIR & "Logs\stats_log.txt"
+Global $scan_log_FILE = $System_DIR & "Logs\scan_log.txt"
+Global $function_log_FILE = $System_DIR & "Logs\function_log.txt"
+Global $error_log_FILE = $System_DIR & "Logs\error_log.txt"
+
+Local $Check_Log_Size_1 = _FileCountLines($stats_log_FILE)
+Local $Check_Log_Size_2 = _FileCountLines($scan_log_FILE)
+Local $Check_Log_Size_3 = _FileCountLines($function_log_FILE)
+Local $Check_Log_Size_4 = _FileCountLines($error_log_FILE)
+
+If $Check_Log_Size_1 > 10000 Then FileDelete($stats_log_FILE)
+If $Check_Log_Size_2 > 10000 Then FileDelete($scan_log_FILE)
+If $Check_Log_Size_3 > 10000 Then FileDelete($function_log_FILE)
+If $Check_Log_Size_4 > 10000 Then FileDelete($error_log_FILE)
 
 IniWrite($Config_INI, "Settings", "Version", $Version)
 
@@ -223,6 +249,8 @@ Global $font_2 = "Arial"
 Local $NR_Colors = 147
 Local $aArray_Colors, $Color_Name_Value
 Local $aArray_Colors[1][2] = [["Name", "Value"]]
+
+FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start '_ArrayAdd' Colors")
 
 _ArrayAdd($aArray_Colors, "AliceBlue|#F0F8FF")
 _ArrayAdd($aArray_Colors, "AntiqueWhite|#FAEBD7")
@@ -373,7 +401,7 @@ _ArrayAdd($aArray_Colors, "WhiteSmoke|#F5F5F5")
 _ArrayAdd($aArray_Colors, "Yellow|#FFFF00")
 _ArrayAdd($aArray_Colors, "YellowGreen|#9ACD32")
 
-
+FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End '_ArrayAdd' Colors")
 ;_ArrayDisplay($aArray_Colors, "2D - Item delimited")
 
 
@@ -427,10 +455,33 @@ If $TAB5_Label = "" Then $TAB5_Label = "Custom 3"
 If $TAB6_Label = "" Then $TAB6_Label = "Custom 4"
 #EndRegion Declare Names
 
+Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+If FileExists($Check_File) Then FileDelete($Check_File)
+
+
 #Region Start Check
 Local $Parameter_1 = ""
 If $CmdLine[0] Then
 	$Parameter_1 = $CmdLine[1]
+EndIf
+
+If $Parameter_1 = "Check_PO_Data" Then
+	Local $HL_TimeDiff = IniRead($Config_INI, "TEMP", "HL_TimeDiff", "")
+	;MsgBox(0, "", @MIN & @CRLF & $HL_TimeDiff + 5 )
+	If @MIN > $HL_TimeDiff + 5 Then
+		_Check_PO_Data_on_Start()
+		IniWrite($Config_INI, "TEMP", "HL_State", "take_over_PO")
+		IniWrite($Config_INI, "TEMP", "HL_TimeDiff", @MIN)
+	Else
+		If @MIN < $HL_TimeDiff - 5 Then
+			_Check_PO_Data_on_Start()
+			IniWrite($Config_INI, "TEMP", "HL_State", "take_over_PO")
+			IniWrite($Config_INI, "TEMP", "HL_TimeDiff", @MIN)
+		Else
+			IniWrite($Config_INI, "TEMP", "HL_State", "")
+		EndIf
+	EndIf
+	Exit
 EndIf
 
 If $Parameter_1 = "GUI - HomeLoaderLibrary ListViewMode" Then
@@ -545,6 +596,7 @@ EndIf
 
 #Region First Start And Update / Empty Check
 Func _First_Start_Empty_Check_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (577) :(' & @MIN & ':' & @SEC & ') _First_Start_Empty_Check_1()' & @CR) ;### Function Trace
 	Global $Install_Folder_Steam_Search_Folder, $Install_Folder_Steam_Search_Folder
 
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
@@ -667,6 +719,7 @@ Func _First_Start_Empty_Check_1()
 EndFunc   ;==>_First_Start_Empty_Check_1
 
 Func _HLL_Detect_SteamVR_Files()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (700) :(' & @MIN & ':' & @SEC & ') _HLL_Detect_SteamVR_Files()' & @CR) ;### Function Trace
 	IniWrite($Config_INI, "Folders", "Steam_default_vrsettings", "")
 	IniWrite($Config_INI, "Folders", "Steam_tools_vrmanifest", "")
 
@@ -704,6 +757,7 @@ EndFunc   ;==>_Detect_SteamVR_Files
 
 #Region Func MAIN
 Func _Loading_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (738) :(' & @MIN & ':' & @SEC & ') _Loading_GUI()' & @CR) ;### Function Trace
 	Local Const $PG_WS_POPUP = 0x80000000
 	Local Const $PG_WS_DLGFRAME = 0x00400000
 
@@ -725,7 +779,34 @@ Func _Loading_GUI()
 	WinSetOnTop("Loading...please wait...", "", $WINDOWS_ONTOP)
 EndFunc   ;==>_Loading_GUI
 
+Func _Preparing_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (761) :(' & @MIN & ':' & @SEC & ') _Preparing_GUI()' & @CR) ;### Function Trace
+	Local Const $PG_WS_POPUP = 0x80000000
+	Local Const $PG_WS_DLGFRAME = 0x00400000
+
+	$GUI_Preparing = GUICreate("Preparing...please wait...", 250, 65, -1, -1, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
+	GUISetIcon(@AutoItExe, -2, $GUI_Preparing)
+	GUISetBkColor("0x00BFFF")
+
+	$font = "arial"
+	GUICtrlCreateLabel("...Preparing...", 58, 5, 152, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+	GUICtrlSetColor(-1, $COLOR_RED)
+	GUICtrlCreateLabel("...Please wait...", 49, 32, 160, 25)
+	GUICtrlSetFont(-1, 17, 800, 1, $font)
+	GUICtrlSetColor(-1, $COLOR_RED)
+
+	GUISetState(@SW_SHOW, $GUI_Preparing)
+	WinSetOnTop("Preparing...please wait...", "", $WINDOWS_ONTOP)
+EndFunc   ;==>_Loading_GUI
+
+Func _Exit_Preparing_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (782) :(' & @MIN & ':' & @SEC & ') _Exit_Preparing_GUI()' & @CR) ;### Function Trace
+	GUIDelete($GUI_Preparing)
+EndFunc   ;==>_Loading_GUI
+
 Func _Create_HLL_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (787) :(' & @MIN & ':' & @SEC & ') _Create_HLL_GUI()' & @CR) ;### Function Trace
 	Local $hGUI, $hGraphic, $hPen
 	Local $HLL_GUI, $aSize, $aStrings[5]
 	Local $btn, $chk, $rdo, $Msg
@@ -758,6 +839,7 @@ Func _Create_HLL_GUI()
 
 	; Icon Preview
 	Global $Icon_Preview_Image = GUICtrlCreatePic($gfx & "Icon_Preview.jpg", 631, 7, 160, 75)
+	GUICtrlSetTip(-1, "Shows a preview Icon for the selected application.")
 
 	Global $Button_AddGame2Library = GUICtrlCreateButton("Add Game to Library", 215, $DesktopHeight - 107, 102, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_AddGame2Library, $gfx & "AddGame2Library.bmp")
@@ -765,7 +847,7 @@ Func _Create_HLL_GUI()
 
 	Global $Button_ReScan_Steam_Library = GUICtrlCreateButton("Rescan Library", 4, 5, 207, 42, $BS_BITMAP) ; 155, 80 --> 174, 71
 	_GUICtrlButton_SetImage($Button_ReScan_Steam_Library, $gfx & "ReScan_SteamLibrary.bmp")
-	GUICtrlSetTip(-1, "Scans for all data." & @CRLF & @CRLF & _
+	GUICtrlSetTip(-1, "Scans for all content." & @CRLF & @CRLF & _
 			"This includes:" & @CRLF & _
 			"- Scan for new games" & @CRLF & _
 			"- Download Icons [If Delete Library Data is activated and/or if the app is new]" & @CRLF & _
@@ -794,13 +876,15 @@ Func _Create_HLL_GUI()
 	If $ScanOnlyVR = "true" Then $State_Checkbox_ScanOnlyVR = "X"
 	If $ScanOnlyVR <> "true" Then $State_Checkbox_ScanOnlyVR = ""
 	Global $Checkbox_ScanOnlyVR = GUICtrlCreateLabel($State_Checkbox_ScanOnlyVR, 160 + 61, 18 + 1, 19, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+	GUICtrlSetTip(-1, "Shows only VR Apps" & @CRLF & "[and with an new Scan it scans only for VR Apps]." & @CRLF)
 	GUICtrlSetFont(-1, 19)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Show_OnlyVR_Apps")
 	Global $Checkbox_ScanOnlyVR_Label = GUICtrlCreateLabel("Only VR Apps", 153 + 93, 15, 160, 30) ; ; +26
+	GUICtrlSetTip(-1, "Shows only VR Apps" & @CRLF & "[and with an new Scan it scans only for VR Apps]." & @CRLF)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
-	GUICtrlSetOnEvent($Checkbox_ScanOnlyVR, "_Checkbox_Show_OnlyVR_Apps")
-	GUICtrlSetOnEvent($Checkbox_ScanOnlyVR_Label, "_Checkbox_Show_OnlyVR_Apps")
-	GUICtrlSetTip($Checkbox_ScanOnlyVR, "Shows only VR Apps" & @CRLF & "[and with an new Scan it scans only for VR Apps]." & @CRLF)
-	GUICtrlSetTip($Checkbox_ScanOnlyVR_Label, "Shows only VR Apps" & @CRLF & "[and with an new Scan it scans only for VR Apps]." & @CRLF)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Show_OnlyVR_Apps")
+
+
 
 	GUICtrlCreateLabel("", 220, 48, 21, 22)
 	GUICtrlSetBkColor(-1, 0)
@@ -809,19 +893,21 @@ Func _Create_HLL_GUI()
 	If $ScanOnlyVR = "false" Then $State_Checkbox_ScanAll = "X"
 	If $ScanOnlyVR <> "false" Then $State_Checkbox_ScanAll = ""
 	Global $Checkbox_ScanAll = GUICtrlCreateLabel($State_Checkbox_ScanAll, 160 + 61, 48 + 1, 19, 20, BitOR($SS_CENTER, $SS_CENTERIMAGE))
+	GUICtrlSetTip(-1, "Shows All VR Apps" & @CRLF & "[and with an new scan it scans for All Apps]." & @CRLF)
 	GUICtrlSetFont(-1, 19)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Show_All_Apps")
 	Global $Checkbox_ScanAll_Label = GUICtrlCreateLabel("All Apps", 153 + 93, 46, 95, 30) ; ; +26
+	GUICtrlSetTip(-1, "Shows All VR Apps" & @CRLF & "[and with an new scan it scans for All Apps]." & @CRLF)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
-	GUICtrlSetOnEvent($Checkbox_ScanAll, "_Checkbox_Show_All_Apps")
-	GUICtrlSetOnEvent($Checkbox_ScanAll_Label, "_Checkbox_Show_All_Apps")
-	GUICtrlSetTip($Checkbox_ScanAll, "Shows All VR Apps" & @CRLF & "[and with an new scan it scans for All Apps]." & @CRLF)
-	GUICtrlSetTip($Checkbox_ScanAll_Label, "Shows All VR Apps" & @CRLF & "[and with an new scan it scans for All Apps]." & @CRLF)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Show_All_Apps")
+
+
 
 
 	Global $Checkbox_ScanLibrary_OnStart_Value = ""
 	If $ScanLibrary_OnStart_SettingValue = "true" Then $Checkbox_ScanLibrary_OnStart_Value = "a"
 	Global $Checkbox_ScanLibrary_OnStart = GUICtrlCreateLabel($Checkbox_ScanLibrary_OnStart_Value, 440, 05, 15, 15, 0x1201)
-	GUICtrlSetTip(-1, "Scans for all data everytime the HomeApp is started." & @CRLF & @CRLF & _
+	GUICtrlSetTip(-1, "Scans for all content everytime the HomeApp is started." & @CRLF & @CRLF & _
 			"This includes:" & @CRLF & _
 			"- Scan for new games" & @CRLF & _
 			"- Download Icons [If Delete Library Data is activated]" & @CRLF & _
@@ -832,7 +918,7 @@ Func _Create_HLL_GUI()
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
 	Global $Checkbox_ScanLibrary_OnStart_Label = GUICtrlCreateLabel("Scan with HomeApp Start", 460, 04, 165, 20)
 	GUICtrlSetFont(-1, 11, 400, 1, "arial")
-	GUICtrlSetTip(-1, "Scans for all data everytime the HomeApp is started." & @CRLF & @CRLF & _
+	GUICtrlSetTip(-1, "Scans for all content everytime the HomeApp is started." & @CRLF & @CRLF & _
 			"This includes:" & @CRLF & _
 			"- Scan for new games" & @CRLF & _
 			"- Download Icons [If Delete Library Data is activated and/or if the app is new]" & @CRLF & _
@@ -867,20 +953,21 @@ Func _Create_HLL_GUI()
 	Global $Button_More_Scan_Options = GUICtrlCreateButton("More Settings", 439, 62, 185, 24, $BS_BITMAP)
 	GUICtrlSetColor(-1, "0x0000CD")
 	GUICtrlSetFont(-1, 10, 600, 2, "arial")
+	GUICtrlSetTip(-1, "Opens the Settings Windows that includes more HomeLoader related settings.")
 	_RM_More_Scan_Options()
 
 
 	Global $Button_ResolutionScale = GUICtrlCreateButton("Resolution Scale", 440, $DesktopHeight - 107, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_ResolutionScale, $gfx & "ResolutionScale.bmp")
-	GUICtrlSetTip(-1, "Shows the HomeLoader Resolution Scale Window.")
+	GUICtrlSetTip(-1, "Shows the HomeLoader Resolution Scale Window. Select the game in the List View of the HomeLoader Library Window.")
 
 	Global $Button_HomeLoaderSettings = GUICtrlCreateButton("Home Loader settings", 440, $DesktopHeight - 65, 96, 37, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_HomeLoaderSettings, $gfx & "HomeLoaderSettings.bmp")
-	GUICtrlSetTip(-1, "Shows the HomeLoader Settings Window where it is possible to change the Home App.")
+	GUICtrlSetTip(-1, "Shows the HomeLoader Start Settings Window where it is possible to change the Home App.")
 
 	Global $Button_SteamVRHome_Panel_Settings = GUICtrlCreateButton("SteamVR Home Panel Setting", 539, $DesktopHeight - 107, 102, 80, $BS_BITMAP) ; 440, $DesktopHeight - 100, 96, 42
 	_GUICtrlButton_SetImage($Button_SteamVRHome_Panel_Settings, $gfx & "SteamVRHome_Panel_Settings.bmp")
-	GUICtrlSetTip(-1, "Shows the Settings Window for the SteamVR Home panels.")
+	GUICtrlSetTip(-1, "Shows the Settings Window for the SteamVR Home Environment settings.")
 
 	;Global $Button_Settings = GUICtrlCreateButton("Settings", 590, $DesktopHeight - 100, 65, 65, $BS_BITMAP)
 	;_GUICtrlButton_SetImage($Button_Settings, $gfx & "Settings.bmp")
@@ -956,32 +1043,34 @@ Func _Create_HLL_GUI()
 	Global $Checkbox_CreatePage = GUICtrlCreateLabel("", 4, $DesktopHeight - 77, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 22, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetTip(-1, "Checks the checkbox for all application in the List View of the current category.")
 	Global $Checkbox_CreatePage_Label = GUICtrlCreateLabel("All", 30, $DesktopHeight - 78, 35, 20)
 	GUICtrlSetFont(-1, 19, 400, 1, "arial")
+	GUICtrlSetTip(-1, "Checks the checkbox for all application in the List View of the current category.")
 
 
-	Global $Button_ShowGamePage_1 = GUICtrlCreateButton("Show Game Page", 335, $DesktopHeight - 107, 102, 80, $BS_BITMAP)
+	Global $Button_ShowGamePage_1 = GUICtrlCreateButton("Game Page Mode", 335, $DesktopHeight - 107, 102, 80, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_ShowGamePage_1, $gfx & "GamePageMode.bmp")
-	GUICtrlSetTip(-1, "Opens the Game Page with all Games for the current Category." & @CRLF)
+	GUICtrlSetTip(-1, "Opens HomeLoader in the Game Page Mode. This Mode can be used after the Library was scanned." & @CRLF)
 
 	;Global $Button_ShowGamePage_2 = GUICtrlCreateButton("Show Game Page", 325, $DesktopHeight - 65, 80, 38, $BS_BITMAP)
 	;_GUICtrlButton_SetImage($Button_ShowGamePage_2, $gfx & "GamePage.bmp")
 	;GUICtrlSetTip(-1, "Opens the Game Page for the current selection in the List View." & @CRLF)
 
 
-	Global $ElementeUntenGroup = GUICtrlCreateGroup("Add Game to TAB", 70, $DesktopHeight - 114, 143, 88)
+	Global $ElementeUntenGroup = GUICtrlCreateGroup("Add Game to Category", 70, $DesktopHeight - 114, 143, 88)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
-	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+	GUICtrlSetFont(-1, 9, 400, 6, $font_arial)
 
-	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose TAB", 76, $DesktopHeight - 95, 130, 32, $CBS_DROPDOWNLIST)
+	Global $Combo_Add_to_Custom = GUICtrlCreateCombo("Choose Category", 76, $DesktopHeight - 95, 130, 32, $CBS_DROPDOWNLIST)
 	GUICtrlSetData(-1, $TAB3_Label & "|" & $TAB4_Label & "|" & $TAB5_Label & "|" & $TAB6_Label, "")
-	GUICtrlSetFont(-1, 14, 400, 2, "arial")
-	GUICtrlSetTip(-1, "Choose the TAB where you want to add the games.")
+	GUICtrlSetFont(-1, 12, 400, 2, "arial")
+	GUICtrlSetTip(-1, "Choose the Category where you want to add the games to.")
 
 	Global $Button_Add_to_Custom = GUICtrlCreateButton("Add to Custom", 75, $DesktopHeight - 63, 133, 32, $BS_BITMAP)
 	_GUICtrlButton_SetImage($Button_Add_to_Custom, $gfx & "Add_to_Custom.bmp")
-	GUICtrlSetTip(-1, "Add selected games to chosen TAB.")
+	GUICtrlSetTip(-1, "Adds selected games to choose Category.")
 
 
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
@@ -1079,12 +1168,18 @@ Func _Create_HLL_GUI()
 
 	GUIRegisterMsg($WM_notify, "_ClickOnListView")
 
+	Global $Scan_Duration = IniRead($Config_INI, "TEMP", "Scan_Duration", "")
+	If $Scan_Duration = "Scanning..." Then $Scan_Duration = ""
+	If $Scan_Duration <> "" Then $Scan_Duration = "Library was scanned in: " & $Scan_Duration
+	IniWrite($Config_INI, "TEMP", "Scan_Duration", "")
+
 	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
-	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & $Scan_Duration & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	If $Autostart_VRUB = "true" Then _GUICtrlStatusBar_SetText($Statusbar, "HomeLoader OVERLAY [VRUB] is enabled..." & "   " & "" & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 EndFunc
 
 Func _HLL_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1155) :(' & @MIN & ':' & @SEC & ') _HLL_Settings_GUI()' & @CR) ;### Function Trace
 	$Checkbox_ScanLibrary_OnStart_Value = ""
 	$Checkbox_Request_Steamdb_info_Value = ""
 	$Checkbox_Use_Steam_Tags_Value = ""
@@ -1118,20 +1213,23 @@ Func _HLL_Settings_GUI()
 
 	Local $Value_SSD_SetSoundDevice = IniRead($Config_INI, "Settings", "SSD_SetSoundDevice", "")
 
-	Global $HEIGHT_GUI = 705 ; 505
+	Global $HEIGHT_GUI = 800 ; 505
 	Global $POS_X_1 = 0
 	Global $POS_Y_1 = 0
 	Global $POS_Y_2 = 470
+	Global $POS_Y_3 = 655
 
 	Global $POS_Y_Button_Open_SSD_SetSoundDevice = 505
 	Global $POS_Y_Button_Combo_Playback = $POS_Y_Button_Open_SSD_SetSoundDevice + 30
 	Global $POS_Y_Button_Combo_Record = $POS_Y_Button_Combo_Playback + 30
-	Global $POS_Y_Button_Exit_Settings_GUI = 665
+	Global $POS_Y_Button_Exit_Settings_GUI = 760
 
 	Global $Width_Group_1 = 531
 	Global $Width_Group_2 = 531
+	Global $Width_Group_3 = 531
 	Global $HEIGHT_Group_1 = 455
-	Global $HEIGHT_Group_2 = 185
+	Global $HEIGHT_Group_2 = 180
+	Global $HEIGHT_Group_3 = 98
 
 
 	$Icon_Folder_1 = IniRead($Config_INI, "Folders", "Icon_Folder_1", "")
@@ -1151,9 +1249,11 @@ Func _HLL_Settings_GUI()
 	Global $Checkbox_Settings_1 = GUICtrlCreateLabel($Checkbox_ScanLibrary_OnStart_Value, $POS_X_1 + 10, $POS_Y_1, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetTip(-1, "If it is enabled then it will Scan your Libraries in the background after SteamVR has been started." & @CRLF & "SteamVR Home App needs to be selected [for example 'SteamVR'] for this function to work." & @CRLF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_ScanLibrary_OnStart")
 	Global $Checkbox_Settings_1_Label = GUICtrlCreateLabel("Scan with HomeApp Start", $POS_X_1 + 38, $POS_Y_1 - 2, 470, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
+	GUICtrlSetTip(-1, "If it is enabled then it will Scan your Libraries in the background after SteamVR has been started." & @CRLF & "SteamVR Home App needs to be selected [for example 'SteamVR'] for this function to work." & @CRLF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_ScanLibrary_OnStart")
 
 	$POS_Y_1 = $POS_Y_1 + 30
@@ -1305,9 +1405,11 @@ Func _HLL_Settings_GUI()
 	Global $Checkbox_SSD_SetSoundDevice_1 = GUICtrlCreateLabel($Checkbox_SSD_SetSoundDevice_1_value, $POS_X_1 + 10, $POS_Y_Button_Open_SSD_SetSoundDevice + 45, 20, 20, 0x1201)
 	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
 	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetTip(-1, "Sets the selected Sound Devices after SteamVR has been started." & @CRLF & "SteamVR Home App needs to be selected [for example 'SteamVR'] for this function to work." & @CRLF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_SSD_SetSoundDevice_1")
 	Global $Checkbox_SSD_SetSoundDevice_1_Label = GUICtrlCreateLabel("Set Sound Device after SteamVR has started", $POS_X_1 + 38, $POS_Y_Button_Open_SSD_SetSoundDevice + 43, 450, 28)
 	GUICtrlSetFont(-1, 17, 400, 1, "arial")
+	GUICtrlSetTip(-1, "Sets the selected Sound Devices after SteamVR has been started." & @CRLF & "SteamVR Home App needs to be selected [for example 'SteamVR'] for this function to work." & @CRLF)
 	GUICtrlSetOnEvent(-1, "_Checkbox_SSD_SetSoundDevice_1")
 
 
@@ -1333,6 +1435,28 @@ Func _HLL_Settings_GUI()
 	GUICtrlSetOnEvent(-1, "_Button_Set_Recording_Device")
 
 
+	GUICtrlCreateGroup("Update", $POS_X_1 + 5, $POS_Y_3, $Width_Group_3, $HEIGHT_Group_3)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 18, 400, 6, $font_arial)
+
+	$POS_Y_3 = $POS_Y_3 + 35
+	$Checkbox_Update_Check_OnStart_Value = ""
+	If $Update_Check = "true" Then $Checkbox_Update_Check_OnStart_Value = "a"
+	Global $Checkbox_Update_Check_1 = GUICtrlCreateLabel($Checkbox_Update_Check_OnStart_Value, $POS_X_1 + 10, $POS_Y_3, 20, 20, 0x1201)
+	GUICtrlSetFont(-1, 24, 400, 0, "Marlett")
+	GUICtrlSetBkColor(-1, 0xFFFFFF)
+	GUICtrlSetOnEvent(-1, "_Checkbox_Update_Check_1")
+	Global $Checkbox_Update_Check_1_Label = GUICtrlCreateLabel("Check for Update on start", $POS_X_1 + 38, $POS_Y_3 - 2, 470, 28)
+	GUICtrlSetFont(-1, 17, 400, 1, "arial")
+	GUICtrlSetOnEvent(-1, "_Checkbox_Update_Check_1")
+
+	$POS_Y_3 = $POS_Y_3 + 25
+	Local $Button_Update_Check_1 = GUICtrlCreateButton("Check for Update", $POS_X_1 + 10, $POS_Y_3, 200, 28)
+	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Button_Update_Check_1")
+
+
 	Global $Button_PAYPAL_DONATE_Settings_GUI = GUICtrlCreateButton("Donate", $POS_X_1 + 5, $POS_Y_Button_Exit_Settings_GUI, 84, 35, $BS_BITMAP)
 	GUICtrlSetOnEvent(-1, "_Button_PAYPAL_DONATE_Settings_GUI")
 	_GUICtrlButton_SetImage(-1, $gfx & "Paypal_Donate.bmp")
@@ -1350,6 +1474,7 @@ Func _HLL_Settings_GUI()
 EndFunc   ;==>_Settings_GUI
 
 Func _AddGame2Library_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1450) :(' & @MIN & ':' & @SEC & ') _AddGame2Library_GUI()' & @CR) ;### Function Trace
 	$AddGame2Library_GUI = GUICreate("Add Game to Library", 349, 305, -1, -1, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 
 	; Rahmen
@@ -1427,6 +1552,7 @@ Func _AddGame2Library_GUI()
 EndFunc   ;==>_AddGame2Library_GUI
 
 Func _SS_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1528) :(' & @MIN & ':' & @SEC & ') _SS_GUI()' & @CR) ;### Function Trace
 	If Not WinExists("Resolution Scale Menu") Then
 		If $ScanOnlyVR <> "true" Then
 			$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
@@ -1501,6 +1627,7 @@ Func _SS_GUI()
 EndFunc   ;==>_SS_GUI
 
 Func _Update_StatusBar()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1603) :(' & @MIN & ':' & @SEC & ') _Update_StatusBar()' & @CR) ;### Function Trace
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "1" Then $listview_TEMP = $listview
 	If $ButtonTAB_State = "2" Then $listview_TEMP = $listview_2
@@ -1524,6 +1651,7 @@ Func _Update_StatusBar()
 EndFunc   ;==>_Update_StatusBar
 
 Func _Search_Files()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1627) :(' & @MIN & ':' & @SEC & ') _Search_Files()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	If $Combo = "ALL" Then Local $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
@@ -1536,24 +1664,32 @@ Func _Search_Files()
 		If $Combo = "Steam Library 5" Then $s_LocalFolder = $Install_Folder_Steam_5 & "SteamApps\"
 		If $Combo = "" Then $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
 		Local $FileList = _FileListToArray($s_LocalFolder, "*.acf", 1)
+		$Array_Result = $FileList
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 		Global $Application_NR = 1
 
-		If $FileList <> "" Then
-			FileDelete($ApplicationList_INI)
-			For $NR = 1 To $FileList[0]
-				Global $FileList_NR = $FileList[0]
-				Global $File_Name = $FileList[$NR]
-				Global $File_Path = $s_LocalFolder & $File_Name
-				Global $ProcessBar_Status = $NR * 100 / $FileList[0]
-				$ProcessBar_Status = $ProcessBar_Status ; - 15
-				GUICtrlSetData($Anzeige_Fortschrittbalken, $ProcessBar_Status)
-				If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
-					_ApplicationList_Update()
-					$Application_NR = $Application_NR + 1
-				EndIf
-				$File_Path = ""
-			Next
-			;Sleep(500)
+		If IsArray($FileList) Then
+			If $FileList <> "" Then
+				FileDelete($ApplicationList_INI)
+				For $NR = 1 To $FileList[0]
+					Global $FileList_NR = $FileList[0]
+					Global $File_Name = $FileList[$NR]
+					Global $File_Path = $s_LocalFolder & $File_Name
+					Global $ProcessBar_Status = $NR * 100 / $FileList[0]
+					$ProcessBar_Status = $ProcessBar_Status ; - 15
+					GUICtrlSetData($Anzeige_Fortschrittbalken, $ProcessBar_Status)
+					If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
+						_ApplicationList_Update()
+						$Application_NR = $Application_NR + 1
+					EndIf
+					$File_Path = ""
+				Next
+				;Sleep(500)
+			EndIf
 		EndIf
 	EndIf
 
@@ -1565,23 +1701,31 @@ Func _Search_Files()
 		If $NR_Library_temp = 5 Then $s_LocalFolder = $Install_Folder_Steam_5 & "SteamApps\"
 
 		Local $FileList = _FileListToArray($s_LocalFolder, "*.acf", 1)
+		$Array_Result = $FileList
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 		Global $Application_NR = IniRead($ApplicationList_INI, "ApplicationList", "NR_Applications", "") + 1
 
-		If $FileList <> "" Then
-			For $NR_temp2 = 1 To $FileList[0]
-				Global $FileList_NR = $FileList[0]
-				Global $File_Name = $FileList[$NR_temp2]
-				Global $File_Path = $s_LocalFolder & $File_Name
-				Global $ProcessBar_Status = $NR_temp2 * 100 / $FileList[0]
-				$ProcessBar_Status = $ProcessBar_Status ; - 15
-				GUICtrlSetData($Anzeige_Fortschrittbalken, $ProcessBar_Status)
-				If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
-					_ApplicationList_Update()
-					$Application_NR = $Application_NR + 1
-				EndIf
-				$File_Path = ""
-			Next
-			;Sleep(500)
+		If IsArray($FileList) Then
+			If $FileList <> "" Then
+				For $NR_temp2 = 1 To $FileList[0]
+					Global $FileList_NR = $FileList[0]
+					Global $File_Name = $FileList[$NR_temp2]
+					Global $File_Path = $s_LocalFolder & $File_Name
+					Global $ProcessBar_Status = $NR_temp2 * 100 / $FileList[0]
+					$ProcessBar_Status = $ProcessBar_Status ; - 15
+					GUICtrlSetData($Anzeige_Fortschrittbalken, $ProcessBar_Status)
+					If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
+						_ApplicationList_Update()
+						$Application_NR = $Application_NR + 1
+					EndIf
+					$File_Path = ""
+				Next
+				;Sleep(500)
+			EndIf
 		EndIf
 		$FileList = ""
 	EndIf
@@ -1589,8 +1733,11 @@ Func _Search_Files()
 EndFunc   ;==>_Search_Files
 
 Func _ApplicationList_Update()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1705) :(' & @MIN & ':' & @SEC & ') _ApplicationList_Update()' & @CR) ;### Function Trace
 	Global $File = $File_Path
 	Global $Wert_Zeile = ""
+
+	If $File = "" Then FileWriteLine($scan_log_FILE, "Variable '$File' empty:" & " - " & "_ApplicationList_Update() " & "[" & _Now() & "]")
 
 	If $File <> "" Then
 		For $iCount_1 = 1 To 7
@@ -1720,6 +1867,7 @@ Func _ApplicationList_Update()
 EndFunc   ;==>_ApplicationList_Update
 
 Func _Get_ADD_PlayersOnline_DATA()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (1839) :(' & @MIN & ':' & @SEC & ') _Get_ADD_PlayersOnline_DATA()' & @CR) ;### Function Trace
 	If $ScanOnlyVR <> "true" Then
 		$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
 	Else
@@ -1768,6 +1916,12 @@ Func _Get_ADD_PlayersOnline_DATA()
 
 					Local $sString = StringMid($DataResponse, $iPosition_1, $iPosition_3)
 					Global $aArray = StringSplit($sString, '<li><strong>', $STR_ENTIRESPLIT)
+					If @error Then
+						$Array_Result = $aArray
+						$ScriptLineNumber_Temp = @ScriptLineNumber
+						$AtError_Result = @error
+						_StringSplit_Error_Handler()
+					EndIf
 
 					;FileWrite(@ScriptDir & "\" & "TESTTEMP.txt", $DataResponse)
 
@@ -1779,10 +1933,28 @@ Func _Get_ADD_PlayersOnline_DATA()
 
 					If $aArray[0] > 1 Then
 						Global $PlayersOnline_right_now = StringSplit($aArray[2], '<')
+						If @error Then
+							$Array_Result = $aArray
+							$ScriptLineNumber_Temp = @ScriptLineNumber
+							$AtError_Result = @error
+							_StringSplit_Error_Handler()
+						EndIf
 						$PlayersOnline_right_now = $PlayersOnline_right_now[1]
 						Global $PlayersOnline_24h_peak = StringSplit($aArray[3], '<')
+						If @error Then
+							$Array_Result = $aArray
+							$ScriptLineNumber_Temp = @ScriptLineNumber
+							$AtError_Result = @error
+							_StringSplit_Error_Handler()
+						EndIf
 						$PlayersOnline_24h_peak = $PlayersOnline_24h_peak[1]
 						Global $PlayersOnline_all_time_peak = StringSplit($aArray[4], '<')
+						If @error Then
+							$Array_Result = $aArray
+							$ScriptLineNumber_Temp = @ScriptLineNumber
+							$AtError_Result = @error
+							_StringSplit_Error_Handler()
+						EndIf
 						$PlayersOnline_all_time_peak = $PlayersOnline_all_time_peak[1]
 
 						$PlayersOnline_right_now = StringReplace($PlayersOnline_right_now, ',', '.')
@@ -1798,6 +1970,27 @@ Func _Get_ADD_PlayersOnline_DATA()
 						IniWrite($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "right_now", $PlayersOnline_right_now)
 						IniWrite($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "24h_peak", $PlayersOnline_24h_peak)
 						IniWrite($ApplicationList_INI_TEMP, "Application_" & $Check_AppId, "all_time_peak", $PlayersOnline_all_time_peak)
+
+						Local $NR_Temp
+						$NR_Temp = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Check_AppId, "NR", "")
+						If $NR_Temp <> "" Then
+							IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $NR_Temp, "right_now", $PlayersOnline_right_now)
+							IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $NR_Temp, "24h_peak", $PlayersOnline_24h_peak)
+							IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $NR_Temp, "all_time_peak", $PlayersOnline_all_time_peak)
+						EndIf
+						IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Check_AppId, "right_now", $PlayersOnline_right_now)
+						IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Check_AppId, "24h_peak", $PlayersOnline_24h_peak)
+						IniWrite($ApplicationList_SteamVRLibrary_ALL_INI, "Application_" & $Check_AppId, "all_time_peak", $PlayersOnline_all_time_peak)
+
+						$NR_Temp = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "NR", "")
+						If $NR_Temp <> "" Then
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Temp, "right_now", $PlayersOnline_right_now)
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Temp, "24h_peak", $PlayersOnline_24h_peak)
+							IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $NR_Temp, "all_time_peak", $PlayersOnline_all_time_peak)
+						EndIf
+						IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "right_now", $PlayersOnline_right_now)
+						IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "24h_peak", $PlayersOnline_24h_peak)
+						IniWrite($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Check_AppId, "all_time_peak", $PlayersOnline_all_time_peak)
 
 						Local $Check_Custom_1_NR_Exist = IniRead($ApplicationList_Custom_1_INI, "Application_" & $Check_AppId, "NR", "")
 						Local $Check_Custom_2_NR_Exist = IniRead($ApplicationList_Custom_2_INI, "Application_" & $Check_AppId, "NR", "")
@@ -1855,14 +2048,19 @@ Func _Get_ADD_PlayersOnline_DATA()
 						If StringLeft($Check_AppId, 9) = "vive.htc." Then $Non_Steam_App = "true"
 						If StringLeft($Check_AppId, 11) = "revive.app." Then $Non_Steam_App = "true"
 
+
+
 						If $Use_Steam_Tags = "true" And $Non_Steam_App <> "true" Then
 							Local $App_in_Library = "false"
 							If $DeleteHomeLoaderLibraryData <> "true" Then
 								For $Loop_Library = 1 To UBound($Array_Library) - 1
+									;MsgBox(0, "", $Check_AppId & @CRLF & $Array_Library[$Loop_Library][0])
 									If $Check_AppId = $Array_Library[$Loop_Library][0] Then $App_in_Library = "true"
 								Next
+								;MsgBox(0, "", $Check_AppId & @CRLF & $App_in_Library)
 							EndIf
 							If $App_in_Library <> "true" Then _Get_SteamGame_Tags_for_SteamID()
+							_Get_SteamGame_Tags_for_SteamID()
 						EndIf
 					EndIf
 				EndIf
@@ -1875,6 +2073,7 @@ EndFunc   ;==>_Get_ADD_PlayersOnline_DATA
 
 
 Func _Get_SteamGame_Tags()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2024) :(' & @MIN & ':' & @SEC & ') _Get_SteamGame_Tags()' & @CR) ;### Function Trace
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding Tags:")
 	If $ScanOnlyVR = "true" Then
 		$ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
@@ -1906,7 +2105,8 @@ Func _Get_SteamGame_Tags()
 
 			If $Check_AppId <> "" Then
 				Local $URL = "https://steamdb.info/app/" & $Check_AppId & "/info/"
-				_INetGetSource($URL)
+				Local $INetGetSource_Check = _INetGetSource($URL)
+				If $INetGetSource_Check = "" Then FileWriteLine($scan_log_FILE, "Could not Read '_INetGetSource' :" & $URL & "[" & _Now() & "]")
 				Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 				If Not @error Then
 					$WinHttpReq.Open("GET", $URL, False)
@@ -1920,6 +2120,8 @@ Func _Get_SteamGame_Tags()
 					Else
 						If $WinHttpReq.Status <> 404 Then
 							Local $Data = $WinHttpReq.ResponseText
+
+							;MsgBox(0, "_Get_SteamGame_Tags()", $Data)
 
 							Local $iPosition_1 = StringInStr($Data, 'store_tags</td>')
 							Local $iPosition_2 = StringInStr($Data, '/a></li></ul></td>', 0, 1, $iPosition_1)
@@ -2092,6 +2294,7 @@ Func _Get_SteamGame_Tags()
 EndFunc   ;==>_Get_SteamGame_Tags
 
 Func _Get_SteamGame_Tags_for_SteamID()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2245) :(' & @MIN & ':' & @SEC & ') _Get_SteamGame_Tags_for_SteamID()' & @CR) ;### Function Trace
 	Global $Check_AppId = $appid
 	Global $Check_NR = IniRead($ApplicationList_TEMP, "Application_" & $appid, "NR", "")
 	Global $Check_name = IniRead($ApplicationList_TEMP, "Application_" & $appid, "name", "")
@@ -2101,16 +2304,20 @@ Func _Get_SteamGame_Tags_for_SteamID()
 	Global $Check_all_time_peak = IniRead($ApplicationList_TEMP, "Application_" & $appid, "all_time_peak", "")
 	Global $Check_resolutionScale = IniRead($ApplicationList_TEMP, "Application_" & $appid, "resolutionScale", "")
 
-	Local $iPosition_1 = StringInStr($DataResponse, 'store_tags</td>')
-	Local $iPosition_2 = StringInStr($DataResponse, '/a></li></ul></td>', 0, 1, $iPosition_1)
+	;MsgBox(0, "_Get_SteamGame_Tags_for_SteamID()", @ScriptDir & "\DataResponse.txt" & @CRLF & @CRLF & $DataResponse)
+	;FileWrite(@ScriptDir & "\DataResponse.txt", $DataResponse)
+
+	Local $iPosition_1 = StringInStr($DataResponse, '<h3>User Tags</h3>')
+	Local $iPosition_2 = StringInStr($DataResponse, '<div class="tab-pane" id="info">', 0, 1, $iPosition_1)
 	Local $iPosition_3 = $iPosition_2 - $iPosition_1
 
 	Local $sString = StringMid($DataResponse, $iPosition_1, $iPosition_3)
-	$sString = StringReplace($sString, 'store_tags</td>', '')
-	$sString = StringReplace($sString, '<td><ul><li><b>', '')
-	$sString = StringReplace($sString, '</b>: <a href="/tags/?tagid=', '')
-	$sString = StringReplace($sString, '/a></li><li><b>', '')
+	$sString = StringReplace($sString, '<h3>User Tags</h3>', '')
+	$sString = StringReplace($sString, '<a class="btn btn-sm btn-outline btn-tag" href="/tags', '')
+	$sString = StringReplace($sString, '/a>', '')
+	$sString = StringReplace($sString, '</div>', '/?')
 
+	;Local $Game_Tags = _StringBetween($sString, '/?', '/?', $STR_ENDNOTSTART)
 	Local $Game_Tags = _StringBetween($sString, '>', '<', $STR_ENDNOTSTART)
 
 	Local $NR_Game_Tags = UBound($Game_Tags) - 1
@@ -2274,6 +2481,7 @@ EndFunc   ;==>_Get_SteamGame_Tags
 
 
 Func _Write_PO_TEXT_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2432) :(' & @MIN & ':' & @SEC & ') _Write_PO_TEXT_2_Image()' & @CR) ;### Function Trace
 	_GDIPlus_Startup()
 	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $PlayersOnline_right_now, "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
 	_GDIPlus_ImageDispose($hImage)
@@ -2286,6 +2494,7 @@ Func _Write_PO_TEXT_2_Image()
 EndFunc   ;==>_Write_PO_TEXT_2_Image
 
 Func _Write_PO_Image_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2445) :(' & @MIN & ':' & @SEC & ') _Write_PO_Image_2_Image()' & @CR) ;### Function Trace
 	Global $ImageSizeX = 460, $ImageSizeY = 215
 	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
 
@@ -2337,6 +2546,7 @@ Func _Write_PO_Image_2_Image()
 EndFunc   ;==>_Write_PO_Image_2_Image
 
 Func _Write_CategoryNameTemplate_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2497) :(' & @MIN & ':' & @SEC & ') _Write_CategoryNameTemplate_2_Image()' & @CR) ;### Function Trace
 	Local $CategoryNameTemplate = $gfx & "CategoryNameTemplate.jpg"
 	_GDIPlus_Startup()
 	Global $hImage = _GDIPlus_WTOB($CategoryNameTemplate, $InputBox, "Arial", 26, -1, 3, 0, 0, 0x000000, 1, 1)
@@ -2352,6 +2562,7 @@ Func _Write_CategoryNameTemplate_2_Image()
 EndFunc   ;==>_Write_PO_TEXT_2_Image
 
 Func _Write_CategoryNameTemplate_Image_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2513) :(' & @MIN & ':' & @SEC & ') _Write_CategoryNameTemplate_Image_2_Image()' & @CR) ;### Function Trace
 	Global $ImageSizeX = 460, $ImageSizeY = 215
 	Global $FAVImageSizeX = 460, $FAVImageSizeY = 45 ; 80 , 60
 
@@ -2410,10 +2621,12 @@ Func _Write_CategoryNameTemplate_Image_2_Image()
 EndFunc   ;==>_Write_PO_Image_2_Image
 
 Func MY_PAINT($hWnd, $Msg, $wParam, $lParam)
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2572) :(' & @MIN & ':' & @SEC & ') MY_PAINT()' & @CR) ;### Function Trace
 	Return $GUI_RUNDEFMSG
 EndFunc   ;==>MY_PAINT
 
 Func _Quit_PO_Image_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2577) :(' & @MIN & ':' & @SEC & ') _Quit_PO_Image_2_Image()' & @CR) ;### Function Trace
 	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
 	If FileExists(@ScriptDir & "\CategoryNameImage" & ".jpg") Then FileDelete(@ScriptDir & "\CategoryNameImage" & ".jpg")
 	If FileExists(@ScriptDir & "\WTOB" & ".png") Then FileDelete(@ScriptDir & "\WTOB" & ".png")
@@ -2429,35 +2642,45 @@ Func _Quit_PO_Image_2_Image()
 EndFunc   ;==>_Quit_PO_Image_2_Image
 
 Func _Get_AD_SS_Values_to_Icons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2593) :(' & @MIN & ':' & @SEC & ') _Get_AD_SS_Values_to_Icons()' & @CR) ;### Function Trace
 	Global $Check_AppId
 	$ApplicationList_TEMP = $ApplicationList_SteamLibrary_ALL_INI
 	If $ScanOnlyVR = "true" Then $ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
 	Local $FileList = _FileListToArray($Icons & "460x215\", "*.jpg", 1)
+	$Array_Result = $FileList
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 
-	If $FileList <> "" Then
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+	If IsArray($FileList) Then
+		If $FileList <> "" Then
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
 
-		For $NR = 1 To $FileList[0]
-			$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
-			$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
+			For $NR = 1 To $FileList[0]
+				$Check_AppId = StringReplace($FileList[$NR], 'steam.app.', '')
+				$Check_AppId = StringReplace($Check_AppId, '.jpg', '')
 
-			Local $SS_Value_Check = IniRead($ApplicationList_TEMP, "Application_" & $Check_AppId, "resolutionScale", "")
-			Global $Value_for_Image = $SS_Value_Check
+				Local $SS_Value_Check = IniRead($ApplicationList_TEMP, "Application_" & $Check_AppId, "resolutionScale", "")
+				Global $Value_for_Image = $SS_Value_Check
 
-			If $Value_for_Image <> "" Then
-				_Write_SS_TEXT_2_Image()
-				_Write_SS_Image_2_Image()
-			EndIf
+				If $Value_for_Image <> "" Then
+					_Write_SS_TEXT_2_Image()
+					_Write_SS_Image_2_Image()
+				EndIf
 
-			$SS_Value_Check = ""
-			$Value_for_Image = ""
-			$Check_AppId = ""
-		Next
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+				$SS_Value_Check = ""
+				$Value_for_Image = ""
+				$Check_AppId = ""
+			Next
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding SS values to icons: " & "<.jpg Files found = " & $FileList[0] & ">")
+		EndIf
 	EndIf
 EndFunc   ;==>_Get_AD_SS_Values_to_Icons
 
 Func _Write_SS_TEXT_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2629) :(' & @MIN & ':' & @SEC & ') _Write_SS_TEXT_2_Image()' & @CR) ;### Function Trace
 	_GDIPlus_Startup()
 	Global $hImage = _GDIPlus_WTOB($gfx & "Icon_NR_Background.jpg", $Value_for_Image & "%", "Arial", 45, -1, 3, 0, 0, 0x00CCFF, 1, 1)
 	_GDIPlus_ImageDispose($hImage)
@@ -2470,6 +2693,7 @@ Func _Write_SS_TEXT_2_Image()
 EndFunc   ;==>_Write_SS_TEXT_2_Image
 
 Func _Write_SS_Image_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2642) :(' & @MIN & ':' & @SEC & ') _Write_SS_Image_2_Image()' & @CR) ;### Function Trace
 	Global $ImageSizeX = 460, $ImageSizeY = 215
 	Global $FAVImageSizeX = 80, $FAVImageSizeY = 60
 
@@ -2520,6 +2744,7 @@ Func _Write_SS_Image_2_Image()
 EndFunc   ;==>_Write_SS_Image_2_Image
 
 Func _Quit_SS_Image_2_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2693) :(' & @MIN & ':' & @SEC & ') _Quit_SS_Image_2_Image()' & @CR) ;### Function Trace
 	If FileExists(@ScriptDir & "\Icon_NR_Background" & ".jpg") Then FileDelete(@ScriptDir & "\Icon_NR_Background" & ".jpg")
 	_GDIPlus_PenDispose($hPen)
 	_GDIPlus_ImageDispose($hImage1)
@@ -2530,10 +2755,12 @@ Func _Quit_SS_Image_2_Image()
 EndFunc   ;==>_Quit_SS_Image_2_Image
 
 Func _Get_SteamGame_Icon_32x32()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2704) :(' & @MIN & ':' & @SEC & ') _Get_SteamGame_Icon_32x32()' & @CR) ;### Function Trace
 	Global $Check_AppId = $appid
 	If $Check_AppId <> "" Then
 		Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
-		_INetGetSource($URL)
+		$INetGetSource_Check = _INetGetSource($URL)
+		If $INetGetSource_Check = "" Then FileWriteLine($scan_log_FILE, "Could not Read '_INetGetSource' :" & $URL & "[" & _Now() & "]")
 		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 		If Not @error Then
 			$WinHttpReq.Open("GET", $URL, False)
@@ -2558,6 +2785,7 @@ Func _Get_SteamGame_Icon_32x32()
 			If $HTML_IconLink <> "" Then
 				Local $URL = $HTML_IconLink & ".jpg"
 				Local $Download = InetGet($URL, $Icons & "32x32\" & "steam.app." & $appid & ".jpg", 16, 0)
+				;If $Download = 0 Then _URL_Download_Error_Handler()
 				If $Download = 0 Then FileCopy($Icons & "32x32\" & "default.bmp", $Icons & "32x32\" & "steam.app." & $appid & ".bmp", $FC_OVERWRITE)
 				If $Download <> 0 Then _Convert_Icon_32x32()
 				FileDelete($Icons & "32x32\" & "steam.app." & $appid & ".jpg")
@@ -2579,11 +2807,13 @@ Func _Get_SteamGame_Icon_32x32()
 EndFunc   ;==>_Get_SteamGame_Icon_32x32
 
 Func _Get_SteamGame_Icon_256x256()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2756) :(' & @MIN & ':' & @SEC & ') _Get_SteamGame_Icon_256x256()' & @CR) ;### Function Trace
 	Global $Check_AppId = $appid
 	If $Check_AppId <> "" Then
 		Global $Steam_AppId = $appid
 		Local $URL = "https://steamdb.info/app/" & $appid & "/info/"
-		_INetGetSource($URL)
+		$INetGetSource_Check = _INetGetSource($URL)
+		If $INetGetSource_Check = "" Then FileWriteLine($scan_log_FILE, "Could not Read '_INetGetSource' :" & $URL & "[" & _Now() & "]")
 		Local $WinHttpReq = ObjCreate("WinHttp.WinHttpRequest.5.1")
 		If Not @error Then
 			$WinHttpReq.Open("GET", $URL, False)
@@ -2602,7 +2832,8 @@ Func _Get_SteamGame_Icon_256x256()
 
 			If $HTML_IconLink <> "" Then
 				Local $URL = $HTML_IconLink & ".ico"
-				InetGet($URL, $Icons & "256x256\" & "steam.app." & $Steam_AppId & ".ico", 16, 0)
+				Local $InetGet_Temp = InetGet($URL, $Icons & "256x256\" & "steam.app." & $Steam_AppId & ".ico", 16, 0)
+			If $InetGet_Temp = 0 Then _URL_Download_Error_Handler()
 			EndIf
 		Else
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Get_SteamGame_Icon_256x256()]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
@@ -2611,6 +2842,7 @@ Func _Get_SteamGame_Icon_256x256()
 EndFunc   ;==>_Get_SteamGame_Icon_256x256
 
 Func _Convert_Icon_32x32()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2791) :(' & @MIN & ':' & @SEC & ') _Convert_Icon_32x32()' & @CR) ;### Function Trace
 	Global $Check_AppId = $appid
 	_GDIPlus_Startup()
 	Local $sFile = $Icons & "32x32\" & "steam.app." & $Check_AppId & ".jpg"
@@ -2626,6 +2858,7 @@ Func _Convert_Icon_32x32()
 EndFunc   ;==>_Convert_Icon_32x32
 
 Func _Download_Icon_for_SteamGameID()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2807) :(' & @MIN & ':' & @SEC & ') _Download_Icon_for_SteamGameID()' & @CR) ;### Function Trace
 	Local $Application_appid = $appid
 	Local $Download_Icon_path_1_jpg = $Icons & "steam.app." & $Application_appid & ".jpg"
 	Local $Download_Icon_path_2_jpg = $Icons & "460x215\steam.app." & $Application_appid & ".jpg"
@@ -2639,13 +2872,17 @@ Func _Download_Icon_for_SteamGameID()
 
 	If $Application_appid <> "" Then
 		;If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Download_Icon_path_1_jpg)
-		If Not FileExists($Download_Icon_path_1_jpg) Then InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
-		If Not FileExists($Download_Icon_path_1_jpg) Then FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_1_jpg)
+		If Not FileExists($Download_Icon_path_1_jpg) Then
+			Local $InetGet_Temp = InetGet($URL, $Download_Icon_path_1_jpg, 16, 0)
+			If $InetGet_Temp = 0 Then _URL_Download_Error_Handler()
+			FileCopy($gfx & "Icon_Preview.jpg", $Download_Icon_path_1_jpg)
+		EndIf
 		If Not FileExists($Download_Icon_path_2_jpg) Then FileCopy($Download_Icon_path_1_jpg, $Download_Icon_path_2_jpg)
 	EndIf
 EndFunc   ;==>_Download_Icon_for_SteamGameID
 
 Func _Sync_Icons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2831) :(' & @MIN & ':' & @SEC & ') _Sync_Icons()' & @CR) ;### Function Trace
 	Local $Icon_Folder_Sync
 	Local $Icon_Folder_1 = $Install_DIR & "WebPage\images\"
 	Local $Icon_Folder_2 = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\images\"
@@ -2656,75 +2893,31 @@ Func _Sync_Icons()
 	If $Use_Steam_Tags = "true" Then $NR_Icons_Folders = 4
 
 	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
-	For $Loop_1 = 1 To $FileList[0]
-		For $Loop_2 = 1 To $NR_Icons_Folders
-			If $Loop_2 = 1 Then $Icon_Folder_Sync = $Icon_Folder_1
-			If $Loop_2 = 2 Then $Icon_Folder_Sync = $Icon_Folder_2
-			If $Loop_2 = 3 Then $Icon_Folder_Sync = $Icon_Folder_3
-			If $Loop_2 = 4 Then $Icon_Folder_Sync = $Icon_Folder_4
+	$Array_Result = $FileList
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 
-			If FileExists($Icon_Folder_Sync) Then
-				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
-				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
-			EndIf
-		Next
-	Next
-EndFunc   ;==>_Sync_Icons
+	If IsArray($FileList) Then
+		For $Loop_1 = 1 To $FileList[0]
+			For $Loop_2 = 1 To $NR_Icons_Folders
+				If $Loop_2 = 1 Then $Icon_Folder_Sync = $Icon_Folder_1
+				If $Loop_2 = 2 Then $Icon_Folder_Sync = $Icon_Folder_2
+				If $Loop_2 = 3 Then $Icon_Folder_Sync = $Icon_Folder_3
+				If $Loop_2 = 4 Then $Icon_Folder_Sync = $Icon_Folder_4
 
-Func _Sync_Icons_Backup()
-	Local $FileList = _FileListToArray($Icons, "*.jpg", 1)
-	For $Loop_1 = 1 To $FileList[0]
-		For $Loop_2 = 1 To 5
-			Local $Icon_Folder_Sync = IniRead($Config_INI, "Folders", "Icon_Folder_" & $Loop_2, "")
-			If $Icon_Folder_Sync <> "" Then
-				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
-				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
-			EndIf
-		Next
-
-		If $Use_Steam_Tags = "true" Then
-			$Icon_Folder_Sync = $Install_DIR & "WebPage\Tags\images\"
-			If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-			If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then
-				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
-				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
-			EndIf
-		EndIf
-
-		If $Autostart_VRUB = "true" Then
-			$Icon_Folder_Sync = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\images\"
-
-			If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-			If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then
-				If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
-				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
-			EndIf
-
-			If $Use_Steam_Tags = "true" Then
-				$Icon_Folder_Sync = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\Tags\images\"
-				If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
-				If Not FileExists($VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\Tags\images\" & $FileList[$Loop_1]) Then
+				If FileExists($Icon_Folder_Sync) Then
 					If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($Icon_Folder_Sync & $FileList[$Loop_1])
 					If FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\SS_Values\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
 					If Not FileExists($Icons & "460x215\SS_Values\" & $FileList[$Loop_1]) Then FileCopy($Icons & "460x215\" & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
 					If Not FileExists($Icons & "460x215\" & $FileList[$Loop_1]) Then FileCopy($Icons & $FileList[$Loop_1], $Icon_Folder_Sync & $FileList[$Loop_1], $FC_OVERWRITE + $FC_CREATEPATH)
 					If Not FileExists($Icon_Folder_Sync & $FileList[$Loop_1]) Then FileCopy($gfx & "Icon_Preview.jpg", $Icon_Folder_Sync & $FileList[$Loop_1])
 				EndIf
-			EndIf
-		EndIf
-	Next
+			Next
+		Next
+	EndIf
 EndFunc   ;==>_Sync_Icons
 
 #EndRegion Func MAIN
@@ -2732,6 +2925,7 @@ EndFunc   ;==>_Sync_Icons
 #Region Func MAIN GUI
 
 Func _Create_ListView_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2871) :(' & @MIN & ':' & @SEC & ') _Create_ListView_1()' & @CR) ;### Function Trace
 	$listview = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview, 16, 500, 1, "arial")
@@ -2809,6 +3003,7 @@ Func _Create_ListView_1()
 EndFunc   ;==>_Create_ListView_1
 
 Func _Create_ListView_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (2949) :(' & @MIN & ':' & @SEC & ') _Create_ListView_2()' & @CR) ;### Function Trace
 	$listview_2 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_2, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_2, 16, 500, 1, "arial")
@@ -2884,6 +3079,7 @@ Func _Create_ListView_2()
 EndFunc   ;==>_Create_ListView_2
 
 Func _Create_ListView_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3025) :(' & @MIN & ':' & @SEC & ') _Create_ListView_3()' & @CR) ;### Function Trace
 	$listview_3 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_3, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_3, 16, 500, 1, "arial")
@@ -2959,6 +3155,7 @@ Func _Create_ListView_3()
 EndFunc   ;==>_Create_ListView_3
 
 Func _Create_ListView_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3101) :(' & @MIN & ':' & @SEC & ') _Create_ListView_4()' & @CR) ;### Function Trace
 	$listview_4 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_4, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_4, 16, 500, 1, "arial")
@@ -3034,6 +3231,7 @@ Func _Create_ListView_4()
 EndFunc   ;==>_Create_ListView_4
 
 Func _Create_ListView_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3177) :(' & @MIN & ':' & @SEC & ') _Create_ListView_5()' & @CR) ;### Function Trace
 	$listview_5 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_5, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_5, 16, 500, 1, "arial")
@@ -3092,6 +3290,7 @@ Func _Create_ListView_5()
 EndFunc   ;==>_Create_ListView_5
 
 Func _Create_ListView_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3236) :(' & @MIN & ':' & @SEC & ') _Create_ListView_6()' & @CR) ;### Function Trace
 	$listview_6 = GUICtrlCreateListView("", 0, 115, 800, $DesktopHeight - 236, BitOR($LVS_SHOWSELALWAYS, $LVS_NOSORTHEADER, $LVS_REPORT))
 	_GUICtrlListView_SetExtendedListViewStyle($listview_6, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $iStylesEx, $LVS_EX_CHECKBOXES))
 	GUICtrlSetFont($listview_6, 16, 500, 1, "arial")
@@ -3150,6 +3349,9 @@ Func _Create_ListView_6()
 EndFunc   ;==>_Create_ListView_6
 
 Func _Read_from_INI_ADD_2_ListView()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3295) :(' & @MIN & ':' & @SEC & ') _Read_from_INI_ADD_2_ListView()' & @CR) ;### Function Trace
+	GUISetState(@SW_LOCK, $HLL_GUI)
+	;MsgBox(0, "_Read_from_INI_ADD_2_ListView()", "_Read_from_INI_ADD_2_ListView()")
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -3242,6 +3444,8 @@ Func _Read_from_INI_ADD_2_ListView()
 	Next
 	_GUICtrlListView_EndUpdate($listview_TEMP)
 
+	;MsgBox(0, "", $NR_Applications - 1)
+
 	For $NR2 = 0 To $NR_Applications - 1
 		Local $Application_appid_last = IniRead($ApplicationList_TEMP, "Application_" & $NR2 + 1, "appid", "")
 		If $Application_appid_last <> "" Then
@@ -3262,9 +3466,12 @@ Func _Read_from_INI_ADD_2_ListView()
 	_GUICtrlListView_EndUpdate($listview_TEMP)
 	;_GUICtrlStatusBar_SetText($Statusbar, $TAB_Label & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	_GUICtrlStatusBar_SetText($Statusbar, $TAB_Label & @TAB & "Apps: " & $NR_Applications & @TAB & "")
+	GUISetState(@SW_UNLOCK, $HLL_GUI)
 EndFunc   ;==>_Read_from_INI_ADD_2_ListView
 
 Func _Update_ListView_Icons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3414) :(' & @MIN & ':' & @SEC & ') _Update_ListView_Icons()' & @CR) ;### Function Trace
+	GUISetState(@SW_LOCK, $HLL_GUI)
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	$Status_Combo_ApplicationList = GUICtrlRead($Combo_ApplicationList)
 	_GUICtrlListView_BeginUpdate($listview)
@@ -3339,9 +3546,11 @@ Func _Update_ListView_Icons()
 		EndIf
 	Next
 	_GUICtrlListView_EndUpdate($listview_TEMP)
+	GUISetState(@SW_UNLOCK, $HLL_GUI)
 EndFunc   ;==>_Update_ListView_Icons
 
 Func _ADD_Icons_32x32_to_ListView()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3494) :(' & @MIN & ':' & @SEC & ') _ADD_Icons_32x32_to_ListView()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -3403,6 +3612,7 @@ Func _ADD_Icons_32x32_to_ListView()
 EndFunc   ;==>_ADD_Icons_32x32_to_ListView
 
 Func _Set_States()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3556) :(' & @MIN & ':' & @SEC & ') _Set_States()' & @CR) ;### Function Trace
 	Global $RM_More_Scan_Options_Item_3, $RM_More_Scan_Options_Item_4, $RM_More_Scan_Options_Item_5, $RM_More_Scan_Options_Item_6, $RM_More_Scan_Options_Item_7
 
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
@@ -3420,6 +3630,7 @@ Func _Set_States()
 	$Add_SS_to_Icons = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "false")
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
+	$Update_Check = IniRead($Config_INI, "Settings", "Update_Check", "")
 
 	If $Request_Steamdb_info = "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_5, $GUI_ENABLE)
@@ -3440,13 +3651,13 @@ Func _Set_States()
 	Else
 		GUICtrlSetState($RM_More_Scan_Options_Item_6, $GUI_DISABLE)
 	EndIf
-
 EndFunc
 
 
 #Region Func RM_Menu
 
 Func _RM_Button_Scan()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3601) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan()' & @CR) ;### Function Trace
 	Global $contextmenu_Button_Scan = GUICtrlCreateContextMenu($Button_ReScan_Steam_Library)
 	Global $RM_Button_Scan_Item_1_1 = GUICtrlCreateMenuItem("Scan", $contextmenu_Button_Scan)
 	GUICtrlSetOnEvent(-1, "_Button_ReScan_Steam_Library")
@@ -3477,24 +3688,28 @@ EndFunc   ;==>_RM_Button_Scan
 
 
 Func _RM_Button_Scan_Item_1_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3632) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan_Item_1_2()' & @CR) ;### Function Trace
 	_ScanViveData()
 	_Sync_All_INI_Files_1()
 	_Read_from_INI_ADD_2_ListView()
 EndFunc
 
 Func _RM_Button_Scan_Item_1_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3639) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan_Item_1_3()' & @CR) ;### Function Trace
 	_ScanOculusData()
 	_Sync_All_INI_Files_1()
 	_Read_from_INI_ADD_2_ListView()
 EndFunc
 
 Func _RM_Button_Scan_Item_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3646) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan_Item_2()' & @CR) ;### Function Trace
 	_RM_Button_Scan_Get_PO_Data()
 	_Sync_All_INI_Files_1()
 	_Read_from_INI_ADD_2_ListView()
 EndFunc
 
 Func _RM_Button_Scan_Item_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3653) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan_Item_3()' & @CR) ;### Function Trace
 	_RM_Scan_Fetch_Steamdb_Tags()
 	_Sync_All_INI_Files_1()
 	_Read_from_INI_ADD_2_ListView()
@@ -3503,6 +3718,7 @@ EndFunc
 
 
 Func _RM_Button_Scan_Get_PO_Data()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3662) :(' & @MIN & ':' & @SEC & ') _RM_Button_Scan_Get_PO_Data()' & @CR) ;### Function Trace
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start adding Steamdb.Info:")
 	If $ScanOnlyVR = "true" Then
 		$ApplicationList_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
@@ -3530,6 +3746,7 @@ Func _RM_Button_Scan_Get_PO_Data()
 				EndIf
 				$appid = $Check_AppId
 				Local $Non_Steam_App = "false"
+				;If StringLeft($appid, 5) = "HLNSG" Then $Non_Steam_App = "true"
 				If StringLeft($appid, 9) = "vive.htc." Then $Non_Steam_App = "true"
 				If StringLeft($appid, 11) = "revive.app." Then $Non_Steam_App = "true"
 				If $Non_Steam_App <> "true" Then _Get_ADD_PlayersOnline_DATA()
@@ -3544,12 +3761,11 @@ Func _RM_Button_Scan_Get_PO_Data()
 		EndIf
 	EndIf
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End adding Steamdb.Info:" & " [NR of Apps: " & $NR_ApplicationsCheck & "]")
-
 	_Sync_All_INI_Files_1()
-
 EndFunc   ;==>_RM_Button_Scan_Get_PO_Data
 
 Func _RM_More_Scan_Options()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3711) :(' & @MIN & ':' & @SEC & ') _RM_More_Scan_Options()' & @CR) ;### Function Trace
 	Global $contextmenu_More_Scan_Options = GUICtrlCreateContextMenu($Button_More_Scan_Options)
 	Global $RM_More_Scan_Options_Item_1_1 = GUICtrlCreateMenuItem("Scan for Viveport Apps", $contextmenu_More_Scan_Options)
 	If $ScanVIVEApps = "true" Then GUICtrlSetState(-1, $GUI_CHECKED)
@@ -3606,6 +3822,7 @@ Func _RM_More_Scan_Options()
 EndFunc   ;==>_RM_More_Scan_Options
 
 Func _RM_Buttons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (3768) :(' & @MIN & ':' & @SEC & ') _RM_Buttons()' & @CR) ;### Function Trace
 	Global $contextmenu_1 = GUICtrlCreateContextMenu($ButtonTAB_Steam_Library)
 	;Global $RM_Button_Item_1_1 = GUICtrlCreateMenuItem("Categorize games based on their tags", $contextmenu_1)
 	;Global $contextmenu_2 = GUICtrlCreateContextMenu($ButtonTAB_Non_Steam_Appl)
@@ -5217,6 +5434,7 @@ Func _RM_Buttons()
 EndFunc   ;==>_RM_Buttons
 
 Func _RM_Button_Item_3_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5380) :(' & @MIN & ':' & @SEC & ') _RM_Button_Item_3_1()' & @CR) ;### Function Trace
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_1)
 	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB3_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
@@ -5231,6 +5449,7 @@ Func _RM_Button_Item_3_1()
 EndFunc   ;==>_RM_Button_Item_3_1
 
 Func _RM_Button_Item_4_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5395) :(' & @MIN & ':' & @SEC & ') _RM_Button_Item_4_1()' & @CR) ;### Function Trace
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_2)
 	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB4_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
@@ -5245,6 +5464,7 @@ Func _RM_Button_Item_4_1()
 EndFunc   ;==>_RM_Button_Item_4_1
 
 Func _RM_Button_Item_5_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5410) :(' & @MIN & ':' & @SEC & ') _RM_Button_Item_5_1()' & @CR) ;### Function Trace
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_3)
 	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB5_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
@@ -5259,6 +5479,7 @@ Func _RM_Button_Item_5_1()
 EndFunc   ;==>_RM_Button_Item_5_1
 
 Func _RM_Button_Item_6_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5425) :(' & @MIN & ':' & @SEC & ') _RM_Button_Item_6_1()' & @CR) ;### Function Trace
 	Local $InputBox_old = GUICtrlRead($ButtonTAB_Custom_4)
 	$InputBox = InputBox("Change Section Name", "Enter the new Section Name and press 'OK' to change the name of this Section.", $TAB6_Label, "", -1, 160)
 	If @error = 1 Or @error = 5 Then
@@ -5274,6 +5495,7 @@ EndFunc   ;==>_RM_Button_Item_6_1
 
 #Region RM TAGS
 Func _RM_Checkbox_Category_3_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5441) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_1()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5295,6 +5517,7 @@ Func _RM_Checkbox_Category_3_1()
 EndFunc   ;==>_RM_Checkbox_Category_3_1
 
 Func _RM_Checkbox_Category_3_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5463) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_2()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 2)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5316,6 +5539,7 @@ Func _RM_Checkbox_Category_3_2()
 EndFunc   ;==>_RM_Checkbox_Category_3_2
 
 Func _RM_Checkbox_Category_3_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5485) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_3()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 3)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5337,6 +5561,7 @@ Func _RM_Checkbox_Category_3_3()
 EndFunc   ;==>_RM_Checkbox_Category_3_3
 
 Func _RM_Checkbox_Category_3_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5507) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_4()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 4)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5358,6 +5583,7 @@ Func _RM_Checkbox_Category_3_4()
 EndFunc   ;==>_RM_Checkbox_Category_3_4
 
 Func _RM_Checkbox_Category_3_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5529) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_5()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 5)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5379,6 +5605,7 @@ Func _RM_Checkbox_Category_3_5()
 EndFunc   ;==>_RM_Checkbox_Category_3_5
 
 Func _RM_Checkbox_Category_3_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5551) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_6()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 6)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5400,6 +5627,7 @@ Func _RM_Checkbox_Category_3_6()
 EndFunc   ;==>_RM_Checkbox_Category_3_6
 
 Func _RM_Checkbox_Category_3_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5573) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_7()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 7)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5421,6 +5649,7 @@ Func _RM_Checkbox_Category_3_7()
 EndFunc   ;==>_RM_Checkbox_Category_3_7
 
 Func _RM_Checkbox_Category_3_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5595) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_8()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 8)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5442,6 +5671,7 @@ Func _RM_Checkbox_Category_3_8()
 EndFunc   ;==>_RM_Checkbox_Category_3_8
 
 Func _RM_Checkbox_Category_3_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5617) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_9()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 9)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5463,6 +5693,7 @@ Func _RM_Checkbox_Category_3_9()
 EndFunc   ;==>_RM_Checkbox_Category_3_9
 
 Func _RM_Checkbox_Category_3_10()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5639) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_10()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 10)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5484,6 +5715,7 @@ Func _RM_Checkbox_Category_3_10()
 EndFunc   ;==>_RM_Checkbox_Category_3_10
 
 Func _RM_Checkbox_Category_3_11()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5661) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_11()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 11)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5505,6 +5737,7 @@ Func _RM_Checkbox_Category_3_11()
 EndFunc   ;==>_RM_Checkbox_Category_3_11
 
 Func _RM_Checkbox_Category_3_12()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5683) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_12()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 12)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5526,6 +5759,7 @@ Func _RM_Checkbox_Category_3_12()
 EndFunc   ;==>_RM_Checkbox_Category_3_12
 
 Func _RM_Checkbox_Category_3_13()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5705) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_13()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 13)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5547,6 +5781,7 @@ Func _RM_Checkbox_Category_3_13()
 EndFunc   ;==>_RM_Checkbox_Category_3_13
 
 Func _RM_Checkbox_Category_3_14()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5727) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_14()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 14)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5568,6 +5803,7 @@ Func _RM_Checkbox_Category_3_14()
 EndFunc   ;==>_RM_Checkbox_Category_3_14
 
 Func _RM_Checkbox_Category_3_15()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5749) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_15()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 15)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5589,6 +5825,7 @@ Func _RM_Checkbox_Category_3_15()
 EndFunc   ;==>_RM_Checkbox_Category_3_15
 
 Func _RM_Checkbox_Category_3_16()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5771) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_16()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 16)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5610,6 +5847,7 @@ Func _RM_Checkbox_Category_3_16()
 EndFunc   ;==>_RM_Checkbox_Category_3_16
 
 Func _RM_Checkbox_Category_3_17()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5793) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_17()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5631,6 +5869,7 @@ Func _RM_Checkbox_Category_3_17()
 EndFunc   ;==>_RM_Checkbox_Category_3_17
 
 Func _RM_Checkbox_Category_3_18()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5815) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_18()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 18)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5652,6 +5891,7 @@ Func _RM_Checkbox_Category_3_18()
 EndFunc   ;==>_RM_Checkbox_Category_3_18
 
 Func _RM_Checkbox_Category_3_19()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5837) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_19()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5673,6 +5913,7 @@ Func _RM_Checkbox_Category_3_19()
 EndFunc   ;==>_RM_Checkbox_Category_3_19
 
 Func _RM_Checkbox_Category_3_20()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5859) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_20()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 20)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5694,6 +5935,7 @@ Func _RM_Checkbox_Category_3_20()
 EndFunc   ;==>_RM_Checkbox_Category_3_20
 
 Func _RM_Checkbox_Category_3_21()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5881) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_21()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 21)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5715,6 +5957,7 @@ Func _RM_Checkbox_Category_3_21()
 EndFunc   ;==>_RM_Checkbox_Category_3_21
 
 Func _RM_Checkbox_Category_3_22()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5903) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_22()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 22)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5736,6 +5979,7 @@ Func _RM_Checkbox_Category_3_22()
 EndFunc   ;==>_RM_Checkbox_Category_3_22
 
 Func _RM_Checkbox_Category_3_23()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5925) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_23()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 23)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5757,6 +6001,7 @@ Func _RM_Checkbox_Category_3_23()
 EndFunc   ;==>_RM_Checkbox_Category_3_23
 
 Func _RM_Checkbox_Category_3_24()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5947) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_24()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 24)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5778,6 +6023,7 @@ Func _RM_Checkbox_Category_3_24()
 EndFunc   ;==>_RM_Checkbox_Category_3_24
 
 Func _RM_Checkbox_Category_3_25()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5969) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_25()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 25)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5799,6 +6045,7 @@ Func _RM_Checkbox_Category_3_25()
 EndFunc   ;==>_RM_Checkbox_Category_3_25
 
 Func _RM_Checkbox_Category_3_26()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (5991) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_26()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 26)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5820,6 +6067,7 @@ Func _RM_Checkbox_Category_3_26()
 EndFunc   ;==>_RM_Checkbox_Category_3_26
 
 Func _RM_Checkbox_Category_3_27()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6013) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_27()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 27)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5841,6 +6089,7 @@ Func _RM_Checkbox_Category_3_27()
 EndFunc   ;==>_RM_Checkbox_Category_3_27
 
 Func _RM_Checkbox_Category_3_28()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6035) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_28()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 28)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5862,6 +6111,7 @@ Func _RM_Checkbox_Category_3_28()
 EndFunc   ;==>_RM_Checkbox_Category_3_28
 
 Func _RM_Checkbox_Category_3_29()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6057) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_29()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 29)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5883,6 +6133,7 @@ Func _RM_Checkbox_Category_3_29()
 EndFunc   ;==>_RM_Checkbox_Category_3_29
 
 Func _RM_Checkbox_Category_3_30()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6079) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_3_30()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 30)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_1.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5905,6 +6156,7 @@ EndFunc   ;==>_RM_Checkbox_Category_3_30
 
 
 Func _RM_Checkbox_Category_4_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6102) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_1()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5926,6 +6178,7 @@ Func _RM_Checkbox_Category_4_1()
 EndFunc   ;==>_RM_Checkbox_Category_4_1
 
 Func _RM_Checkbox_Category_4_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6124) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_2()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 2)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5947,6 +6200,7 @@ Func _RM_Checkbox_Category_4_2()
 EndFunc   ;==>_RM_Checkbox_Category_4_2
 
 Func _RM_Checkbox_Category_4_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6146) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_3()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 3)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5968,6 +6222,7 @@ Func _RM_Checkbox_Category_4_3()
 EndFunc   ;==>_RM_Checkbox_Category_4_3
 
 Func _RM_Checkbox_Category_4_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6168) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_4()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 4)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -5989,6 +6244,7 @@ Func _RM_Checkbox_Category_4_4()
 EndFunc   ;==>_RM_Checkbox_Category_4_4
 
 Func _RM_Checkbox_Category_4_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6190) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_5()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 5)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6010,6 +6266,7 @@ Func _RM_Checkbox_Category_4_5()
 EndFunc   ;==>_RM_Checkbox_Category_4_5
 
 Func _RM_Checkbox_Category_4_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6212) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_6()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 6)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6031,6 +6288,7 @@ Func _RM_Checkbox_Category_4_6()
 EndFunc   ;==>_RM_Checkbox_Category_4_6
 
 Func _RM_Checkbox_Category_4_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6234) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_7()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 7)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6052,6 +6310,7 @@ Func _RM_Checkbox_Category_4_7()
 EndFunc   ;==>_RM_Checkbox_Category_4_7
 
 Func _RM_Checkbox_Category_4_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6256) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_8()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 8)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6073,6 +6332,7 @@ Func _RM_Checkbox_Category_4_8()
 EndFunc   ;==>_RM_Checkbox_Category_4_8
 
 Func _RM_Checkbox_Category_4_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6278) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_9()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 9)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6094,6 +6354,7 @@ Func _RM_Checkbox_Category_4_9()
 EndFunc   ;==>_RM_Checkbox_Category_4_9
 
 Func _RM_Checkbox_Category_4_10()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6300) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_10()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 10)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6115,6 +6376,7 @@ Func _RM_Checkbox_Category_4_10()
 EndFunc   ;==>_RM_Checkbox_Category_4_10
 
 Func _RM_Checkbox_Category_4_11()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6322) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_11()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 11)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6136,6 +6398,7 @@ Func _RM_Checkbox_Category_4_11()
 EndFunc   ;==>_RM_Checkbox_Category_4_11
 
 Func _RM_Checkbox_Category_4_12()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6344) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_12()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 12)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6157,6 +6420,7 @@ Func _RM_Checkbox_Category_4_12()
 EndFunc   ;==>_RM_Checkbox_Category_4_12
 
 Func _RM_Checkbox_Category_4_13()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6366) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_13()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 13)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6178,6 +6442,7 @@ Func _RM_Checkbox_Category_4_13()
 EndFunc   ;==>_RM_Checkbox_Category_4_13
 
 Func _RM_Checkbox_Category_4_14()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6388) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_14()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 14)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6199,6 +6464,7 @@ Func _RM_Checkbox_Category_4_14()
 EndFunc   ;==>_RM_Checkbox_Category_4_14
 
 Func _RM_Checkbox_Category_4_15()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6410) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_15()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 15)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6220,6 +6486,7 @@ Func _RM_Checkbox_Category_4_15()
 EndFunc   ;==>_RM_Checkbox_Category_4_15
 
 Func _RM_Checkbox_Category_4_16()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6432) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_16()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 16)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6241,6 +6508,7 @@ Func _RM_Checkbox_Category_4_16()
 EndFunc   ;==>_RM_Checkbox_Category_4_16
 
 Func _RM_Checkbox_Category_4_17()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6454) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_17()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 17)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6262,6 +6530,7 @@ Func _RM_Checkbox_Category_4_17()
 EndFunc   ;==>_RM_Checkbox_Category_4_17
 
 Func _RM_Checkbox_Category_4_18()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6476) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_18()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 18)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6283,6 +6552,7 @@ Func _RM_Checkbox_Category_4_18()
 EndFunc   ;==>_RM_Checkbox_Category_4_18
 
 Func _RM_Checkbox_Category_4_19()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6498) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_19()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 19)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6304,6 +6574,7 @@ Func _RM_Checkbox_Category_4_19()
 EndFunc   ;==>_RM_Checkbox_Category_4_19
 
 Func _RM_Checkbox_Category_4_20()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6520) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_20()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 20)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6325,6 +6596,7 @@ Func _RM_Checkbox_Category_4_20()
 EndFunc   ;==>_RM_Checkbox_Category_4_20
 
 Func _RM_Checkbox_Category_4_21()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6542) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_21()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 21)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6346,6 +6618,7 @@ Func _RM_Checkbox_Category_4_21()
 EndFunc   ;==>_RM_Checkbox_Category_4_21
 
 Func _RM_Checkbox_Category_4_22()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6564) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_22()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 22)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6367,6 +6640,7 @@ Func _RM_Checkbox_Category_4_22()
 EndFunc   ;==>_RM_Checkbox_Category_4_22
 
 Func _RM_Checkbox_Category_4_23()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6586) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_23()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 23)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6388,6 +6662,7 @@ Func _RM_Checkbox_Category_4_23()
 EndFunc   ;==>_RM_Checkbox_Category_4_23
 
 Func _RM_Checkbox_Category_4_24()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6608) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_24()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 24)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6409,6 +6684,7 @@ Func _RM_Checkbox_Category_4_24()
 EndFunc   ;==>_RM_Checkbox_Category_4_24
 
 Func _RM_Checkbox_Category_4_25()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6630) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_25()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 25)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6430,6 +6706,7 @@ Func _RM_Checkbox_Category_4_25()
 EndFunc   ;==>_RM_Checkbox_Category_4_25
 
 Func _RM_Checkbox_Category_4_26()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6652) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_26()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 26)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6451,6 +6728,7 @@ Func _RM_Checkbox_Category_4_26()
 EndFunc   ;==>_RM_Checkbox_Category_4_26
 
 Func _RM_Checkbox_Category_4_27()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6674) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_27()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 27)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6472,6 +6750,7 @@ Func _RM_Checkbox_Category_4_27()
 EndFunc   ;==>_RM_Checkbox_Category_4_27
 
 Func _RM_Checkbox_Category_4_28()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6696) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_28()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 28)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6493,6 +6772,7 @@ Func _RM_Checkbox_Category_4_28()
 EndFunc   ;==>_RM_Checkbox_Category_4_28
 
 Func _RM_Checkbox_Category_4_29()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6718) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_29()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 29)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6514,6 +6794,7 @@ Func _RM_Checkbox_Category_4_29()
 EndFunc   ;==>_RM_Checkbox_Category_4_29
 
 Func _RM_Checkbox_Category_4_30()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6740) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_4_30()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 30)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_2.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6537,6 +6818,7 @@ EndFunc   ;==>_RM_Checkbox_Category_4_30
 
 
 Func _RM_Checkbox_Category_5_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6764) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_1()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6558,6 +6840,7 @@ Func _RM_Checkbox_Category_5_1()
 EndFunc   ;==>_RM_Checkbox_Category_5_1
 
 Func _RM_Checkbox_Category_5_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6786) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_2()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 2)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6579,6 +6862,7 @@ Func _RM_Checkbox_Category_5_2()
 EndFunc   ;==>_RM_Checkbox_Category_5_2
 
 Func _RM_Checkbox_Category_5_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6808) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_3()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 3)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6600,6 +6884,7 @@ Func _RM_Checkbox_Category_5_3()
 EndFunc   ;==>_RM_Checkbox_Category_5_3
 
 Func _RM_Checkbox_Category_5_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6830) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_4()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 4)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6621,6 +6906,7 @@ Func _RM_Checkbox_Category_5_4()
 EndFunc   ;==>_RM_Checkbox_Category_5_4
 
 Func _RM_Checkbox_Category_5_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6852) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_5()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 5)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6642,6 +6928,7 @@ Func _RM_Checkbox_Category_5_5()
 EndFunc   ;==>_RM_Checkbox_Category_5_5
 
 Func _RM_Checkbox_Category_5_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6874) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_6()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 6)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6663,6 +6950,7 @@ Func _RM_Checkbox_Category_5_6()
 EndFunc   ;==>_RM_Checkbox_Category_5_6
 
 Func _RM_Checkbox_Category_5_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6896) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_7()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 7)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6684,6 +6972,7 @@ Func _RM_Checkbox_Category_5_7()
 EndFunc   ;==>_RM_Checkbox_Category_5_7
 
 Func _RM_Checkbox_Category_5_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6918) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_8()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 8)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6705,6 +6994,7 @@ Func _RM_Checkbox_Category_5_8()
 EndFunc   ;==>_RM_Checkbox_Category_5_8
 
 Func _RM_Checkbox_Category_5_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6940) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_9()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 9)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6726,6 +7016,7 @@ Func _RM_Checkbox_Category_5_9()
 EndFunc   ;==>_RM_Checkbox_Category_5_9
 
 Func _RM_Checkbox_Category_5_10()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6962) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_10()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 10)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6747,6 +7038,7 @@ Func _RM_Checkbox_Category_5_10()
 EndFunc   ;==>_RM_Checkbox_Category_5_10
 
 Func _RM_Checkbox_Category_5_11()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (6984) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_11()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 11)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6768,6 +7060,7 @@ Func _RM_Checkbox_Category_5_11()
 EndFunc   ;==>_RM_Checkbox_Category_5_11
 
 Func _RM_Checkbox_Category_5_12()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7006) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_12()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 12)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6789,6 +7082,7 @@ Func _RM_Checkbox_Category_5_12()
 EndFunc   ;==>_RM_Checkbox_Category_5_12
 
 Func _RM_Checkbox_Category_5_13()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7028) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_13()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 13)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6810,6 +7104,7 @@ Func _RM_Checkbox_Category_5_13()
 EndFunc   ;==>_RM_Checkbox_Category_5_13
 
 Func _RM_Checkbox_Category_5_14()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7050) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_14()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 14)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6831,6 +7126,7 @@ Func _RM_Checkbox_Category_5_14()
 EndFunc   ;==>_RM_Checkbox_Category_5_14
 
 Func _RM_Checkbox_Category_5_15()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7072) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_15()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 15)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6852,6 +7148,7 @@ Func _RM_Checkbox_Category_5_15()
 EndFunc   ;==>_RM_Checkbox_Category_5_15
 
 Func _RM_Checkbox_Category_5_16()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7094) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_16()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 16)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6873,6 +7170,7 @@ Func _RM_Checkbox_Category_5_16()
 EndFunc   ;==>_RM_Checkbox_Category_5_16
 
 Func _RM_Checkbox_Category_5_17()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7116) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_17()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 17)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6894,6 +7192,7 @@ Func _RM_Checkbox_Category_5_17()
 EndFunc   ;==>_RM_Checkbox_Category_5_17
 
 Func _RM_Checkbox_Category_5_18()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7138) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_18()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 18)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6915,6 +7214,7 @@ Func _RM_Checkbox_Category_5_18()
 EndFunc   ;==>_RM_Checkbox_Category_5_18
 
 Func _RM_Checkbox_Category_5_19()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7160) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_19()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 19)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6936,6 +7236,7 @@ Func _RM_Checkbox_Category_5_19()
 EndFunc   ;==>_RM_Checkbox_Category_5_19
 
 Func _RM_Checkbox_Category_5_20()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7182) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_20()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 02)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6957,6 +7258,7 @@ Func _RM_Checkbox_Category_5_20()
 EndFunc   ;==>_RM_Checkbox_Category_5_20
 
 Func _RM_Checkbox_Category_5_21()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7204) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_21()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 21)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6978,6 +7280,7 @@ Func _RM_Checkbox_Category_5_21()
 EndFunc   ;==>_RM_Checkbox_Category_5_21
 
 Func _RM_Checkbox_Category_5_22()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7226) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_22()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 22)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -6999,6 +7302,7 @@ Func _RM_Checkbox_Category_5_22()
 EndFunc   ;==>_RM_Checkbox_Category_5_22
 
 Func _RM_Checkbox_Category_5_23()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7248) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_23()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 23)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7020,6 +7324,7 @@ Func _RM_Checkbox_Category_5_23()
 EndFunc   ;==>_RM_Checkbox_Category_5_23
 
 Func _RM_Checkbox_Category_5_24()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7270) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_24()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 24)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7041,6 +7346,7 @@ Func _RM_Checkbox_Category_5_24()
 EndFunc   ;==>_RM_Checkbox_Category_5_24
 
 Func _RM_Checkbox_Category_5_25()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7292) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_25()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 25)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7062,6 +7368,7 @@ Func _RM_Checkbox_Category_5_25()
 EndFunc   ;==>_RM_Checkbox_Category_5_25
 
 Func _RM_Checkbox_Category_5_26()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7314) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_26()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 26)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7083,6 +7390,7 @@ Func _RM_Checkbox_Category_5_26()
 EndFunc   ;==>_RM_Checkbox_Category_5_26
 
 Func _RM_Checkbox_Category_5_27()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7336) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_27()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 27)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7104,6 +7412,7 @@ Func _RM_Checkbox_Category_5_27()
 EndFunc   ;==>_RM_Checkbox_Category_5_27
 
 Func _RM_Checkbox_Category_5_28()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7358) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_28()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 28)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7125,6 +7434,7 @@ Func _RM_Checkbox_Category_5_28()
 EndFunc   ;==>_RM_Checkbox_Category_5_28
 
 Func _RM_Checkbox_Category_5_29()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7380) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_29()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 29)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7146,6 +7456,7 @@ Func _RM_Checkbox_Category_5_29()
 EndFunc   ;==>_RM_Checkbox_Category_5_29
 
 Func _RM_Checkbox_Category_5_30()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7402) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_5_30()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 30)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_3.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7167,6 +7478,7 @@ Func _RM_Checkbox_Category_5_30()
 EndFunc   ;==>_RM_Checkbox_Category_5_30
 
 Func _RM_Checkbox_Category_6_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7424) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_1()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 1)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7188,6 +7500,7 @@ Func _RM_Checkbox_Category_6_1()
 EndFunc   ;==>_RM_Checkbox_Category_6_1
 
 Func _RM_Checkbox_Category_6_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7446) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_2()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 2)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7209,6 +7522,7 @@ Func _RM_Checkbox_Category_6_2()
 EndFunc   ;==>_RM_Checkbox_Category_6_2
 
 Func _RM_Checkbox_Category_6_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7468) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_3()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 3)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7230,6 +7544,7 @@ Func _RM_Checkbox_Category_6_3()
 EndFunc   ;==>_RM_Checkbox_Category_6_3
 
 Func _RM_Checkbox_Category_6_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7490) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_4()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 4)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7251,6 +7566,7 @@ Func _RM_Checkbox_Category_6_4()
 EndFunc   ;==>_RM_Checkbox_Category_6_4
 
 Func _RM_Checkbox_Category_6_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7512) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_5()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 5)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7272,6 +7588,7 @@ Func _RM_Checkbox_Category_6_5()
 EndFunc   ;==>_RM_Checkbox_Category_6_5
 
 Func _RM_Checkbox_Category_6_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7534) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_6()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 6)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7293,6 +7610,7 @@ Func _RM_Checkbox_Category_6_6()
 EndFunc   ;==>_RM_Checkbox_Category_6_6
 
 Func _RM_Checkbox_Category_6_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7556) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_7()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 7)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7314,6 +7632,7 @@ Func _RM_Checkbox_Category_6_7()
 EndFunc   ;==>_RM_Checkbox_Category_6_7
 
 Func _RM_Checkbox_Category_6_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7578) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_8()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 8)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7335,6 +7654,7 @@ Func _RM_Checkbox_Category_6_8()
 EndFunc   ;==>_RM_Checkbox_Category_6_8
 
 Func _RM_Checkbox_Category_6_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7600) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_9()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 9)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7356,6 +7676,7 @@ Func _RM_Checkbox_Category_6_9()
 EndFunc   ;==>_RM_Checkbox_Category_6_9
 
 Func _RM_Checkbox_Category_6_10()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7622) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_10()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 10)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7377,6 +7698,7 @@ Func _RM_Checkbox_Category_6_10()
 EndFunc   ;==>_RM_Checkbox_Category_6_10
 
 Func _RM_Checkbox_Category_6_11()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7644) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_11()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 11)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7398,6 +7720,7 @@ Func _RM_Checkbox_Category_6_11()
 EndFunc   ;==>_RM_Checkbox_Category_6_11
 
 Func _RM_Checkbox_Category_6_12()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7666) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_12()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 12)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7419,6 +7742,7 @@ Func _RM_Checkbox_Category_6_12()
 EndFunc   ;==>_RM_Checkbox_Category_6_12
 
 Func _RM_Checkbox_Category_6_13()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7688) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_13()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 13)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7440,6 +7764,7 @@ Func _RM_Checkbox_Category_6_13()
 EndFunc   ;==>_RM_Checkbox_Category_6_13
 
 Func _RM_Checkbox_Category_6_14()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7710) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_14()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 14)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7461,6 +7786,7 @@ Func _RM_Checkbox_Category_6_14()
 EndFunc   ;==>_RM_Checkbox_Category_6_14
 
 Func _RM_Checkbox_Category_6_15()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7732) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_15()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 15)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7482,6 +7808,7 @@ Func _RM_Checkbox_Category_6_15()
 EndFunc   ;==>_RM_Checkbox_Category_6_15
 
 Func _RM_Checkbox_Category_6_16()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7754) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_16()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 16)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7503,6 +7830,7 @@ Func _RM_Checkbox_Category_6_16()
 EndFunc   ;==>_RM_Checkbox_Category_6_16
 
 Func _RM_Checkbox_Category_6_17()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7776) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_17()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 17)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7524,6 +7852,7 @@ Func _RM_Checkbox_Category_6_17()
 EndFunc   ;==>_RM_Checkbox_Category_6_17
 
 Func _RM_Checkbox_Category_6_18()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7798) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_18()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 18)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7545,6 +7874,7 @@ Func _RM_Checkbox_Category_6_18()
 EndFunc   ;==>_RM_Checkbox_Category_6_18
 
 Func _RM_Checkbox_Category_6_19()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7820) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_19()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 19)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7566,6 +7896,7 @@ Func _RM_Checkbox_Category_6_19()
 EndFunc   ;==>_RM_Checkbox_Category_6_19
 
 Func _RM_Checkbox_Category_6_20()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7842) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_20()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 20)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7587,6 +7918,7 @@ Func _RM_Checkbox_Category_6_20()
 EndFunc   ;==>_RM_Checkbox_Category_6_20
 
 Func _RM_Checkbox_Category_6_21()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7864) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_21()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 21)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7608,6 +7940,7 @@ Func _RM_Checkbox_Category_6_21()
 EndFunc   ;==>_RM_Checkbox_Category_6_21
 
 Func _RM_Checkbox_Category_6_22()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7886) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_22()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 22)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7629,6 +7962,7 @@ Func _RM_Checkbox_Category_6_22()
 EndFunc   ;==>_RM_Checkbox_Category_6_22
 
 Func _RM_Checkbox_Category_6_23()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7908) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_23()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 23)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7650,6 +7984,7 @@ Func _RM_Checkbox_Category_6_23()
 EndFunc   ;==>_RM_Checkbox_Category_6_23
 
 Func _RM_Checkbox_Category_6_24()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7930) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_24()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 24)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7671,6 +8006,7 @@ Func _RM_Checkbox_Category_6_24()
 EndFunc   ;==>_RM_Checkbox_Category_6_24
 
 Func _RM_Checkbox_Category_6_25()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7952) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_25()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 25)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7692,6 +8028,7 @@ Func _RM_Checkbox_Category_6_25()
 EndFunc   ;==>_RM_Checkbox_Category_6_25
 
 Func _RM_Checkbox_Category_6_26()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7974) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_26()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 26)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7713,6 +8050,7 @@ Func _RM_Checkbox_Category_6_26()
 EndFunc   ;==>_RM_Checkbox_Category_6_26
 
 Func _RM_Checkbox_Category_6_27()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (7996) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_27()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 27)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7734,6 +8072,7 @@ Func _RM_Checkbox_Category_6_27()
 EndFunc   ;==>_RM_Checkbox_Category_6_27
 
 Func _RM_Checkbox_Category_6_28()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8018) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_28()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 28)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7755,6 +8094,7 @@ Func _RM_Checkbox_Category_6_28()
 EndFunc   ;==>_RM_Checkbox_Category_6_28
 
 Func _RM_Checkbox_Category_6_29()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8040) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_29()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 29)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7776,6 +8116,7 @@ Func _RM_Checkbox_Category_6_29()
 EndFunc   ;==>_RM_Checkbox_Category_6_29
 
 Func _RM_Checkbox_Category_6_30()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8062) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Category_6_30()' & @CR) ;### Function Trace
 	For $Loop_Temp = 1 To 10
 		Local $Check_name = FileReadLine($Tags_TXT, 30)
 		Local $Read_Temp = IniRead($Install_DIR & "ApplicationList\Tags_Custom_4.ini", "Tags", "Tag_" & $Loop_Temp, "")
@@ -7799,77 +8140,92 @@ EndFunc   ;==>_RM_Checkbox_Category_6_30
 
 #Region RM_Resolution Scale
 Func _RM_Item_RS_1() ; Resolution Scale 40%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8086) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_1()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "40"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_1
 
 Func _RM_Item_RS_2() ; Resolution Scale 60%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8092) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_2()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "60"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_2
 
 Func _RM_Item_RS_3() ; Resolution Scale 80%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8098) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_3()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "80"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_3
 
 Func _RM_Item_RS_4() ; Resolution Scale 100%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8104) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_4()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "100"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_4
 
 Func _RM_Item_RS_5() ; Resolution Scale 120%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8110) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_5()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "120"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_5
 
 Func _RM_Item_RS_6() ; Resolution Scale 140%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8116) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_6()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "140"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_6
 
 Func _RM_Item_RS_7() ; Resolution Scale 160%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8122) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_7()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "160"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_7
 
 Func _RM_Item_RS_8() ; Resolution Scale 180%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8128) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_8()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "180"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_8
 
 Func _RM_Item_RS_9() ; Resolution Scale 200%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8134) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_9()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "200"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_9
 
 Func _RM_Item_RS_10() ; Resolution Scale 220%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8140) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_10()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "220"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_10
 
 Func _RM_Item_RS_11() ; Resolution Scale 240%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8146) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_11()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "240"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_11
 
 Func _RM_Item_RS_12() ; Resolution Scale 260%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8152) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_12()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "260"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_12
 
 Func _RM_Item_RS_13() ; Resolution Scale 280%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8158) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_13()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "280"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_13
 
 Func _RM_Item_RS_14() ; Resolution Scale 300%
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8164) :(' & @MIN & ':' & @SEC & ') _RM_Item_RS_14()' & @CR) ;### Function Trace
 	$ResolutionScale_TEMP = "300"
 	_RM_Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_RM_Item_RS_14
 #EndRegion RM_Resolution Scale
 
 Func _RM_Menu_Item_5_1() ; Add to Autostart List
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8171) :(' & @MIN & ':' & @SEC & ') _RM_Menu_Item_5_1()' & @CR) ;### Function Trace
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "1" Then $listview = $listview
 	If $ButtonTAB_State = "2" Then $listview = $listview_2
@@ -7914,6 +8270,7 @@ Func _RM_Menu_Item_5_1() ; Add to Autostart List
 EndFunc   ;==>_RM_Menu_Item_5_1
 
 Func _RM_Menu_Item_5_2() ; Remove to Autostart List
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8216) :(' & @MIN & ':' & @SEC & ') _RM_Menu_Item_5_2()' & @CR) ;### Function Trace
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "1" Then $listview = $listview
 	If $ButtonTAB_State = "2" Then $listview = $listview_2
@@ -7958,6 +8315,7 @@ Func _RM_Menu_Item_5_2() ; Remove to Autostart List
 EndFunc   ;==>_RM_Menu_Item_5_2
 
 Func _RM_Menu_Item_8() ; RM_UP
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8261) :(' & @MIN & ':' & @SEC & ') _RM_Menu_Item_8()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -8066,6 +8424,7 @@ Func _RM_Menu_Item_8() ; RM_UP
 EndFunc   ;==>_RM_Menu_Item_8
 
 Func _RM_Menu_Item_9() ; RM_DOWN
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8370) :(' & @MIN & ':' & @SEC & ') _RM_Menu_Item_9()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -8175,6 +8534,7 @@ Func _RM_Menu_Item_9() ; RM_DOWN
 EndFunc   ;==>_RM_Menu_Item_9
 
 Func _RM_Menu_Item11() ; Delete ListView item
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8480) :(' & @MIN & ':' & @SEC & ') _RM_Menu_Item11()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	Local $Combo_State = StringReplace($Combo, 'Steam Library ', '')
@@ -8274,7 +8634,7 @@ Func _RM_Menu_Item11() ; Delete ListView item
 			IniDelete($ApplicationList_TEMP, "Application_" & $Loop_Temp)
 		EndIf
 	Next
-	_Update_ListView_Icons()
+	;_Update_ListView_Icons()
 	_Read_from_INI_ADD_2_ListView()
 EndFunc   ;==>_RM_Menu_Item11
 #EndRegion Func RM_Menu
@@ -8290,24 +8650,29 @@ Func _ClickOnListView($hWndGUI, $MsgID, $wParam, $lParam)
 			If WinExists("Resolution Scale Menu") Then _Update_VRSettings_GUI_Items()
 			_Update_StatusBar()
 		EndIf
-
 		If $event = $NM_DBLCLK Then
 			_DB_Click_Listview()
 		EndIf
+		Local $HL_State = IniRead($Config_INI, "TEMP", "HL_State", "")
+		If $HL_State = "take_over_PO" Then
+			IniWrite($Config_INI, "TEMP", "HL_State", "")
+			_Read_from_INI_ADD_2_ListView()
+		EndIf
 	EndIf
-
 	$tagNMHDR = 0
 	$event = 0
 	$lParam = 0
 EndFunc   ;==>_ClickOnListView
 
 Func _DB_Click_Listview()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8609) :(' & @MIN & ':' & @SEC & ') _DB_Click_Listview()' & @CR) ;### Function Trace
 	Sleep(100)
 	_Start_ListView_Selected()
 	Sleep(100)
 EndFunc   ;==>_DB_Click_Listview
 
 Func _Change_Preview_Icon_ListView()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8616) :(' & @MIN & ':' & @SEC & ') _Change_Preview_Icon_ListView()' & @CR) ;### Function Trace
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "1" Then $listview_TEMP = $listview
 	If $ButtonTAB_State = "2" Then $listview_TEMP = $listview_2
@@ -8369,6 +8734,7 @@ Func _Change_Preview_Icon_ListView()
 EndFunc   ;==>_Change_Preview_Icon_ListView
 
 Func _Update_VRSettings_GUI_Items()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8678) :(' & @MIN & ':' & @SEC & ') _Update_VRSettings_GUI_Items()' & @CR) ;### Function Trace
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 
 	If $ButtonTAB_State = "1" Then
@@ -8412,13 +8778,38 @@ Func _Update_VRSettings_GUI_Items()
 	EndIf
 EndFunc   ;==>_Update_VRSettings_GUI_Items
 
+Func _Button_Open_in_Browser()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8723) :(' & @MIN & ':' & @SEC & ') _Button_Open_in_Browser()' & @CR) ;### Function Trace
+
+	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
+	If $ButtonTAB_State = "1" Then $listview = $listview
+	If $ButtonTAB_State = "2" Then $listview = $listview_2
+	If $ButtonTAB_State = "3" Then $listview = $listview_3
+	If $ButtonTAB_State = "4" Then $listview = $listview_4
+	If $ButtonTAB_State = "5" Then $listview = $listview_5
+	If $ButtonTAB_State = "6" Then $listview = $listview_6
+
+	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
+	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
+	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
+
+	Local $ListView_Item_Array = _GUICtrlListView_GetItemTextArray($listview, $ListView_Selected_Row_Index)
+	Local $Steam_app_Name = $ListView_Item_Array[3]
+	Local $Game_ID = $ListView_Item_Array[2]
+
+	Local $IE_Adresse = "https://steamdb.info/app/" & $Game_ID & "/graphs/"
+	_Button_Exit_HTML_GUI()
+	ShellExecute($IE_Adresse)
+EndFunc
+
 Func _Create_HTMLView_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8747) :(' & @MIN & ':' & @SEC & ') _Create_HTMLView_GUI()' & @CR) ;### Function Trace
 	Local $Button_Exit_HTML_GUI
 
 	Local Const $PG_WS_POPUP = 0x80000000
 	Local Const $PG_WS_DLGFRAME = 0x00400000
 
-	Local $regValue = "0x2AF8"
+	Local $regValue = "0x2AF9"
 	; IE11 edge mode: 11001 (0x2AF9)
 	; IE11: 11000 (0x2AF8)
 	; IE10: 10001 (0x2711)
@@ -8451,10 +8842,16 @@ Func _Create_HTMLView_GUI()
 	Local $Steam_app_Name = $ListView_Item_Array[3]
 	Local $Game_ID = $ListView_Item_Array[2]
 
-	Local $oIE = ObjCreate("Shell.Explorer.2")
+	;Local $oIE = ObjCreate("Shell.Explorer.2")
+	Local $oIE = _IECreateEmbedded()
 	If Not @error Then
 		Global $HTML_GUI = GUICreate($Steam_app_Name & " - " & "steam.app." & $Game_ID, 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
 		GUICtrlCreateObj($oIE, 0, 0, 979, 550)
+
+		Global $Button_Open_in_Browser = GUICtrlCreateButton("Open in default Web Browser", 5, 560, 220, 35)
+		GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+		GUICtrlSetOnEvent(-1, "_Button_Open_in_Browser")
+		GUICtrlSetTip(-1, "Opens the Page in the default Web Browser.")
 
 		Global $Button_Exit_HTML_GUI = GUICtrlCreateButton("Exit", 940, 560, 35, 35, $BS_BITMAP)
 		GUICtrlSetOnEvent(-1, "_Button_Exit_HTML_GUI")
@@ -8462,7 +8859,19 @@ Func _Create_HTMLView_GUI()
 		GUICtrlSetTip(-1, "Closes HTML GUI.")
 
 		Local $IE_Adresse = "https://steamdb.info/app/" & $Game_ID & "/graphs/"
-		$oIE.navigate($IE_Adresse)
+		Local $sHeader = "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0" & @CRLF & _
+							"Accept: image/gif" & @CRLF & _
+							"Accept: */*"
+
+		;$oIE.Navigate($IE_Adresse, Default, Default, "", $sHeader)
+		;Sleep(150)
+		;__IENavigate($oIE, $IE_Adresse, 1, 0, "", "", $sHeader)
+		;$oIE.Navigate($IE_Adresse, Default, Default, "", $sHeader)
+
+		;$oIE.navigate($IE_Adresse)
+
+		;_IELoadWait($oIE, 1000)
+		_IENavigate($oIE, $IE_Adresse, 1)
 
 		GUISetState()
 		$Game_ID = ""
@@ -8471,95 +8880,16 @@ Func _Create_HTMLView_GUI()
 	EndIf
 EndFunc   ;==>_Create_HTMLView_GUI
 
-Func _Create_HTMLGamePage_GUI_Backup()
-	Local Const $PG_WS_POPUP = 0x80000000
-	Local Const $PG_WS_DLGFRAME = 0x00400000
-
-	Local $regValue = "0x2AF8"
-	; IE11 edge mode: 11001 (0x2AF9)
-	; IE11: 11000 (0x2AF8)
-	; IE10: 10001 (0x2711)
-	; IE10: 10000 (0x02710)
-	; IE 9: 9999 (0x270F)
-	; IE 9: 9000 (0x2328)
-	; IE 8: 8888 (0x22B8)
-	; IE 8: 8000 (0x1F40)
-	; IE 7: 7000 (0x1B58)
-
-	RegWrite("HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION", _ProcessGetName(@AutoItPID), "REG_DWORD", $regValue)
-	RegWrite("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\MAIN\FeatureControl\FEATURE_BROWSER_EMULATION", _ProcessGetName(@AutoItPID), "REG_DWORD", $regValue)
-;~ RegWrite("HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION", @ScriptName, "REG_DWORD", $regValue)
-;~ RegWrite("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\MAIN\FeatureControl\FEATURE_BROWSER_EMULATION",@ScriptName, "REG_DWORD", $regValue)
-
-	Local $Button_Exit_HTML_GUI
-
-	Global $oIE = ObjCreate("Shell.Explorer.2")
-	If Not @error Then
-		;Global $HTML_HTMLGamePage_GUI = GUICreate("" & " - " & "steam.app." & "", 980, 600, (@DesktopWidth - 980) / 2, (@DesktopHeight - 600) / 2, BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_EX_CLIENTEDGE, $WS_EX_TOOLWINDOW))
-		Global $HTML_HTMLGamePage_GUI = GUICreate("Game Page Menu", @DesktopWidth, @DesktopHeight, 0, 0, BitOR($PG_WS_DLGFRAME, $PG_WS_POPUP))
-		GUISetBkColor("0x00BFFF")
-		GUICtrlCreateObj($oIE, 0, 0, @DesktopWidth, @DesktopHeight - 42)
-
-		Global $Button_Exit_HTML_GUI = GUICtrlCreateButton("Exit", @DesktopWidth - 40, @DesktopHeight - 40, 35, 35, $BS_BITMAP)
-		GUICtrlSetOnEvent(-1, "_Button_Exit_HTMLGamePage_GUI")
-		_GUICtrlButton_SetImage(-1, $gfx & "Close_small.bmp")
-		GUICtrlSetTip(-1, "Closes HTML GamePage GUI.")
-
-		Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
-		Local $IE_Adresse = "file:///" & $Install_DIR_Replaced & "WebPage/GamePage_Menu.html"
-		$oIE.navigate($IE_Adresse)
-
-		;_IENavigate($object, $IE_Adresse)
-
-		GUISetState()
-		Sleep(100)
-		GUISetState()
-		Sleep(100)
-
-	Else
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [_Create_HTMLView_GUI()]: " & "ObjCreate 'Shell.Explorer.2'" & " The requested action with this object has failed. <--- " & "[" & _Now() & "]")
-	EndIf
-
-
-
-
-	Local $locationurl_old = _IEPropertyGet($oIE, "uniqueid")
-
-	Do
-		;GUICtrlSetOnEvent($Button_Exit_HTML_GUI, "_Button_Exit_HTMLGamePage_GUI")
-		Sleep(100)
-
-		;If WinExists("Game Page Menu") Then
-
-		If _IsPressed("1B") Then
-			_Button_Exit_HTMLGamePage_GUI()
-		EndIf
-
-		GUICtrlSetOnEvent($Button_Exit_HTML_GUI, "_Button_Exit_HTMLGamePage_GUI")
-
-		Local $locationurl_new = _IEPropertyGet($oIE, "uniqueid")
-
-		If $locationurl_new <> "" Then
-			If $locationurl_new <> $locationurl_old Then
-				MsgBox(0, "", $locationurl_new, 3)
-				$locationurl_old = $locationurl_new
-			EndIf
-		EndIf
-		;_Get_Started_HTML_Game()
-
-		;EndIf
-
-	Until WinExists("Game Page Menu") = 0
-
-EndFunc   ;==>_Create_HTMLGamePage_GUI_Backup
 
 Func _Button_HTMLGamePage_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8826) :(' & @MIN & ':' & @SEC & ') _Button_HTMLGamePage_GUI()' & @CR) ;### Function Trace
 	GUIDelete($HLL_GUI_Handle)
 	GUIDelete($HLL_GUI)
 	_Create_HTMLGamePage_GUI()
 EndFunc
 
 Func _Create_HTMLGamePage_GUI() ; GamePageMode
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (8833) :(' & @MIN & ':' & @SEC & ') _Create_HTMLGamePage_GUI()' & @CR) ;### Function Trace
 	IniWrite($Config_INI, "TEMP", "GamePageMenu", "")
 
 	Global $locationurl_new
@@ -8772,6 +9102,7 @@ Func _Create_HTMLGamePage_GUI() ; GamePageMode
 EndFunc   ;==>_Create_HTMLGamePage_GUI
 
 Func _Evt_onClick()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9046) :(' & @MIN & ':' & @SEC & ') _Evt_onClick()' & @CR) ;### Function Trace
 	Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
 	Local $IE_Adresse_Back = "file:///" & $Install_DIR_Replaced & "WebPage/GamePage_Menu.html"
 	Local $o_Link = @COM_EventObj
@@ -8795,6 +9126,7 @@ Func _Evt_onClick()
 EndFunc   ;==>_Evt_onClick
 
 Func _HTML_GamePage_Start_Game()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9070) :(' & @MIN & ':' & @SEC & ') _HTML_GamePage_Start_Game()' & @CR) ;### Function Trace
 	$ApplicationList_TEMP = ""
 	Local $NR_ApplicationsCheck = ""
 	Local $Link_Check, $OculusApp_Path
@@ -8829,48 +9161,20 @@ Func _HTML_GamePage_Start_Game()
 	Next
 EndFunc   ;==>_HTML_GamePage_Start_Game
 
-Func _Get_Started_HTML_Game()
-
-	;Local $oIE = _IE_Example("basic")
-	If _IEPropertyGet($oIE, "uniqueid") Then
-		MsgBox($MB_SYSTEMMODAL, "AddressBar Status", "AddressBar Visible, turning it off" & @CRLF & @CRLF & _IEPropertyGet($oIE, "uniqueid"))
-		;_IEPropertySet($oIE, "addressbar", False)
-	Else
-		MsgBox($MB_SYSTEMMODAL, "AddressBar Status", "AddressBar Invisible, turning it on" & @CRLF & @CRLF & _IEPropertyGet($oIE, "uniqueid"))
-		;_IEPropertySet($oIE, "addressbar", True)
-	EndIf
-
-
-
-EndFunc   ;==>_Get_Started_HTML_Game
 
 Func _Button_Exit_HTML_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9107) :(' & @MIN & ':' & @SEC & ') _Button_Exit_HTML_GUI()' & @CR) ;### Function Trace
 	GUIDelete($HTML_GUI)
 EndFunc   ;==>_Button_Exit_HTML_GUI
 
 Func _Button_Exit_HTMLGamePage_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9112) :(' & @MIN & ':' & @SEC & ') _Button_Exit_HTMLGamePage_GUI()' & @CR) ;### Function Trace
 	GUIDelete($HTML_HTMLGamePage_GUI)
 EndFunc   ;==>_Button_Exit_HTMLGamePage_GUI
 
-Func _Show_HTML_GamePage_GUI_1()
-	Local $GamePage_URL = $Install_DIR & "WebPage\GamePage_ALL.html"
-	If $ButtonTAB_State = "1" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_ALL.html"
-	If $ButtonTAB_State = "2" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Non-Steam_Appl.html"
-	If $ButtonTAB_State = "3" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_1.html"
-	If $ButtonTAB_State = "4" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_2.html"
-	If $ButtonTAB_State = "5" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_3.html"
-	If $ButtonTAB_State = "6" Then $GamePage_URL = $Install_DIR & "WebPage\GamePage_Custom_4.html"
-
-	If FileExists($GamePage_URL) Then
-		ShellExecute($GamePage_URL)
-	Else
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "Game Page missing.", "Game Page does not exist." & @CRLF & _
-				"'" & $GamePage_URL & "'" & @CRLF & @CRLF & _
-				"Create a new Game Page first using the 'Create Game Page' Button.")
-	EndIf
-EndFunc   ;==>_Show_HTML_GamePage_GUI_1
 
 Func _Checkbox_all()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9118) :(' & @MIN & ':' & @SEC & ') _Checkbox_all()' & @CR) ;### Function Trace
 	Local $CheckBox = GUICtrlRead($Checkbox_CreatePage)
 	If $CheckBox = "" Then
 		GUICtrlSetData($Checkbox_CreatePage, "a")
@@ -8881,6 +9185,7 @@ Func _Checkbox_all()
 EndFunc   ;==>_Checkbox_all
 
 Func _Checkbox_CheckUncheck()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9129) :(' & @MIN & ':' & @SEC & ') _Checkbox_CheckUncheck()' & @CR) ;### Function Trace
 	Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
@@ -8924,6 +9229,7 @@ Func _Checkbox_CheckUncheck()
 EndFunc   ;==>_Checkbox_CheckUncheck
 
 Func _Button_Create_GamePage_selected()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9173) :(' & @MIN & ':' & @SEC & ') _Button_Create_GamePage_selected()' & @CR) ;### Function Trace
 	_GUICtrlStatusBar_SetText($Statusbar, "Creating Game Page..." & @TAB & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
@@ -9082,6 +9388,7 @@ Func _Button_Create_GamePage_selected()
 EndFunc   ;==>_Button_Create_GamePage_selected
 
 Func _Button_Create_SinglePage_selected()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9332) :(' & @MIN & ':' & @SEC & ') _Button_Create_SinglePage_selected()' & @CR) ;### Function Trace
 	_GUICtrlStatusBar_SetText($Statusbar, "Creating Single Page..." & @TAB & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	If $ButtonTAB_State = "" Then $ButtonTAB_State = "1"
@@ -9221,6 +9528,7 @@ Func _Button_Create_SinglePage_selected()
 EndFunc   ;==>_Button_Create_SinglePage_selected
 
 Func _Button_Add_to_Custom()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9472) :(' & @MIN & ':' & @SEC & ') _Button_Add_to_Custom()' & @CR) ;### Function Trace
 	Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	Local $Status_Combo_Add_to_Custom = GUICtrlRead($Combo_Add_to_Custom)
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
@@ -9302,12 +9610,14 @@ Func _Button_Add_to_Custom()
 EndFunc   ;==>_Button_Add_to_Custom
 
 Func _Button_HomeLoaderSettings()
-	If Not WinExists("HomeLoader - Settings") Then
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9554) :(' & @MIN & ':' & @SEC & ') _Button_HomeLoaderSettings()' & @CR) ;### Function Trace
+	If Not WinExists("HomeLoader - SteamVR Start Settings") Then
 		_Settings_GUI()
 	EndIf
 EndFunc   ;==>_Button_HomeLoaderSettings
 
 Func _Start_ListView_Selected()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9561) :(' & @MIN & ':' & @SEC & ') _Start_ListView_Selected()' & @CR) ;### Function Trace
 	$listview_TEMP = $listview
 	If $ButtonTAB_State = 1 Then $listview_TEMP = $listview
 	If $ButtonTAB_State = 2 Then $listview_TEMP = $listview_2
@@ -9374,6 +9684,7 @@ Func _Start_ListView_Selected()
 EndFunc   ;==>_Start_ListView_Selected
 
 Func _Combo_SteamLibrary()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9628) :(' & @MIN & ':' & @SEC & ') _Combo_SteamLibrary()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 	IniWrite($Config_INI, "Settings", "Steam_Library", $Combo)
@@ -9438,6 +9749,7 @@ Func _Combo_SteamLibrary()
 EndFunc   ;==>_Combo_SteamLibrary
 
 Func _Combo_ApplicationList()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9693) :(' & @MIN & ':' & @SEC & ') _Combo_ApplicationList()' & @CR) ;### Function Trace
 	Local $ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	Local $Status_Combo = GUICtrlRead($Combo_ApplicationList)
 	IniWrite($Config_INI, "Settings", "MainCategory", $Status_Combo)
@@ -9447,7 +9759,8 @@ EndFunc   ;==>_Combo_ApplicationList
 
 
 Func _ButtonTAB_Steam_Library()
-	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Non_Steam_Appl)
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9703) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Steam_Library()' & @CR) ;### Function Trace
+	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Steam_Library)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "1")
 	FileDelete($ApplicationList_INI)
 	_GUICtrlListView_DeleteAllItems($listview)
@@ -9470,6 +9783,7 @@ Func _ButtonTAB_Steam_Library()
 EndFunc   ;==>_ButtonTAB_Steam_Library
 
 Func _ButtonTAB_Non_Steam_Appl()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9727) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Non_Steam_Appl()' & @CR) ;### Function Trace
 	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Non_Steam_Appl)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "2")
 	_GUICtrlListView_DeleteAllItems($listview_2)
@@ -9492,6 +9806,7 @@ Func _ButtonTAB_Non_Steam_Appl()
 EndFunc   ;==>_ButtonTAB_Non_Steam_Appl
 
 Func _ButtonTAB_Custom_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9750) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Custom_1()' & @CR) ;### Function Trace
 	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Custom_1)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "3")
 	_GUICtrlListView_DeleteAllItems($listview_3)
@@ -9514,6 +9829,7 @@ Func _ButtonTAB_Custom_1()
 EndFunc   ;==>_ButtonTAB_Custom_1
 
 Func _ButtonTAB_Custom_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9773) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Custom_2()' & @CR) ;### Function Trace
 	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Custom_2)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "4")
 	_GUICtrlListView_DeleteAllItems($listview_4)
@@ -9536,6 +9852,7 @@ Func _ButtonTAB_Custom_2()
 EndFunc   ;==>_ButtonTAB_Custom_2
 
 Func _ButtonTAB_Custom_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9796) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Custom_3()' & @CR) ;### Function Trace
 	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Custom_3)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "5")
 	_GUICtrlListView_DeleteAllItems($listview_5)
@@ -9558,6 +9875,7 @@ Func _ButtonTAB_Custom_3()
 EndFunc   ;==>_ButtonTAB_Custom_3
 
 Func _ButtonTAB_Custom_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9819) :(' & @MIN & ':' & @SEC & ') _ButtonTAB_Custom_4()' & @CR) ;### Function Trace
 	$ButtonTAB_State = GUICtrlRead($ButtonTAB_Custom_4)
 	IniWrite($Config_INI, "Settings", "ButtonTAB_State", "6")
 	_GUICtrlListView_DeleteAllItems($listview_6)
@@ -9580,11 +9898,16 @@ Func _ButtonTAB_Custom_4()
 EndFunc   ;==>_ButtonTAB_Custom_4
 
 Func _Button_AddGame2Library()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9842) :(' & @MIN & ':' & @SEC & ') _Button_AddGame2Library()' & @CR) ;### Function Trace
 	_AddGame2Library_GUI()
 EndFunc   ;==>_Button_AddGame2Library
 
 
 Func _Button_ReScan_Steam_Library() ; Scan Button
+	Local $Timer = TimerInit()
+	IniWrite($Config_INI, "TEMP", "Scan_Duration", "Scanning...")
+
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (9848) :(' & @MIN & ':' & @SEC & ') _Button_ReScan_Steam_Library()' & @CR) ;### Function Trace
 	;MsgBox(0, "1 - _Button_ReScan_Steam_Library", "_Button_ReScan_Steam_Library")
 	$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
 	$DeleteHomeLoaderLibraryData = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
@@ -9602,7 +9925,22 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	$Create_SteamVR_Home_Panels = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
 
-	Local $Timer = TimerInit()
+	FileWriteLine($scan_log_FILE, "Start Scan:" & " - " & "[" & _Now() & "]")
+	FileWriteLine($scan_log_FILE, "$ButtonTAB_State" & " = " & $ButtonTAB_State)
+	FileWriteLine($scan_log_FILE, "$DeleteHomeLoaderLibraryData" & " = " & $DeleteHomeLoaderLibraryData)
+	FileWriteLine($scan_log_FILE, "$Request_Steamdb_info" & " = " & $Request_Steamdb_info)
+	FileWriteLine($scan_log_FILE, "$ScanOnlyVR" & " = " & $ScanOnlyVR)
+	FileWriteLine($scan_log_FILE, "$ScanVIVEApps" & " = " & $ScanVIVEApps)
+	FileWriteLine($scan_log_FILE, "$ScanOculusApps" & " = " & $ScanOculusApps)
+	FileWriteLine($scan_log_FILE, "$Sort_Alphabetical_order" & " = " & $Sort_Alphabetical_order)
+	FileWriteLine($scan_log_FILE, "$Use_Steam_Tags" & " = " & $Use_Steam_Tags)
+	FileWriteLine($scan_log_FILE, "$Allow_Multiple_Tag_Assignments" & " = " & $Allow_Multiple_Tag_Assignments)
+	FileWriteLine($scan_log_FILE, "$Add_Apps_Tags_to_categories" & " = " & $Add_Apps_Tags_to_categories)
+	FileWriteLine($scan_log_FILE, "$Create_HTML_GamePage" & " = " & $Create_HTML_GamePage)
+	FileWriteLine($scan_log_FILE, "$Add_PlayersOnline_to_Icons" & " = " & $Add_PlayersOnline_to_Icons)
+	FileWriteLine($scan_log_FILE, "$Add_SS_to_Icons" & " = " & $Add_SS_to_Icons)
+	FileWriteLine($scan_log_FILE, "$Add_SS_per_game" & " = " & $Add_SS_per_game)
+	FileWriteLine($scan_log_FILE, "$Create_SteamVR_Home_Panels" & " = " & $Create_SteamVR_Home_Panels)
 
 	If WinExists("HomeLoader - Library") Then _Loading_GUI()
 	If $ScanOnlyVR <> "true" Then
@@ -9611,7 +9949,12 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 		For $Loop_Library = 1 To $NR_Applications
 			Local $appid_Library_Array = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_Library, "appid", "")
-			_ArrayAdd($Array_Library, $appid_Library_Array)
+			$Array_Result = _ArrayAdd($Array_Library, $appid_Library_Array)
+			If @error Then
+				$ScriptLineNumber_Temp = @ScriptLineNumber
+				$AtError_Result = @error
+			EndIf
+			If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 		Next
 
 		_Scan_SteamLibrary_ALL()
@@ -9628,7 +9971,12 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 		For $Loop_Library = 1 To $NR_Applications
 			Local $appid_Library_Array = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_Library, "appid", "")
-			_ArrayAdd($Array_Library, $appid_Library_Array)
+			$Array_Result = _ArrayAdd($Array_Library, $appid_Library_Array)
+			If @error Then
+				$ScriptLineNumber_Temp = @ScriptLineNumber
+				$AtError_Result = @error
+			EndIf
+			If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 		Next
 
 		_Read_steamapps_vrmanifest()
@@ -9684,9 +10032,7 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 		If WinExists("HomeLoader - Library") Then
 			_GUICtrlStatusBar_SetText($Statusbar, "" & "Preparing SteamVR Home Environment, please wait." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 		EndIf
-		;If $HomeApp = "SteamVR Home" Then
 			_Button_Panel_Settings_Apply()
-		;Endif
 		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 85)
 	EndIf
 
@@ -9697,31 +10043,34 @@ Func _Button_ReScan_Steam_Library() ; Scan Button
 	EndIf
 	_Sync_Icons()
 
-	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 100)
-
-	Local $TimerDiff = TimerDiff($Timer)
-	Local $sec = Round(($TimerDiff / 1000), 2)
-
 	If $Autostart_VRUB = "true" Then
 		_Write_ALL_Categories_to_VRUB_PersistentStore_File()
 		_Copy_To_VRUB()
 	EndIf
 
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 100)
+
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+
+	IniWrite($Config_INI, "TEMP", "Scan_Duration", $TimerDiff_temp)
+
 	If WinExists("HomeLoader - Library") Then
 		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 100)
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Scan finished in " & $sec & " " & "seconds")
-		_GUICtrlStatusBar_SetText($Statusbar, "" & "Scan finished in " & $sec & " " & "seconds" & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Scan finished in " & $TimerDiff_temp & " " & "")
+		_GUICtrlStatusBar_SetText($Statusbar, "" & "Scan finished in " & $TimerDiff_temp & " " & "" & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
 		GUIDelete($GUI_Loading)
 		_Restart()
-		;GUIDelete($HLL_GUI_Handle)
-		;_Create_HLL_GUI()
 	EndIf
-
 EndFunc   ;==>_Button_ReScan_Steam_Library
 
 Func _Button_ReScan_Steam_Library_AutoUpdate()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10013) :(' & @MIN & ':' & @SEC & ') _Button_ReScan_Steam_Library_AutoUpdate()' & @CR) ;### Function Trace
 	;MsgBox(0, "2 - _Button_ReScan_Steam_Library_AutoUpdate", "_Button_ReScan_Steam_Library_AutoUpdate")
 	Local $Timer = TimerInit()
 	If $ScanOnlyVR <> "true" Then
@@ -9729,7 +10078,12 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 		Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 		For $Loop_Library = 1 To $NR_Applications
 			Local $appid_Library_Array = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_Library, "appid", "")
-			_ArrayAdd($Array_Library, $appid_Library_Array)
+			$Array_Result = _ArrayAdd($Array_Library, $appid_Library_Array)
+			If @error Then
+				$ScriptLineNumber_Temp = @ScriptLineNumber
+				$AtError_Result = @error
+			EndIf
+			If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 		Next
 
 		_Scan_SteamLibrary_ALL()
@@ -9743,7 +10097,12 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 		Local $NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 		For $Loop_Library = 1 To $NR_Applications
 			Local $appid_Library_Array = IniRead($ApplicationList_SteamLibrary_ALL_INI, "Application_" & $Loop_Library, "appid", "")
-			_ArrayAdd($Array_Library, $appid_Library_Array)
+			$Array_Result = _ArrayAdd($Array_Library, $appid_Library_Array)
+			If @error Then
+				$ScriptLineNumber_Temp = @ScriptLineNumber
+				$AtError_Result = @error
+			EndIf
+			If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 		Next
 
 		_Read_steamapps_vrmanifest()
@@ -9796,6 +10155,7 @@ Func _Button_ReScan_Steam_Library_AutoUpdate()
 EndFunc   ;==>_Button_ReScan_Steam_Library_AutoUpdate
 
 Func _Button_More_Scan_Options()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10098) :(' & @MIN & ':' & @SEC & ') _Button_More_Scan_Options()' & @CR) ;### Function Trace
 	If Not WinExists("Settings") Then
 		_HLL_Settings_GUI()
 	EndIf
@@ -9803,6 +10163,7 @@ EndFunc   ;==>_Button_More_Scan_Options
 
 
 Func _Scan_SteamLibrary_ALL()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10106) :(' & @MIN & ':' & @SEC & ') _Scan_SteamLibrary_ALL()' & @CR) ;### Function Trace
 	;Local $Combo = GUICtrlRead($Combo_SteamLibrary)
 	Local $Combo = "ALL"
 
@@ -9824,7 +10185,7 @@ Func _Scan_SteamLibrary_ALL()
 			;GUICtrlSetData($Anzeige_Fortschrittbalken_2, $NR_Library * 100 / $NR_temp3)
 		Next
 		$NR_Library_temp = ""
-		_GUICtrlListView_DeleteAllItems($listview)
+		;_GUICtrlListView_DeleteAllItems($listview)
 		Local $SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
 		If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini")
 
@@ -9841,7 +10202,7 @@ Func _Scan_SteamLibrary_ALL()
 	If $Combo <> "ALL" Then
 		If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
 		_Search_Files()
-		_GUICtrlListView_DeleteAllItems($listview)
+		;_GUICtrlListView_DeleteAllItems($listview)
 		$SteamLibrary_NR = StringReplace($Combo, 'Steam Library ', '')
 		If $DeleteHomeLoaderLibraryData = "true" Then FileDelete($ApplicationList_Folder & "ApplicationList_SteamLibrary_" & $SteamLibrary_NR & ".ini")
 
@@ -9858,6 +10219,7 @@ Func _Scan_SteamLibrary_ALL()
 EndFunc   ;==>_Scan_SteamLibrary_ALL
 
 Func _Sort_ApplicationList_ALL()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10162) :(' & @MIN & ':' & @SEC & ') _Sort_ApplicationList_ALL()' & @CR) ;### Function Trace
 	Global $Array_Sorted[1][6] = [["name", "appid", "right_now", "24h_peak", "all_time_peak", "resolutionScale"]]
 	Local $NR_Applications = IniRead($ApplicationList_INI, "ApplicationList", "NR_Applications", "")
 
@@ -9870,7 +10232,12 @@ Func _Sort_ApplicationList_ALL()
 		Local $resolutionScale = IniRead($ApplicationList_INI, "Application_" & $Loop_1, "resolutionScale", "")
 
 		Local $sFill = $name & "|" & $appid & "|" & $right_now & "|" & $24h_peak & "|" & $all_time_peak & "|" & $resolutionScale
-		_ArrayAdd($Array_Sorted, $sFill)
+		$Array_Result = _ArrayAdd($Array_Sorted, $sFill)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 	Next
 
 	_ArraySort($Array_Sorted, 0, 1, 0, 0)
@@ -9897,6 +10264,7 @@ Func _Sort_ApplicationList_ALL()
 EndFunc   ;==>_Sort_ApplicationList_ALL
 
 Func _ScanViveData()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10207) :(' & @MIN & ':' & @SEC & ') _ScanViveData()' & @CR) ;### Function Trace
 	Global $Viveport_Array_Sorted[1][6] = [["name", "NR", "url", "appid", "IconPath", "binary_path_windows"]]
 
 	Local $NR_LINES_TEMP = _FileCountLines($Steam_AppConfig_Json)
@@ -9923,12 +10291,24 @@ Func _ScanViveData()
 			Local $Value_AppVRmanifest_2 = StringTrimLeft($Value_AppVRmanifest_1, 35)
 
 			Local $StringSplit_Value = StringSplit($Value_AppVRmanifest_2, ",")
+			If @error Then
+				$Array_Result = $aArray
+				$ScriptLineNumber_Temp = @ScriptLineNumber
+				$AtError_Result = @error
+				_StringSplit_Error_Handler()
+			EndIf
 			Local $Application_NR_new = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "") + 1
 
 			Local $NR_TEMP = $Application_NR_new
 
 			For $i = 1 To $StringSplit_Value[0]
 				Local $StringSplit_Value_2 = StringSplit($StringSplit_Value[$i], ":")
+				If @error Then
+					$Array_Result = $aArray
+					$ScriptLineNumber_Temp = @ScriptLineNumber
+					$AtError_Result = @error
+					_StringSplit_Error_Handler()
+				EndIf
 				Local $StringSplit_Value_2_1 = StringReplace($StringSplit_Value_2[1], '"', '')
 				Local $StringSplit_Value_2_1_1 = StringReplace($StringSplit_Value_2_1, '[', '')
 				Local $StringSplit_Value_2_1_2 = StringReplace($StringSplit_Value_2_1_1, '{', '')
@@ -9943,7 +10323,7 @@ Func _ScanViveData()
 				If $StringSplit_Value_2_1_2 = "app_key" Then ; appid
 					Local $StringSplit_Value_2_2 = StringReplace($StringSplit_Value_2[2], '"', '')
 					Local $Application_appid_TEMP = $StringSplit_Value_2_2
-					Local $appid_TEMP = $StringSplit_Value_2_2
+					$appid_TEMP = $StringSplit_Value_2_2
 				EndIf
 
 				If $StringSplit_Value_2_1_2 = "strings" Then ; NAME
@@ -9996,7 +10376,14 @@ Func _ScanViveData()
 			Next
 
 			Local $sFill = $name_TEMP & "|" & $NR_TEMP & "|" & $url_TEMP & "|" & $appid_TEMP & "|" & $IconPath_TEMP & "|" & $binary_path_windows_TEMP
-			If $appid_TEMP <> "" Then _ArrayAdd($Viveport_Array_Sorted, $sFill)
+			If $appid_TEMP <> "" Then
+				$Array_Result = _ArrayAdd($Viveport_Array_Sorted, $sFill)
+				If @error Then
+					$ScriptLineNumber_Temp = @ScriptLineNumber
+					$AtError_Result = @error
+				EndIf
+				If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
+			EndIf
 			GUICtrlSetData($Anzeige_Fortschrittbalken, $Loop * 100 / $NR_LINES_TEMP)
 
 			If WinExists("HomeLoader - Library") Then
@@ -10042,10 +10429,47 @@ Func _ScanViveData()
 
 		IniWrite($ApplicationList_TEMP, "ApplicationList", "NR_Applications", $Application_NR_new)
 	Next
+
+	;$NR_Game = IniRead($ApplicationList_TEMP, "ApplicationList", "NR_Applications", "")
+
+	;For $Loop_1 = 1 To $NR_Game
+		;$appid_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $Loop_1, "appid", "")
+		;MsgBox(0, "$appid_TEMP", $appid_TEMP)
+
+		;If StringLeft($appid_TEMP, 9) = "vive.htc." Then
+			;Local $Bat_Filename = $Viveport_Bat_File_Folder & $appid_TEMP & ".bat"
+			;If Not FileExists($Bat_Filename) Then _Create_Viveport_Bat_Files()
+		;EndIf
+	;Next
+
 	GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 EndFunc   ;==>_ScanViveData
 
+Func _Create_Viveport_Bat_Files()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10389) :(' & @MIN & ':' & @SEC & ') _Create_Viveport_Bat_Files()' & @CR) ;### Function Trace
+	Local $Bat_Filename = $Viveport_Bat_File_Folder & $appid_TEMP & ".bat"
+
+	Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+	If $ScanOnlyVR = "true" Then $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamVRLibrary_ALL.ini"
+	If $ScanOnlyVR <> "true" Then $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+
+	Local $installdir = IniRead($ApplicationList_Temp_INI, "Application_" & $appid_TEMP, "binary_path_windows", "")
+	Local $Working_Dir = StringLeft($installdir, StringInStr($installdir, "\", 0, -1) - 1)
+
+	If Not FileExists($Bat_Filename) Then
+		Local $File_Content = '@echo off ' & @CRLF & _
+								'C:' & @CRLF & _
+								'chdir "' & $Working_Dir & '"' & @CRLF & _
+								'"' & $installdir & '"' & @CRLF & _
+								'@echo.' & @CRLF
+
+		FileWrite($Bat_Filename, $File_Content)
+	EndIf
+EndFunc
+
+
 Func _ScanOculusData()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10412) :(' & @MIN & ':' & @SEC & ') _ScanOculusData()' & @CR) ;### Function Trace
 	If FileExists($Revive_revive_vrmanifest_FilePath) Then
 		Global $OculusData_Array_Sorted[1][6] = [["name", "app_key", "arguments", "binary_path_windows", "image_path", "launch_type"]]
 
@@ -10057,9 +10481,19 @@ Func _ScanOculusData()
 			$ApplicationList_TEMP = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
 		EndIf
 
-		_FileReadToArray($Revive_revive_vrmanifest_FilePath, $Revive_revive_vrmanifest_Array)
+		$Array_Result = _FileReadToArray($Revive_revive_vrmanifest_FilePath, $Revive_revive_vrmanifest_Array)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 		Local $Loop_End_1 = $Revive_revive_vrmanifest_Array[0]
-		_FileReadToArray($Revive_support_vrmanifest_FilePath, $Revive_support_vrmanifest_Array)
+		$Array_Result = _FileReadToArray($Revive_support_vrmanifest_FilePath, $Revive_support_vrmanifest_Array)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 		Local $Loop_End_2 = $Revive_support_vrmanifest_Array[0]
 
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 33)
@@ -10129,7 +10563,12 @@ Func _ScanOculusData()
 						$app_Name_TEMP = StringReplace($app_Name_TEMP, '-', ' ')
 
 						Local $sFill = $app_Name_TEMP & "|" & $app_key_TEMP & "|" & $arguments_TEMP & "|" & $binary_path_windows_TEMP & "|" & $image_path_TEMP & "|" & $launch_type_TEMP
-						_ArrayAdd($OculusData_Array_Sorted, $sFill)
+						$Array_Result = _ArrayAdd($OculusData_Array_Sorted, $sFill)
+						If @error Then
+							$ScriptLineNumber_Temp = @ScriptLineNumber
+							$AtError_Result = @error
+						EndIf
+						If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 						;_ArrayDisplay($OculusData_Array_Sorted)
 
 						If WinExists("HomeLoader - Library") Then
@@ -10209,7 +10648,12 @@ Func _ScanOculusData()
 						$app_Name_TEMP = StringReplace($app_Name_TEMP, '-', ' ')
 
 						Local $sFill = $app_Name_TEMP & "|" & $app_key_TEMP & "|" & $arguments_TEMP & "|" & $binary_path_windows_TEMP & "|" & $image_path_TEMP & "|" & $launch_type_TEMP
-						_ArrayAdd($OculusData_Array_Sorted, $sFill)
+						$Array_Result = _ArrayAdd($OculusData_Array_Sorted, $sFill)
+						If @error Then
+							$ScriptLineNumber_Temp = @ScriptLineNumber
+							$AtError_Result = @error
+						EndIf
+						If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 						;_ArrayDisplay($OculusData_Array_Sorted)
 
 						If WinExists("HomeLoader - Library") Then
@@ -10282,6 +10726,7 @@ Func _ScanOculusData()
 EndFunc   ;==>_ScanOculusData
 
 Func _Add_SteamID_Tags_to_ApplicationList_Tags()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10669) :(' & @MIN & ':' & @SEC & ') _Add_SteamID_Tags_to_ApplicationList_Tags()' & @CR) ;### Function Trace
 	Local $iPosition_1 = StringInStr($DataResponse, 'store_tags</td>')
 	Local $iPosition_2 = StringInStr($DataResponse, '/a></li></ul></td>', 0, 1, $iPosition_1)
 	Local $iPosition_3 = $iPosition_2 - $iPosition_1
@@ -10296,7 +10741,7 @@ Func _Add_SteamID_Tags_to_ApplicationList_Tags()
 	_ArrayDisplay($Game_Tags)
 
 	Local $NR_Game_Tags = UBound($Game_Tags) - 1
-	MsgBox(0, $NR_Game_Tags, $NR_Game_Tags)
+	;MsgBox(0, $NR_Game_Tags, $NR_Game_Tags)
 
 	For $Loop_1 = 1 To $NR_Game_Tags
 		MsgBox(0, $Loop_1, $ApplicationList_Folder & "Tags\" & $Game_Tags[$Loop_1] & ".ini")
@@ -10328,6 +10773,7 @@ Func _Add_SteamID_Tags_to_ApplicationList_Tags()
 EndFunc   ;==>_Add_ApplicationList_To_Tags
 
 Func _Checkbox_Show_OnlyVR_Apps()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10716) :(' & @MIN & ':' & @SEC & ') _Checkbox_Show_OnlyVR_Apps()' & @CR) ;### Function Trace
 	If $ScanOnlyVR = "false" Then
 		Local $State_Checkbox = GUICtrlRead($Checkbox_ScanOnlyVR)
 		If $State_Checkbox = "" Then
@@ -10345,6 +10791,7 @@ Func _Checkbox_Show_OnlyVR_Apps()
 EndFunc   ;==>_Checkbox_Show_OnlyVR_Apps
 
 Func _Checkbox_Show_All_Apps()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10734) :(' & @MIN & ':' & @SEC & ') _Checkbox_Show_All_Apps()' & @CR) ;### Function Trace
 	If $ScanOnlyVR = "true" Then
 		Local $State_Checkbox = GUICtrlRead($Checkbox_ScanAll)
 		If $State_Checkbox = "" Then
@@ -10362,25 +10809,39 @@ Func _Checkbox_Show_All_Apps()
 EndFunc   ;==>_Checkbox_Show_All_Apps
 
 Func _Checkbox_ScanLibrary_OnStart()
-	If $Autostart_VRUB <> "true" Then
-		Local $CheckBox = GUICtrlRead($Checkbox_ScanLibrary_OnStart)
-		If $CheckBox = "" Then
-			GUICtrlSetData($Checkbox_ScanLibrary_OnStart, "a")
-			GUICtrlSetData($Checkbox_Settings_1, "a")
-			IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", "true")
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10752) :(' & @MIN & ':' & @SEC & ') _Checkbox_ScanLibrary_OnStart()' & @CR) ;### Function Trace
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+
+	If $HomeApp <> "" Then
+		If $Autostart_VRUB <> "true" Then
+			Local $CheckBox = GUICtrlRead($Checkbox_ScanLibrary_OnStart)
+			If $CheckBox = "" Then
+				GUICtrlSetData($Checkbox_ScanLibrary_OnStart, "a")
+				GUICtrlSetData($Checkbox_Settings_1, "a")
+				IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", "true")
+			Else
+				GUICtrlSetData($Checkbox_ScanLibrary_OnStart, "")
+				GUICtrlSetData($Checkbox_Settings_1, "")
+				IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", "false")
+			EndIf
+			$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 		Else
-			GUICtrlSetData($Checkbox_ScanLibrary_OnStart, "")
-			GUICtrlSetData($Checkbox_Settings_1, "")
-			IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", "false")
+			MsgBox($MB_ICONWARNING, "HomeLoader Overlay VRUB is activated", "Overlay is activated. The settings are overwritten with the settings made in the Overlay.")
 		EndIf
-		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
+		_Set_States()
 	Else
-		MsgBox($MB_ICONWARNING, "HomeLoader Overlay VRUB is activated", "Overlay is activated. The settings are overwritten with the settings made in the Overlay.")
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention", "SteamVR Home App needs to be selected" & @CRLF & _
+															"[for example 'SteamVR'] for this function to work." & @CRLF & @CRLF & _
+															"If it is enabled then it will Scan your Libraries in the background after SteamVR has been started." & @CRLF)
+		GUICtrlSetData($Checkbox_ScanLibrary_OnStart, "")
+		GUICtrlSetData($Checkbox_Settings_1, "")
+		IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", "false")
+		$ScanLibrary_OnStart_SettingValue = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
 	EndIf
-	_Set_States()
 EndFunc   ;==>_Checkbox_ScanLibrary_OnStart
 
 Func _Checkbox_Request_Steamdb_info()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10784) :(' & @MIN & ':' & @SEC & ') _Checkbox_Request_Steamdb_info()' & @CR) ;### Function Trace
 	If $Autostart_VRUB <> "true" Then
 		Local $CheckBox = GUICtrlRead($Checkbox_Request_Steamdb_info)
 		If $CheckBox = "" Then
@@ -10400,6 +10861,7 @@ Func _Checkbox_Request_Steamdb_info()
 EndFunc   ;==>_Checkbox_Request_Steamdb_info
 
 Func _Checkbox_Use_Steam_Tags()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10804) :(' & @MIN & ':' & @SEC & ') _Checkbox_Use_Steam_Tags()' & @CR) ;### Function Trace
 	If $Autostart_VRUB <> "true" Then
 		Local $CheckBox = GUICtrlRead($Checkbox_Use_Steam_Tags)
 		If $CheckBox = "" Then
@@ -10419,6 +10881,7 @@ Func _Checkbox_Use_Steam_Tags()
 EndFunc   ;==>_Checkbox_Use_Steam_Tags
 
 Func _RM_Checkbox_ScanViveData()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10824) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_ScanViveData()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_1_1, $GUI_CHECKED)
@@ -10434,6 +10897,7 @@ Func _RM_Checkbox_ScanViveData()
 EndFunc   ;==>_RM_Checkbox_ScanViveData
 
 Func _RM_Checkbox_ScanOculusData()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10840) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_ScanOculusData()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "ScanOculusApps", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_1_2, $GUI_CHECKED)
@@ -10449,6 +10913,7 @@ Func _RM_Checkbox_ScanOculusData()
 EndFunc   ;==>_RM_Checkbox_ScanOculusData
 
 Func _RM_Checkbox_Sort_Alphabetical_order()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10856) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Sort_Alphabetical_order()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Sort_Alphabetical_order", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_2, $GUI_CHECKED)
@@ -10464,6 +10929,7 @@ Func _RM_Checkbox_Sort_Alphabetical_order()
 EndFunc   ;==>_RM_Checkbox_Sort_Alphabetical_order
 
 Func _RM_Add_Apps_Tags_to_categories()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10872) :(' & @MIN & ':' & @SEC & ') _RM_Add_Apps_Tags_to_categories()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_3, $GUI_CHECKED)
@@ -10479,6 +10945,7 @@ Func _RM_Add_Apps_Tags_to_categories()
 EndFunc   ;==>_RM_Add_Apps_Tags_to_categories
 
 Func _RM_Checkbox_Allow_Multiple_Tag_Assignments()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10888) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Allow_Multiple_Tag_Assignments()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_4, $GUI_CHECKED)
@@ -10494,6 +10961,7 @@ Func _RM_Checkbox_Allow_Multiple_Tag_Assignments()
 EndFunc   ;==>_RM_Checkbox_Allow_Multiple_Tag_Assignments
 
 Func _RM_Checkbox_Add_PlayersOnline_to_Icons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10904) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Add_PlayersOnline_to_Icons()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_5, $GUI_CHECKED)
@@ -10509,6 +10977,7 @@ Func _RM_Checkbox_Add_PlayersOnline_to_Icons()
 EndFunc   ;==>_RM_Checkbox_Add_PlayersOnline_to_Icons
 
 Func _RM_Checkbox_Add_SS_to_Icons()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10920) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Add_SS_to_Icons()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_6, $GUI_CHECKED)
@@ -10524,6 +10993,7 @@ Func _RM_Checkbox_Add_SS_to_Icons()
 EndFunc   ;==>_RM_Checkbox_Add_SS_to_Icons
 
 Func _RM_Checkbox_Add_SS_per_game()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10936) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Add_SS_per_game()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_7, $GUI_CHECKED)
@@ -10539,6 +11009,7 @@ Func _RM_Checkbox_Add_SS_per_game()
 EndFunc   ;==>_RM_Checkbox_Add_SS_per_game
 
 Func _RM_Checkbox_Create_HTML_GamePage()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10952) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Create_HTML_GamePage()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_8, $GUI_CHECKED)
@@ -10554,6 +11025,7 @@ Func _RM_Checkbox_Create_HTML_GamePage()
 EndFunc   ;==>_RM_Checkbox_Create_HTML_GamePage
 
 Func _RM_Checkbox_Create_SteamVR_Home_Panels()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10968) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_Create_SteamVR_Home_Panels()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "Create_SteamVR_Home_Panels", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_9, $GUI_CHECKED)
@@ -10569,6 +11041,7 @@ Func _RM_Checkbox_Create_SteamVR_Home_Panels()
 EndFunc   ;==>_RM_Checkbox_DeleteHomeLoaderLibraryData
 
 Func _RM_Checkbox_DeleteHomeLoaderLibraryData()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (10984) :(' & @MIN & ':' & @SEC & ') _RM_Checkbox_DeleteHomeLoaderLibraryData()' & @CR) ;### Function Trace
 	Local $CheckBox = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
 	If $CheckBox <> "true" Then
 		GUICtrlSetState($RM_More_Scan_Options_Item_10, $GUI_CHECKED)
@@ -10584,23 +11057,27 @@ Func _RM_Checkbox_DeleteHomeLoaderLibraryData()
 EndFunc   ;==>_RM_Checkbox_DeleteHomeLoaderLibraryData
 
 Func _RM_Scan_Fetch_Steamdb_Tags()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11000) :(' & @MIN & ':' & @SEC & ') _RM_Scan_Fetch_Steamdb_Tags()' & @CR) ;### Function Trace
 	_RM_Delete_Category_Pages()
 	_Get_SteamGame_Tags()
 	;_Add_ApplicationList_To_Tags()
 EndFunc   ;==>_RM_Scan_Fetch_Steamdb_Tags
 
 Func _RM_Create_HTML_GamePages_All()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11007) :(' & @MIN & ':' & @SEC & ') _RM_Create_HTML_GamePages_All()' & @CR) ;### Function Trace
 	_Create_GamePages()
 	_Create_SinglePages()
 	_Create_Game_Tags_Page()
 EndFunc   ;==>_RM_Create_HTML_GamePages_All
 
 Func _RM_Create_HTML_GamePages_Selected()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11014) :(' & @MIN & ':' & @SEC & ') _RM_Create_HTML_GamePages_Selected()' & @CR) ;### Function Trace
 	_Button_Create_GamePage_selected()
 	_Button_Create_SinglePage_selected()
 EndFunc   ;==>_RM_Create_HTML_GamePages_Selected
 
 Func _RM_SteamVR_Home_Game_Panels_ALL()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11020) :(' & @MIN & ':' & @SEC & ') _RM_SteamVR_Home_Game_Panels_ALL()' & @CR) ;### Function Trace
 	_Button_Panel_Settings_Apply()
 
 	If WinExists("HomeLoader - Library") Then
@@ -10608,11 +11085,8 @@ Func _RM_SteamVR_Home_Game_Panels_ALL()
 	EndIf
 EndFunc   ;==>_RM_SteamVR_Home_Game_Panels_ALL
 
-;Func _RM_SteamVR_Home_Game_Panels_Selected()
-;	_Compile_SteamVR_Files()
-;EndFunc   ;==>_RM_SteamVR_Home_Game_Panels_Selected
-
 Func _RM_Delete_Category_Pages()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11029) :(' & @MIN & ':' & @SEC & ') _RM_Delete_Category_Pages()' & @CR) ;### Function Trace
 	If FileExists($ApplicationList_Custom_1_INI) Then FileDelete($ApplicationList_Custom_1_INI)
 	If FileExists($ApplicationList_Custom_2_INI) Then FileDelete($ApplicationList_Custom_2_INI)
 	If FileExists($ApplicationList_Custom_3_INI) Then FileDelete($ApplicationList_Custom_3_INI)
@@ -10623,6 +11097,7 @@ EndFunc   ;==>_RM_Delete_Category_Pages
 
 #Region Func Add to Library GUI
 Func _DROPDOWN_Library()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11040) :(' & @MIN & ':' & @SEC & ') _DROPDOWN_Library()' & @CR) ;### Function Trace
 	Local $DROPDOWN = GUICtrlRead($DROPDOWN_Library)
 	If $DROPDOWN <> "" Then
 		Local $Value_DROPDOWN_Library = $DROPDOWN
@@ -10631,6 +11106,7 @@ Func _DROPDOWN_Library()
 EndFunc   ;==>_DROPDOWN_Library
 
 Func _BUTTON_GamePath_Folder()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11049) :(' & @MIN & ':' & @SEC & ') _BUTTON_GamePath_Folder()' & @CR) ;### Function Trace
 	Local $FileSelect = FileOpenDialog("Choose File.", $Install_DIR, "All (*.*)", $FD_FILEMUSTEXIST)
 	If $FileSelect <> "" Then
 		Local $Value_GamePath_Folder = $FileSelect
@@ -10660,6 +11136,7 @@ Func _BUTTON_GamePath_Folder()
 EndFunc   ;==>_BUTTON_GamePath_Folder
 
 Func _BUTTON_Use_SteamID()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11079) :(' & @MIN & ':' & @SEC & ') _BUTTON_Use_SteamID()' & @CR) ;### Function Trace
 	Local $InputBox = InputBox("Enter Steam Game ID", " ", "", "", -1, 1)
 	If $InputBox <> "" Then
 		Local $Value_Use_SteamID = $InputBox
@@ -10683,6 +11160,7 @@ Func _BUTTON_Use_SteamID()
 EndFunc   ;==>_BUTTON_Use_SteamID
 
 Func _Input_Name()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11103) :(' & @MIN & ':' & @SEC & ') _Input_Name()' & @CR) ;### Function Trace
 	Local $Input_Input_Name = GUICtrlRead($Input_Name)
 	If $Input_Input_Name <> "" Then
 		Local $Value_Input_Name = $Input_Input_Name
@@ -10691,6 +11169,7 @@ Func _Input_Name()
 EndFunc   ;==>_Input_Name
 
 Func _BUTTON_IconPath_Folder()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11112) :(' & @MIN & ':' & @SEC & ') _BUTTON_IconPath_Folder()' & @CR) ;### Function Trace
 	Local $FileSelect = FileOpenDialog("Choose Icon File.", $Icons, "All (*.*)", $FD_FILEMUSTEXIST)
 	If $FileSelect <> "" Then
 		Local $Value_IconPath_Folder = $FileSelect
@@ -10705,6 +11184,7 @@ Func _BUTTON_IconPath_Folder()
 EndFunc   ;==>_BUTTON_IconPath_Folder
 
 Func _Button_SAVE_APP()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11127) :(' & @MIN & ':' & @SEC & ') _Button_SAVE_APP()' & @CR) ;### Function Trace
 	Local $Value_DROPDOWN_Library = IniRead($Config_INI, "TEMP", "Value_DROPDOWN_Library", "")
 	Local $Value_GamePath_Folder = IniRead($Config_INI, "TEMP", "Value_GamePath_Folder", "")
 	Local $Value_Use_SteamID = IniRead($Config_INI, "TEMP", "Value_Use_SteamID", "")
@@ -10752,6 +11232,7 @@ Func _Button_SAVE_APP()
 EndFunc   ;==>_Button_SAVE_APP
 
 Func _Button_Exit_AddGame2Library_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11175) :(' & @MIN & ':' & @SEC & ') _Button_Exit_AddGame2Library_GUI()' & @CR) ;### Function Trace
 	IniWrite($Config_INI, "TEMP", "Value_DROPDOWN_Library", "")
 	IniWrite($Config_INI, "TEMP", "Value_GamePath_Folder", "")
 	IniWrite($Config_INI, "TEMP", "Value_Use_SteamID", "")
@@ -10764,6 +11245,7 @@ EndFunc   ;==>_Button_Exit_AddGame2Library_GUI
 #Region Func Settings GUI
 
 Func _Update_Objects_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11188) :(' & @MIN & ':' & @SEC & ') _Update_Objects_Settings_GUI()' & @CR) ;### Function Trace
 	Local $Value, $Value_Read, $Device_Name
 	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
 
@@ -10778,7 +11260,12 @@ Func _Update_Objects_Settings_GUI()
 
 	$Value_Read = IniRead($Config_INI, "Settings", "Audio_Playback_Device", "")
 	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SSD_SetSoundDevice\", "*.lnk", 1)
-	;_ArrayDisplay($Value_Array)
+	$Array_Result = $Value_Array
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 
 	If IsArray($Value_Array) Then
 		$Value = ""
@@ -10828,6 +11315,7 @@ Func _Update_Objects_Settings_GUI()
 EndFunc   ;==>_Update_Objects()
 
 Func _Button_Exit_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11258) :(' & @MIN & ':' & @SEC & ') _Button_Exit_Settings_GUI()' & @CR) ;### Function Trace
 	GUIDelete($HLL_Settings_GUI)
 	$Install_Folder_Steam_1 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_1", "")
 	$Install_Folder_Steam_2 = IniRead($Config_INI, "Folders", "Install_Folder_Steam_2", "")
@@ -10837,6 +11325,7 @@ Func _Button_Exit_Settings_GUI()
 EndFunc   ;==>_Button_Exit_Settings_GUI
 
 Func _Button_Open_SSD_SetSoundDevice()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11268) :(' & @MIN & ':' & @SEC & ') _Button_Open_SSD_SetSoundDevice()' & @CR) ;### Function Trace
 	Local $SSD_Path = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.exe"
 	If FileExists($SSD_Path) Then
 		ShellExecuteWait($SSD_Path)
@@ -10848,36 +11337,48 @@ EndFunc
 
 
 Func _Checkbox_SSD_SetSoundDevice_1()
-	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
-	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
-	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11280) :(' & @MIN & ':' & @SEC & ') _Checkbox_SSD_SetSoundDevice_1()' & @CR) ;### Function Trace
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
 
-	If $NR_of_Playback_Devices = "" And $NR_of_Recording_Devices = "" Then
-		MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the audio devices that you want to use.")
-		GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
-		IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
-	Else
-		If Not FileExists($SSD_INI) Then
+	If $HomeApp <> "" Then
+		Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
+		Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
+		Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
+
+		If $NR_of_Playback_Devices = "" And $NR_of_Recording_Devices = "" Then
 			MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the audio devices that you want to use.")
 			GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
 			IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
 		Else
-			Local $CheckBox = GUICtrlRead($Checkbox_SSD_SetSoundDevice_1)
-			If $CheckBox = "" Then
-				GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "a")
-				IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "true")
-			Else
+			If Not FileExists($SSD_INI) Then
+				MsgBox($MB_OK + $MB_ICONINFORMATION, "SSD - SetSoundDevice", "Open 'SSD - Set Sound Device' first and create shortcuts for the audio devices that you want to use.")
 				GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
 				IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
+			Else
+				Local $CheckBox = GUICtrlRead($Checkbox_SSD_SetSoundDevice_1)
+				If $CheckBox = "" Then
+					GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "a")
+					IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "true")
+				Else
+					GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
+					IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
+				EndIf
 			EndIf
 		EndIf
 
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention", "SteamVR Home App needs to be selected" & @CRLF & _
+															"[for example 'SteamVR'] for this function to work." & @CRLF & @CRLF & _
+															"If it is enabled then it will set the selected Sound Devices after SteamVR has been started." & @CRLF)
+		GUICtrlSetData($Checkbox_SSD_SetSoundDevice_1, "")
+		IniWrite($Config_INI, "Settings", "SSD_SetSoundDevice", "false")
 	EndIf
 EndFunc
 
 
 
 Func _Combo_Playback_Device()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11321) :(' & @MIN & ':' & @SEC & ') _Combo_Playback_Device()' & @CR) ;### Function Trace
 	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
 	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
 	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
@@ -10895,6 +11396,7 @@ Func _Combo_Playback_Device()
 EndFunc
 
 Func _Combo_Recording_Device()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11339) :(' & @MIN & ':' & @SEC & ') _Combo_Recording_Device()' & @CR) ;### Function Trace
 	Local $SSD_INI = $Install_DIR & "Apps\SSD_SetSoundDevice\SSD.ini"
 	Local $NR_of_Playback_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Playback_Devices", "")
 	Local $NR_of_Recording_Devices = IniRead($SSD_INI, "HomeLoader", "NR_of_Recording_Devices", "")
@@ -10913,6 +11415,7 @@ EndFunc
 
 
 Func _Button_Set_Playback_Device()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11358) :(' & @MIN & ':' & @SEC & ') _Button_Set_Playback_Device()' & @CR) ;### Function Trace
 	Local $Sound_Device_Name = IniRead($Config_INI, "Settings", "Audio_Playback_Device", "")
 	Local $Sound_Device_Temp = $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Sound_Device_Name & ".lnk"
 
@@ -10937,6 +11440,7 @@ Func _Button_Set_Playback_Device()
 EndFunc
 
 Func _Button_Set_Recording_Device()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11383) :(' & @MIN & ':' & @SEC & ') _Button_Set_Recording_Device()' & @CR) ;### Function Trace
 	Local $Sound_Device_Name = IniRead($Config_INI, "Settings", "Audio_Recording_Device", "")
 	Local $Sound_Device_Temp = $Install_DIR & "Apps\SSD_SetSoundDevice\" & $Sound_Device_Name & ".lnk"
 
@@ -10960,15 +11464,44 @@ Func _Button_Set_Recording_Device()
 	EndIf
 EndFunc
 
+
+
+Func _Checkbox_Update_Check_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11410) :(' & @MIN & ':' & @SEC & ') _Checkbox_Update_Check_1()' & @CR) ;### Function Trace
+	Local $CheckBox = GUICtrlRead($Checkbox_Update_Check_1)
+	If $CheckBox = "" Then
+		GUICtrlSetData($Checkbox_Update_Check_1, "a")
+		IniWrite($Config_INI, "Settings", "Update_Check", "true")
+	Else
+		GUICtrlSetData($Checkbox_Update_Check_1, "")
+		IniWrite($Config_INI, "Settings", "Update_Check", "false")
+	EndIf
+	$Update_Check = IniRead($Config_INI, "Settings", "Update_Check", "")
+
+	;_Set_States()
+EndFunc
+
+Func _Button_Update_Check_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11425) :(' & @MIN & ':' & @SEC & ') _Button_Update_Check_1()' & @CR) ;### Function Trace
+	If FileExists($Install_DIR & "Update.exe") Then
+		ShellExecute($Install_DIR & "Update.exe")
+	Else
+		ShellExecute($Install_DIR & "Update.au3")
+	EndIf
+EndFunc
+
+
 #EndRegion Func Settings GUI
 
 #Region Func SS_Settings GUI
 Func _Slider_0()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11438) :(' & @MIN & ':' & @SEC & ') _Slider_0()' & @CR) ;### Function Trace
 	Local $Value_Slider = GUICtrlRead($Slider_0)
 	GUICtrlSetData($Input_ResolutionScale, $Value_Slider)
 EndFunc   ;==>_Slider_0
 
 Func _UpDown_ResolutionScale()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11444) :(' & @MIN & ':' & @SEC & ') _UpDown_ResolutionScale()' & @CR) ;### Function Trace
 	Local $Value_UpDown = GUICtrlRead($Input_ResolutionScale)
 	If $Value_UpDown < 20 Then $Value_UpDown = "20"
 	If $Value_UpDown > 500 Then $Value_UpDown = "500"
@@ -10977,6 +11510,7 @@ Func _UpDown_ResolutionScale()
 EndFunc   ;==>_UpDown_ResolutionScale
 
 Func _SS_Checkbox_motionSmoothingOverride()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11453) :(' & @MIN & ':' & @SEC & ') _SS_Checkbox_motionSmoothingOverride()' & @CR) ;### Function Trace
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
 	$ListView_Selected_Row_Index = Int($ListView_Selected_Row_Index)
 	Local $ListView_Selected_Row_Nr = $ListView_Selected_Row_Index + 1
@@ -11013,6 +11547,7 @@ Func _SS_Checkbox_motionSmoothingOverride()
 EndFunc
 
 Func _Button_Save_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11490) :(' & @MIN & ':' & @SEC & ') _Button_Save_Settings_GUI()' & @CR) ;### Function Trace
 	$Input_ResolutionScale = GUICtrlRead($Input_ResolutionScale)
 
 	Local $ListView_Selected_Row_Index = _GUICtrlListView_GetSelectedIndices($listview)
@@ -11034,12 +11569,14 @@ Func _Button_Save_Settings_GUI()
 EndFunc   ;==>_Button_Save_Settings_GUI
 
 Func _Button_Exit_SS_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11512) :(' & @MIN & ':' & @SEC & ') _Button_Exit_SS_Settings_GUI()' & @CR) ;### Function Trace
 	GUIDelete($SS_Settings_GUI)
 EndFunc   ;==>_Button_Exit_SS_Settings_GUI
 #EndRegion Func SS_Settings GUI
 
 #Region Func Home Loader
 Func _Restart()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11519) :(' & @MIN & ':' & @SEC & ') _Restart()' & @CR) ;### Function Trace
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
 	;_Create_HLL_GUI()
 	If FileExists($Install_DIR & "HomeLoader.exe") Then
@@ -11047,36 +11584,46 @@ Func _Restart()
 	Else
 		ShellExecute($Install_DIR & "HomeLoader.au3", "", $Install_DIR)
 	EndIf
-	Sleep(500)
+	Sleep(750)
 	GUIDelete($HLL_GUI_Handle)
 	GUIDelete($HLL_GUI)
 	Exit
 EndFunc   ;==>_Restart
 
 Func _Exit_Check()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11534) :(' & @MIN & ':' & @SEC & ') _Exit_Check()' & @CR) ;### Function Trace
 	If Not ProcessExists("vrmonitor.exe") Then
 		FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Exit Check: SteamVR is not running --> Exit [HomeLoaderLibrary]" & " '_Exit_Check()'")
+		Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+		If FileExists($Check_File) Then FileDelete($Check_File)
 		Exit
 	EndIf
 EndFunc   ;==>_Exit_Check
 
 Func _Exit_Check_VRUB()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11544) :(' & @MIN & ':' & @SEC & ') _Exit_Check_VRUB()' & @CR) ;### Function Trace
 	If Not ProcessExists("VRUtilityBelt.exe") Then
 		FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Exit Check: VRUB is not running --> Exit [HomeLoaderLibrary]" & " '_Exit_Check()'")
+		Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+		If FileExists($Check_File) Then FileDelete($Check_File)
 		Exit
 	EndIf
 	_Exit_Check()
 EndFunc   ;==>_Exit_Check
 
 Func _Exit()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11555) :(' & @MIN & ':' & @SEC & ') _Exit()' & @CR) ;### Function Trace
 	If FileExists($ApplicationList_INI) Then FileDelete($ApplicationList_INI)
 	GUIDelete($HLL_GUI)
+	Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+	If FileExists($Check_File) Then FileDelete($Check_File)
 	Exit
 EndFunc   ;==>_Beenden
 #EndRegion Func Home Loader
 
 #Region Func OVERLAY
 Func _Overlay_ReScan_Steam_Library()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11566) :(' & @MIN & ':' & @SEC & ') _Overlay_ReScan_Steam_Library()' & @CR) ;### Function Trace
 	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
 	Local $NR_temp4
 	Local $Combo = "ALL"
@@ -11111,6 +11658,7 @@ Func _Overlay_ReScan_Steam_Library()
 EndFunc   ;==>_Overlay_ReScan_Steam_Library
 
 Func _Overlay_Search_Files()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11601) :(' & @MIN & ':' & @SEC & ') _Overlay_Search_Files()' & @CR) ;### Function Trace
 	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
 	Local $Combo = "ALL"
 	If $Combo = "ALL" Then Local $s_LocalFolder = $Install_Folder_Steam_1 & "SteamApps\"
@@ -11123,27 +11671,36 @@ Func _Overlay_Search_Files()
 		If $NR_Library_temp = 5 Then $s_LocalFolder = $Install_Folder_Steam_5 & "SteamApps\"
 
 		Local $FileList = _FileListToArray($s_LocalFolder, "*.acf", 1)
+		$Array_Result = $FileList
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 		Global $Application_NR
 		If $NR_Library_temp = 1 Then $Application_NR = 1
 
-		If $FileList <> "" Then
-			For $NR_temp2 = 1 To $FileList[0]
-				Global $FileList_NR = $FileList[0]
-				Global $File_Name = $FileList[$NR_temp2]
-				Global $File_Path = $s_LocalFolder & $File_Name
-				If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
-					_Overlay_ApplicationList_Update()
-					$Application_NR = $Application_NR + 1
-				EndIf
-				$File_Path = ""
-			Next
-			Sleep(500)
+		If IsArray($FileList) Then
+			If $FileList <> "" Then
+				For $NR_temp2 = 1 To $FileList[0]
+					Global $FileList_NR = $FileList[0]
+					Global $File_Name = $FileList[$NR_temp2]
+					Global $File_Path = $s_LocalFolder & $File_Name
+					If StringLeft(FileRead($File_Path), 3) <> "0x0" Then
+						_Overlay_ApplicationList_Update()
+						$Application_NR = $Application_NR + 1
+					EndIf
+					$File_Path = ""
+				Next
+				Sleep(500)
+			EndIf
 		EndIf
 		$FileList = ""
 	EndIf
 EndFunc   ;==>_Overlay_Search_Files
 
 Func _Overlay_ApplicationList_Update()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11641) :(' & @MIN & ':' & @SEC & ') _Overlay_ApplicationList_Update()' & @CR) ;### Function Trace
 	$ApplicationList_INI = $ApplicationList_SteamLibrary_ALL_INI
 	Global $File = $File_Path
 	Global $Wert_Zeile = ""
@@ -11274,6 +11831,7 @@ Func _Overlay_ApplicationList_Update()
 EndFunc   ;==>_Overlay_ApplicationList_Update
 
 Func _Copy_To_VRUB()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11772) :(' & @MIN & ':' & @SEC & ') _Copy_To_VRUB()' & @CR) ;### Function Trace
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start updating VRUB Overlay.")
 	Local $VRUB_Overlay_Folder = $VRUB_Folder & "addons\custom\HomeLoader\overlays\HomeLoader\"
 	;Local $File_1 = $Install_DIR & "WebPage\GamePage_ALL.html"
@@ -11308,12 +11866,19 @@ EndFunc
 
 #Region Func VR ToolBox
 Func _Create_VRToolBox_StartPage()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11807) :(' & @MIN & ':' & @SEC & ') _Create_VRToolBox_StartPage()' & @CR) ;### Function Trace
 	Local $Array_StartPageTemplate_Value
 
 	Local $StartPage_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
 	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
 	Local $StartPageTemplate = $Install_DIR & "WebPage\VRToolBox.html"
-	_FileReadToArray($StartPageTemplate, $Array_StartPageTemplate_Value, $FRTA_COUNT)
+	$Array_Result = _FileReadToArray($StartPageTemplate, $Array_StartPageTemplate_Value, $FRTA_COUNT)
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
+
 
 	If FileExists($StartPage_path) Then FileDelete($StartPage_path)
 
@@ -11330,16 +11895,24 @@ Func _Create_VRToolBox_StartPage()
 
 	Local $LocalFolder = $Install_DIR & "Apps\VRToolBox\"
 	Local $FolderList = _FileListToArray($LocalFolder, "*", $FLTA_FOLDERS)
+	$Array_Result = $FolderList
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 
-	For $Loop_Temp = 1 To $FolderList[0]
-		Local $Addon_Path = $LocalFolder & $FolderList[$Loop_Temp] & "\index.html"
-		If $FolderList[$Loop_Temp] = "HomeLoader" Then $Addon_Path = $LocalFolder & $FolderList[$Loop_Temp] & "\HomeLoader_StartPage.html"
-		Local $Addon_Path_Replaced = StringReplace($Addon_Path, '\', '/')
-		Local $IconPath_TEMP = $LocalFolder & $FolderList[$Loop_Temp] & "\icon.png"
-		If FileExists($Addon_Path) Then
-			FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Addon_Path_Replaced & '">         <img class="icon" src="' & $IconPath_TEMP & '" width="200" />                    <span class="tooltiptext">' & $FolderList[$Loop_Temp] & '</span></a></div>')
-		EndIf
-	Next
+	If IsArray($FolderList) Then
+		For $Loop_Temp = 1 To $FolderList[0]
+			Local $Addon_Path = $LocalFolder & $FolderList[$Loop_Temp] & "\index.html"
+			If $FolderList[$Loop_Temp] = "HomeLoader" Then $Addon_Path = $LocalFolder & $FolderList[$Loop_Temp] & "\HomeLoader_StartPage.html"
+			Local $Addon_Path_Replaced = StringReplace($Addon_Path, '\', '/')
+			Local $IconPath_TEMP = $LocalFolder & $FolderList[$Loop_Temp] & "\icon.png"
+			If FileExists($Addon_Path) Then
+				FileWriteLine($StartPage_path, '    <div class="tooltip"><a href="file:///' & $Addon_Path_Replaced & '">         <img class="icon" src="' & $IconPath_TEMP & '" width="200" />                    <span class="tooltiptext">' & $FolderList[$Loop_Temp] & '</span></a></div>')
+			EndIf
+		Next
+	EndIf
 
 	FileWriteLine($StartPage_path, '    <br>')
 	FileWriteLine($StartPage_path, '  </div>')
@@ -11348,6 +11921,7 @@ Func _Create_VRToolBox_StartPage()
 EndFunc   ;==>_Create_VRToolBox_StartPage
 
 Func _Create_VRToolBox_HL_StartPage()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11860) :(' & @MIN & ':' & @SEC & ') _Create_VRToolBox_HL_StartPage()' & @CR) ;### Function Trace
 	Local $FileRead_HL_StartPage_Template = FileRead($Install_DIR & "WebPage\Templates\HomeLoader_StartPage.html")
 	Local $FileRead_HL_StartPage = $Install_DIR & "Apps\VRToolBox\HomeLoader\HomeLoader_StartPage.html"
 	Local $HL_StartPage_Install_Dir_Replace = "file:///" & StringReplace($Install_DIR, '\', '/')
@@ -11359,6 +11933,7 @@ Func _Create_VRToolBox_HL_StartPage()
 EndFunc   ;==>_Create_VRToolBox_HL_StartPage
 
 Func _Create_VRToolBox_VideoPage()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11872) :(' & @MIN & ':' & @SEC & ') _Create_VRToolBox_VideoPage()' & @CR) ;### Function Trace
 	Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
 	Local $VIDEOID_ini = $Install_DIR & "WebPage\VideoPage\VIDEOID.ini"
 	Local $VideoPage_path = $Install_DIR & "WebPage\VideoPage\VideoPage.html"
@@ -11382,6 +11957,7 @@ Func _Create_VRToolBox_VideoPage()
 EndFunc   ;==>_Create_VRToolBox_VideoPage
 
 Func _Copy_2_VRToolBox()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11896) :(' & @MIN & ':' & @SEC & ') _Copy_2_VRToolBox()' & @CR) ;### Function Trace
 	Local $VRToolBox_path = $VRToolBox_Steam_Folder & "utils\StartPage.html"
 	Local $VRToolBox_image_path = $VRToolBox_Steam_Folder & "utils\images\"
 	Local $VRToolBox_StartPage_Template_path = $Install_DIR & "WebPage\VRToolBox_StartPage.html"
@@ -11411,6 +11987,7 @@ EndFunc   ;==>_Copy_2_VRToolBox
 
 #Region Func Create HTML Pages / Game Pages
 Func _Create_GamePage_Menu_Page()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11926) :(' & @MIN & ':' & @SEC & ') _Create_GamePage_Menu_Page()' & @CR) ;### Function Trace
 	Local $FileRead_HL_GamePage_Menu_Page_Template = FileRead($Install_DIR & "WebPage\Templates\GamePage_Menu.html")
 	Local $FileRead_HL_GamePage_Menu_Page = $Install_DIR & "WebPage\GamePage_Menu.html"
 
@@ -11437,6 +12014,7 @@ Func _Create_GamePage_Menu_Page()
 EndFunc   ;==>_Create_VRToolBox_HL_StartPage
 
 Func _Create_GamePages()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (11953) :(' & @MIN & ':' & @SEC & ') _Create_GamePages()' & @CR) ;### Function Trace
 	$Add_Back_to_HTML_GamePage = IniRead($Config_INI, "Settings", "Add_Back_to_HTML_GamePage", "")
 	Local $ApplicationList_TEMP, $GamePage_path, $NR_Applications, $PageName
 	Local $Install_DIR_TEMP = StringReplace($Install_DIR, '\', '/')
@@ -11786,7 +12364,7 @@ Func _Create_GamePages()
 
 			If $Add_Back_to_HTML_GamePage = "true" Then
 				Local $Content_Back = '<div id="layer_1" style="position: absolute; width: 100px; height: 45px; z-index: 1; left: 22px; top: 30px">' & @CRLF & _
-						'	<a onclick="goBack()" href="GamePage_Tags.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
+						'	<a onclick="goBack()" href="Back.html">			<img src="images/BACK.png" height="55px" width="100px"></a>' & @CRLF & _
 						'</div>' & @CRLF
 
 				$HTML_Content = $HTML_Content & $Content_Back
@@ -11794,9 +12372,10 @@ Func _Create_GamePages()
 
 			FileWrite($GamePage_path_temp, $HTML_Content)
 
-			Local $Back_Content = '<meta http-equiv="refresh" content="0; url=https://www.youtube.com/tv#/watch?v=2AisONDi4dE">'
+			Local $Back_Content = '<meta http-equiv="refresh" content="0; url=file:///' & $Install_DIR & 'WebPage/' & 'GamePage_Tags.html">'
 
-			FileWrite($GamePage_Tags_path_folder & "Back.html", '<meta http-equiv="refresh" content="0; url=https://www.youtube.com/tv#/watch?v=2AisONDi4dE">')
+			If FileExists($GamePage_Tags_path_folder & "Back.html") Then FileDelete($GamePage_Tags_path_folder & "Back.html")
+			FileWrite($GamePage_Tags_path_folder & "Back.html", $Back_Content)
 
 			For $NR = 1 To $NR_Applications
 				Global $Application_NR = IniRead($ApplicationList_TEMP, "Application_" & $NR, "NR", "")
@@ -11849,6 +12428,7 @@ Func _Create_GamePages()
 EndFunc   ;==>_Create_GamePages
 
 Func _Create_SinglePages()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12367) :(' & @MIN & ':' & @SEC & ') _Create_SinglePages()' & @CR) ;### Function Trace
 	Local $Install_DIR_TEMP = StringReplace($Install_DIR, '\', '/')
 	$Add_Back_to_HTML_GamePage = IniRead($Config_INI, "Settings", "Add_Back_to_HTML_GamePage", "")
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start creating Single Pages:")
@@ -11956,6 +12536,7 @@ Func _Create_SinglePages()
 EndFunc   ;==>_Create_SinglePages
 
 Func _Create_Game_Tags_Page()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12475) :(' & @MIN & ':' & @SEC & ') _Create_Game_Tags_Page()' & @CR) ;### Function Trace
 	Local $Value_Line, $Value_Line_ADD, $Value_Line_1, $Value_Line_Tag
 	Local $Install_DIR_Replaced = StringReplace($Install_DIR, '\', '/')
 
@@ -11972,7 +12553,12 @@ Func _Create_Game_Tags_Page()
 		EndIf
 
 		;Local $sFill = $Value_Line_Left & "|" & $Value_Line_Tag & "|" & $Value_Line_Right
-		_ArrayAdd($Array_GamePage_Tags, $Value_Line_ADD)
+		$Array_Result = _ArrayAdd($Array_GamePage_Tags, $Value_Line_ADD)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 	Next
 
 	;_ArrayDisplay($Array_GamePage_Tags)
@@ -12009,6 +12595,7 @@ EndFunc
 
 #Region Func Create SteamVR_Home Pages / Game Pages
 Func _Button_SteamVRHome_Panel_Settings()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12534) :(' & @MIN & ':' & @SEC & ') _Button_SteamVRHome_Panel_Settings()' & @CR) ;### Function Trace
 	If Not WinExists("HomeLoader - SteamVR Environment Settings") Then
 		Local $SteamVR_Environment_Name_Check = "homeloader"
 		Local $SteamVR_EnvironmentPath_Check = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name_Check & "\"
@@ -12023,7 +12610,11 @@ Func _Button_SteamVRHome_Panel_Settings()
 																	"Do you want to prepare the downloaded HomeLoader SteamVR Home Workshop Environment for use with HomeLoader?" & @CRLF)
 
 			If $Abfrage = 6 Then
+				_Preparing_GUI()
 				_Create_HomeLoader_Environment_Files_Folders()
+				Sleep(100)
+				;_Check_for_HomeLoader_Environment_Map_Folders()
+				;_Exit_Preparing_GUI()
 			Else
 
 			EndIf
@@ -12032,6 +12623,8 @@ Func _Button_SteamVRHome_Panel_Settings()
 EndFunc
 
 Func _Create_SteamVRHome_Environment_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12560) :(' & @MIN & ':' & @SEC & ') _Create_SteamVRHome_Environment_Settings_GUI()' & @CR) ;### Function Trace
+	_Loading_GUI()
 	$Panel_Name_1 = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
 	$Panel_Name_2 = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
 	$Panel_Name_3 = IniRead($Config_INI, "Settings", "TAB3_Name", "Custom 1")
@@ -12040,6 +12633,7 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 	$Panel_Name_6 = IniRead($Config_INI, "Settings", "TAB6_Name", "Custom 4")
 
 	Global $SteamVR_Home_Panels_GUI = GUICreate("HomeLoader - SteamVR Environment Settings", 1014, 734, -1, -1, BitOR($WS_BORDER, $WS_CAPTION, $WS_SYSMENU))
+	GUISetState(@SW_HIDE, $SteamVR_Home_Panels_GUI)
 	Local $hMenu = _GUICtrlMenu_GetSystemMenu($SteamVR_Home_Panels_GUI)
 	Local $iMenuItemCount = _GUICtrlMenu_GetItemCount($hMenu)
 	_GUICtrlMenu_RemoveMenu($hMenu, $iMenuItemCount - 1, $MF_BYPOSITION)
@@ -12047,15 +12641,15 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 	Local $Pos_X_1 = 10
 	Local $Pos_X_2= 315
 	Local $Pos_X_3= 755
-	Local $Pos_X_4= 710
+	Local $Pos_X_4= 10
 	Local $Pos_X_5= 710
-	Local $Pos_Y = 65
+	Local $Pos_X_6= 710
+	Local $Pos_Y = 60
 	Local $Pos_Y_2 = 55
-	Local $Pos_Y_3 = 75
-	Local $Pos_Y_4 = 65
-	Local $Pos_Y_5 = 55
-
-
+	Local $Pos_Y_3 = 70
+	Local $Pos_Y_4 = 542
+	Local $Pos_Y_5 = 50
+	Local $Pos_Y_6 = 372
 
 	GUICtrlCreateLabel("SteamVR Home Environment: ", $Pos_X_1, $Pos_Y - 52, 300, 20)
 	GUICtrlSetColor(-1, "0x0000FF")
@@ -12063,17 +12657,23 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 
 	$Combo_Environment_Name = GUICtrlCreateCombo("", $Pos_X_1 + 305, $Pos_Y - 55, 386, 33, $CBS_DROPDOWNLIST)
 	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_Consolas)
+	GuiCtrlSetTip(-1, "Select the SteamVR Environment you want to use. If you have other Environments saved in your Steam steamvr_environments folder then you can use them too.")
 	GUICtrlSetOnEvent(-1, "_Combo_Environment_Name")
 
-	Global $contextmenu_Combo_Environment_Name = GUICtrlCreateContextMenu($Combo_Environment_Name)
-	Global $RM_Combo_Environment_Name_1 = GUICtrlCreateMenuItem("Prepare new SteamVR Home Workshop Environment for use with HomeLoader", $contextmenu_Combo_Environment_Name)
-	GUICtrlSetOnEvent(-1, "_RM_Combo_Environment_Name_1")
+	;Global $contextmenu_Combo_Environment_Name = GUICtrlCreateContextMenu($Combo_Environment_Name)
+	;Global $RM_Combo_Environment_Name_1 = GUICtrlCreateMenuItem("Prepare new SteamVR Home Workshop Environment for use with HomeLoader", $contextmenu_Combo_Environment_Name)
+	;GUICtrlSetOnEvent(-1, "_RM_Combo_Environment_Name_1")
 
-	;Global $Button_Prepare_Environment = GUICtrlCreateButton("Prepare new SteamVR Home Workshop Environment", $Pos_X_1 + 505, $Pos_Y - 56, 490, 31)
-	;GuiCtrlSetTip(-1, "Closes Settings Window.")
-	;GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
-	;GUICtrlSetColor(-1, "0x006600")
-	;GUICtrlSetOnEvent(-1, "_Button_Prepare_Environment")
+	Global $Button_Prepare_Environment = GUICtrlCreateButton("Update/Prepare Environment", $Pos_X_1 + 699, $Pos_Y - 56, 296, 31)
+	GuiCtrlSetTip(-1, "Updates and prepares the downloaded HomeLoader SteamVR Workshop Environment.")
+	GUICtrlSetFont(-1, 14, 600, 2, $font_arial)
+	GUICtrlSetColor(-1, "0x006600")
+	GUICtrlSetOnEvent(-1, "_RM_Selection_Prepare_Environment_Button")
+	_RM_Selection_Update_Prepare_Button_Contextmenu()
+
+
+
+
 
 	#Region X 1
 	GUICtrlCreateLabel("Enable/Disable SteamVR Home Panels:", $Pos_X_1, $Pos_Y - 10, 400, 20)
@@ -12142,7 +12742,7 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
 
-	GUICtrlCreateGroup("", $Pos_X_1, $Pos_Y_2 + 342, 295, 282)
+	GUICtrlCreateGroup("", $Pos_X_1, $Pos_Y_2 + 342, 295, 125)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
@@ -12303,12 +12903,12 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 	#endregion
 
 	#Region X 4
-	GUICtrlCreateLabel("DVD Case Model:", $Pos_X_4, $Pos_Y_4 - 10, 350, 20)
+	GUICtrlCreateLabel("Props / 3D Models:", $Pos_X_4, $Pos_Y_4 - 10, 150, 20)
 	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
 
-	GUICtrlCreateGroup("", $Pos_X_4, $Pos_Y_4 + 07, 295, 295)
+	GUICtrlCreateGroup("", $Pos_X_4, $Pos_Y_4 + 07, 295, 125)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
@@ -12322,62 +12922,189 @@ Func _Create_SteamVRHome_Environment_Settings_GUI()
 	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
 	Global $Combo_DVD_Cover_Template = GUICtrlCreateCombo("", $Pos_X_4 + 138, $Pos_Y_4 + 48, 150, 20)
 	GUICtrlSetOnEvent(-1, "_Combo_DVD_Cover_Template")
+
+	;Global $Checkbox_Arcade_Machine_1 = GUICtrlCreateCheckbox(" Enable Arcade Machine", $Pos_X_4 + 5, $Pos_Y_4 + 75, 230, 20)
+	;GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
+	;GUICtrlSetOnEvent(-1, "_Checkbox_Arcade_Machine_1")
+	;GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_DISABLE)
 	#endregion
 
 	#Region X 5
-	GUICtrlCreateLabel("Arcade Machine Model:", $Pos_X_5, $Pos_Y_5 + 325, 350, 20)
+	GUICtrlCreateLabel("HomeLoader Menu:", $Pos_X_5, $Pos_Y_5, 350, 20)
 	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
 
-	GUICtrlCreateGroup("", $Pos_X_5, $Pos_Y_5 + 342, 295, 282)
+	GUICtrlCreateGroup("", $Pos_X_5, $Pos_Y_5 + 17, 295, 285)
 	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
 	GUICtrlSetColor(-1, "0x0000FF")
 	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
 
-	Global $Checkbox_Arcade_Machine_1 = GUICtrlCreateCheckbox(" Enable Arcade Machine", $Pos_X_4 + 5, $Pos_Y_4 + 350, 230, 20)
-	GUICtrlSetFont(-1, 11, $FW_NORMAL, "", $font_2)
-	GUICtrlSetOnEvent(-1, "_Checkbox_Arcade_Machine_1")
-	GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_DISABLE)
+	Global $Checkbox_HL_Environment_Enable_Row_1 = GUICtrlCreateCheckbox(" Category for Row 1", $Pos_X_5 + 5, $Pos_Y_5 + 35, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_1")
+	Global $Combo_HomeLoader_Menu_Category_Row_1 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 32, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_1")
 
-	;GUICtrlCreateLabel($Panel_Name_11, $Pos_X_5 + 5, $Pos_Y_5 + 387, 140, 20)
-	;GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
-	;Global $Combo_Panel_Tool_2 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 385, 140, 20)
-	;GUICtrlSetOnEvent(-1, "_Combo_Panel_Tool_2")
+	Global $Checkbox_HL_Environment_Enable_Row_2 = GUICtrlCreateCheckbox(" Category for Row 2", $Pos_X_5 + 5, $Pos_Y_5 + 59, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_2")
+	Global $Combo_HomeLoader_Menu_Category_Row_2 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 56, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_2")
+
+	Global $Checkbox_HL_Environment_Enable_Row_3 = GUICtrlCreateCheckbox(" Category for Row 3", $Pos_X_5 + 5, $Pos_Y_5 + 83, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_3")
+	Global $Combo_HomeLoader_Menu_Category_Row_3 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 80, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_3")
+
+	Global $Checkbox_HL_Environment_Enable_Row_4 = GUICtrlCreateCheckbox(" Category for Row 4", $Pos_X_5 + 5, $Pos_Y_5 + 107, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_4")
+	Global $Combo_HomeLoader_Menu_Category_Row_4 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 105, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_4")
+
+	Global $Checkbox_HL_Environment_Enable_Row_5 = GUICtrlCreateCheckbox(" Category for Row 5", $Pos_X_5 + 5, $Pos_Y_5 + 131, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_5")
+	Global $Combo_HomeLoader_Menu_Category_Row_5 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 128, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_5")
+
+	Global $Checkbox_HL_Environment_Enable_Row_6 = GUICtrlCreateCheckbox(" Category for Row 6", $Pos_X_5 + 5, $Pos_Y_5 + 155, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_6")
+	Global $Combo_HomeLoader_Menu_Category_Row_6 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 152, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_6")
+
+	Global $Checkbox_HL_Environment_Enable_Row_7 = GUICtrlCreateCheckbox(" Category for Row 7", $Pos_X_5 + 5, $Pos_Y_5 + 179, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_7")
+	Global $Combo_HomeLoader_Menu_Category_Row_7 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 176, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_7")
+
+	Global $Checkbox_HL_Environment_Enable_Row_8 = GUICtrlCreateCheckbox(" Category for Row 8", $Pos_X_5 + 5, $Pos_Y_5 + 203, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_8")
+	Global $Combo_HomeLoader_Menu_Category_Row_8 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 200, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_8")
+
+	Global $Checkbox_HL_Environment_Enable_Row_9 = GUICtrlCreateCheckbox(" Category for Row 9", $Pos_X_5 + 5, $Pos_Y_5 + 227, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	GUICtrlSetOnEvent(-1, "_Checkbox_HL_Environment_Enable_Row_9")
+	Global $Combo_HomeLoader_Menu_Category_Row_9 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 224, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Category_Row_9")
+
+
+
+	GUICtrlCreateLabel("Panel Distance", $Pos_X_5 + 5, $Pos_Y_5 + 256, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	Global $Combo_HomeLoader_Menu_Panel_Distance_1 = GUICtrlCreateCombo("", $Pos_X_5 + 148, $Pos_Y_5 + 253, 140, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Menu_Panel_Distance_1")
+
+
+	;Local $Button_HomeLoader_Menu_1 = GUICtrlCreateButton("Create Menu Panel", $Pos_X_5 + 5, $Pos_Y_5 + 600, 140, 20, $BS_BITMAP)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	;GuiCtrlSetTip(-1, "Create Menu Panel")
+	;GUICtrlSetOnEvent(-1, "_Create_Menu_Panel")
+
+	;Local $Button_HomeLoader_Menu_2 = GUICtrlCreateButton("Create LUA File", $Pos_X_5 + 148, $Pos_Y_5 + 600, 140, 20, $BS_BITMAP)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	;GuiCtrlSetTip(-1, "Create Menu Panel")
+	;GUICtrlSetOnEvent(-1, "_Create_Menu_LUA")
 	#endregion
 
-	Local $Button_Panel_Settings_Apply = GUICtrlCreateButton("Apply", $Pos_X_1, $Pos_Y_3 +615, 155, 32, $BS_BITMAP)
+	#Region X 6
+	GUICtrlCreateLabel("Environment:", $Pos_X_6, $Pos_Y_6, 350, 20)
+	;GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 12, 400, 6, $font_arial)
+
+	GUICtrlCreateGroup("", $Pos_X_6, $Pos_Y_6 + 17, 295, 285)
+	DllCall("UxTheme.dll", "int", "SetWindowTheme", "hwnd", GUICtrlGetHandle(-1), "wstr", "Explorer", "wstr", 0)
+	GUICtrlSetColor(-1, "0x0000FF")
+	GUICtrlSetFont(-1, 11, 400, 6, $font_arial)
+
+
+	GUICtrlCreateLabel("Environment / Map", $Pos_X_6 + 5, $Pos_Y_6 + 35, 140, 20)
+	GUICtrlSetFont(-1, 10, $FW_NORMAL, "", $font_2)
+	Global $Combo_HomeLoader_Environment_Map = GUICtrlCreateCombo("", $Pos_X_6 + 120, $Pos_Y_6 + 32, 168, 20)
+	GUICtrlSetOnEvent(-1, "_Combo_HomeLoader_Environment_Map")
+
+
+	Global $Map_Preview_Image = GUICtrlCreatePic($gfx & "Environment_Map.jpg", $Pos_x_6 + 5, $Pos_Y_6 + 60, 283, 157)
+	GUICtrlSetTip(-1, "Shows an preview image of the selected Environment Map.")
+	GUICtrlSetOnEvent(-1, "_RM_Map_Preview_Image")
+	_Create_RM_Map_Preview_Image()
+
+
+
+
+	Local $Button_Environment_Apply_Map = GUICtrlCreateButton("Apply Map", $Pos_x_6 + 5, $Pos_Y_6 + 225, 140, 25, $BS_BITMAP)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Applies the selected Map to the Environment.")
+	GUICtrlSetOnEvent(-1, "_Button_Environment_Apply_Map")
+
+	Local $Button_Environment_Create_New_Map = GUICtrlCreateButton("Create New Map", $Pos_x_6 + 149, $Pos_Y_6 + 225, 140, 25, $BS_BITMAP)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Creates an new Map for use with the HomeLoader SteamVR Home Environment.")
+	GUICtrlSetOnEvent(-1, "_Button_Environment_Create_New_Map")
+
+	Global $Button_Environment_Edit_Map = GUICtrlCreateButton("Edit Map", $Pos_x_6 + 5, $Pos_Y_6 + 255, 140, 25, $BS_BITMAP)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Creates an new Map for use with the HomeLoader SteamVR Home Environment.")
+	GUICtrlSetOnEvent(-1, "_Button_Environment_Edit_Map")
+
+	Global $Button_Environment_Save_Map = GUICtrlCreateButton("Save Map", $Pos_x_6 + 149, $Pos_Y_6 + 255, 140, 25, $BS_BITMAP)
+	GUICtrlSetFont(-1, 12, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Creates an new Map for use with the HomeLoader SteamVR Home Environment.")
+	GUICtrlSetOnEvent(-1, "_Button_Environment_Save_Map")
+
+	#endregion
+
+
+
+
+
+
+
+
+
+	Global $Button_Panel_Settings_Apply = GUICtrlCreateButton("Apply", $Pos_X_1, $Pos_Y_3 + 615, 155, 32, $BS_BITMAP)
 	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Creates the Game Panels and/or DVD Cases using the current settings.")
 	GUICtrlSetOnEvent(-1, "_Button_Panel_Settings_Apply")
 
 	Global $Combo_Panel_Layout = GUICtrlCreateCombo("", $Pos_X_1 + 305, $Pos_Y_3 + 616, 386, 33, $CBS_DROPDOWNLIST)
 	GUICtrlSetFont(-1, 14, $FW_NORMAL, "", $font_Consolas)
-	;GUICtrlSetFont(-1, 14, Default, Default, "Consolas")
+	GuiCtrlSetTip(-1, "Select saved settings to change the appearance of the panels.")
 	GUICtrlSetOnEvent(-1, "_Combo_Panel_Layout")
 	Global $contextmenu_Combo_Panel_Layout = GUICtrlCreateContextMenu($Combo_Panel_Layout)
 	Global $RM_Combo_Panel_Layout_1 = GUICtrlCreateMenuItem("Save Environment Layout Settings", $contextmenu_Combo_Panel_Layout)
 	GUICtrlSetOnEvent(-1, "_RM_Combo_Panel_Layout_1")
 
 
-	;GUICtrlSetFont(-1, 10, Default, Default, "Consolas") ; <<<<<<<<<<<<<<<< From above https reference thread.
-	;GUISetState()
 
 
 
 	Local $Button_Panel_Settings_Close = GUICtrlCreateButton("Close", $Pos_X_1 + 840, $Pos_Y_3 + 615, 155, 32, $BS_BITMAP)
 	GUICtrlSetFont(-1, 13, $FW_NORMAL, "", $font_2)
+	GuiCtrlSetTip(-1, "Closes the settings window.")
 	GUICtrlSetOnEvent(-1, "_Close_Button_SteamVRHome_Panel_Settings_GUI")
+
+	_RM_Button_SteamVRHome_Panel_Settings_Apply_Button()
 EndFunc
 
 
 
 Func _RM_Button_SteamVRHome_Panel_Settings()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12972) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings()' & @CR) ;### Function Trace
 	Global $contextmenu_Button_SteamVRHome_Panel_Settings = GUICtrlCreateContextMenu($Button_SteamVRHome_Panel_Settings)
 	Global $RM_Button_SteamVRHome_Panel_Settings_1 = GUICtrlCreateMenuItem("Update all Environment Files", $contextmenu_Button_SteamVRHome_Panel_Settings)
 	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings)
-	Global $RM_Button_SteamVRHome_Panel_Settings_2 = GUICtrlCreateMenuItem("Update Game panels", $contextmenu_Button_SteamVRHome_Panel_Settings)
-	Global $RM_Button_SteamVRHome_Panel_Settings_3 = GUICtrlCreateMenuItem("Update DVD Case Models", $contextmenu_Button_SteamVRHome_Panel_Settings)
-	;Global $RM_Button_SteamVRHome_Panel_Settings_4 = GUICtrlCreateMenuItem("Update Arcade Machine", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_2 = GUICtrlCreateMenuItem("Update Game Panels", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_3 = GUICtrlCreateMenuItem("Update HomeLoader Menu", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	Global $RM_Button_SteamVRHome_Panel_Settings_4 = GUICtrlCreateMenuItem("Update DVD Case Models", $contextmenu_Button_SteamVRHome_Panel_Settings)
+	;Global $RM_Button_SteamVRHome_Panel_Settings_5 = GUICtrlCreateMenuItem("Update Arcade Machine", $contextmenu_Button_SteamVRHome_Panel_Settings)
 	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings)
 
 	;GUICtrlSetState($RM_Button_SteamVRHome_Panel_Settings_4, $GUI_DISABLE)
@@ -12385,10 +13112,31 @@ Func _RM_Button_SteamVRHome_Panel_Settings()
 	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_1, "_RM_Button_SteamVRHome_Panel_Settings_1")
 	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_2, "_RM_Button_SteamVRHome_Panel_Settings_2")
 	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_3, "_RM_Button_SteamVRHome_Panel_Settings_3")
-	;GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_4, "_RM_Button_SteamVRHome_Panel_Settings_4")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_4, "_RM_Button_SteamVRHome_Panel_Settings_4")
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_Apply_Button()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12991) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_Apply_Button()' & @CR) ;### Function Trace
+	Global $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button = GUICtrlCreateContextMenu($Button_Panel_Settings_Apply)
+	Global $RM_Button_SteamVRHome_Panel_Settings_Apply_Button_1 = GUICtrlCreateMenuItem("Update all Environment Files", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	Global $RM_Button_SteamVRHome_Panel_Settings_Apply_Button_2 = GUICtrlCreateMenuItem("Update Game Panels", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	Global $RM_Button_SteamVRHome_Panel_Settings_Apply_Button_3 = GUICtrlCreateMenuItem("Update HomeLoader Menu", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	Global $RM_Button_SteamVRHome_Panel_Settings_Apply_Button_4 = GUICtrlCreateMenuItem("Update DVD Case Models", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	;Global $RM_Button_SteamVRHome_Panel_Settings_Apply_Button_5 = GUICtrlCreateMenuItem("Update Map", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+	GUICtrlCreateMenuItem("", $contextmenu_Button_SteamVRHome_Panel_Settings_Apply_Button)
+
+	;GUICtrlSetState($RM_Button_SteamVRHome_Panel_Settings_4, $GUI_DISABLE)
+
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_Apply_Button_1, "_RM_Button_SteamVRHome_Panel_Settings_1")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_Apply_Button_2, "_RM_Button_SteamVRHome_Panel_Settings_2")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_Apply_Button_3, "_RM_Button_SteamVRHome_Panel_Settings_3")
+	GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_Apply_Button_4, "_RM_Button_SteamVRHome_Panel_Settings_4")
+	;GUICtrlSetOnEvent($RM_Button_SteamVRHome_Panel_Settings_Apply_Button_5, "_RM_Button_SteamVRHome_Panel_Settings_5")
 EndFunc
 
 Func _RM_Combo_Panel_Layout_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13010) :(' & @MIN & ':' & @SEC & ') _RM_Combo_Panel_Layout_1()' & @CR) ;### Function Trace
 	Local $InputBox_Name = InputBox("Enter Layout Name", "Enter Layout Name and continue with 'OK'", "", "", 270, 140)
 	Sleep(500)
 	If $InputBox_Name <> "" Then
@@ -12403,18 +13151,87 @@ Func _RM_Combo_Panel_Layout_1()
 	_Set_SteamVR_Home_Panel_GUI_Data()
 EndFunc
 
+Func _RM_Selection_Update_Prepare_Button_Contextmenu()
+	$SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
+	$contextmenu_Prepare_Environment_Button = GUICtrlCreateContextMenu($Button_Prepare_Environment)
+
+	$RM_Prepare_Environment_Item_1 = GUICtrlCreateMenuItem("Open the HomeLoader SteamVR Home Environment Steam Page", $contextmenu_Prepare_Environment_Button)
+	GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_1")
+
+	$RM_Prepare_Environment_Item_2 = GUICtrlCreateMenuItem("Unpack the downloaded HomeLoader SteamVR Home Workshop Environment", $contextmenu_Prepare_Environment_Button)
+	GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_2")
+
+	;$RM_Prepare_Environment_Item_3 = GUICtrlCreateMenuItem("Unpack an new SteamVR Workshop Environment", $contextmenu_Prepare_Environment_Button)
+	;GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_3")
+
+	GUICtrlCreateMenuItem("", $contextmenu_Prepare_Environment_Button)
+
+	$RM_Prepare_Environment_Item_4 = GUICtrlCreateMenuItem("Use unpacked workshop environment (longer loading time)", $contextmenu_Prepare_Environment_Button, -1, 1)
+	If $Use_unpacked_workshop_environment = "true" Then GUICtrlSetState($RM_Prepare_Environment_Item_4, $GUI_CHECKED)
+	GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_4")
+
+	$RM_Prepare_Environment_Item_5 = GUICtrlCreateMenuItem("Use packed workshop environment (faster londing time)", $contextmenu_Prepare_Environment_Button, -1, 1)
+	If $Use_unpacked_workshop_environment <> "true" Then GUICtrlSetState($RM_Prepare_Environment_Item_5, $GUI_CHECKED)
+	GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_5")
+
+	GUICtrlCreateMenuItem("", $contextmenu_Prepare_Environment_Button)
+
+	$RM_Prepare_Environment_Item_6 = GUICtrlCreateMenuItem("Pack Current Environment to .vpk File.", $contextmenu_Prepare_Environment_Button)
+	GUICtrlSetOnEvent(- 1, "_RM_Prepare_Environment_Item_6")
+EndFunc
+
+Func _Create_RM_Map_Preview_Image()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (12972) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings()' & @CR) ;### Function Trace
+
+	Local $Value_Map = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", "")
+
+	Local $Environment_Map = $Value_Map
+	If $Environment_Map = "" Then
+		$Environment_Map = "homeloader_default"
+	EndIf
+
+	Local $Map_INI = $HomeLoader_Map_Folder & $Environment_Map & "\map.ini"
+	Local $Map_Name = IniRead($Map_INI, "Map", "Name", "")
+	Local $Map_Environment_by = IniRead($Map_INI, "Map", "Environment_by", "")
+	Local $Map_Environment_source = IniRead($Map_INI, "Map", "Environment_source", "")
+	Local $Map_Model_by = IniRead($Map_INI, "Map", "Model_by", "")
+	Local $Map_Model_source = IniRead($Map_INI, "Map", "Model_source", "")
+
+
+	Global $contextmenu_RM_Map_Preview_Image = GUICtrlCreateContextMenu($Map_Preview_Image)
+	Global $RM_Button_RM_Map_Preview_Image_1 = GUICtrlCreateMenuItem("Environment source" & " [by " & $Map_Environment_by & "]", $contextmenu_RM_Map_Preview_Image)
+	Global $RM_Button_RM_Map_Preview_Image_2 = GUICtrlCreateMenuItem("Model source" & " [by " & $Map_Environment_by & "]", $contextmenu_RM_Map_Preview_Image)
+
+	If $Map_Environment_source = "" Then GUICtrlSetState($RM_Button_RM_Map_Preview_Image_1, $GUI_DISABLE)
+	If $Map_Model_source = "" Then GUICtrlSetState($RM_Button_RM_Map_Preview_Image_2, $GUI_DISABLE)
+
+	GUICtrlSetOnEvent($RM_Button_RM_Map_Preview_Image_1, "_RM_Button_RM_Map_Preview_Image_1")
+	GUICtrlSetOnEvent($RM_Button_RM_Map_Preview_Image_2, "_RM_Button_RM_Map_Preview_Image_2")
+EndFunc
+
+
 Func _Set_SteamVR_Home_Panel_GUI_Data()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13026) :(' & @MIN & ':' & @SEC & ') _Set_SteamVR_Home_Panel_GUI_Data()' & @CR) ;### Function Trace
 	Local $Value, $Value_Panel_NR, $Panel_Name_temp, $Combo_BK_color
 
 	$SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
 	If $SteamVR_Environment_Name = "" Then $SteamVR_Environment_Name = "homeloader"
 	Local $Value_Array = _FileListToArray($SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\", "*", $FLTA_FOLDERS)
+	$Array_Result = $Value_Array
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
 	$Value = ""
-	For $Loop = 1 To $Value_Array[0]
-		If $Value_Array[$Loop] <> "addon_template" Then
-			$Value = $Value & "|" & $Value_Array[$Loop]
-		EndIf
-	Next
+
+	If IsArray($Value_Array) Then
+		For $Loop = 1 To $Value_Array[0]
+			If $Value_Array[$Loop] <> "addon_template" Then
+				$Value = $Value & "|" & $Value_Array[$Loop]
+			EndIf
+		Next
+	EndIf
 	GUICtrlSetData($Combo_Environment_Name, $Value, $SteamVR_Environment_Name)
 
 
@@ -12472,11 +13289,11 @@ Func _Set_SteamVR_Home_Panel_GUI_Data()
 
 	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_1", "")
 	GUICtrlSetData($Combo_Panel_Tool_1, "")
-	GUICtrlSetData($Combo_Panel_Tool_1, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]|" & "Panel 10 [" & $Panel_Name_10 & "]|"& "Panel 11 [" & $Panel_Name_11 & "]", $Value)
+	GUICtrlSetData($Combo_Panel_Tool_1, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]", $Value)
 
 	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_2", "")
 	GUICtrlSetData($Combo_Panel_Tool_2, "")
-	GUICtrlSetData($Combo_Panel_Tool_2, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]|" & "Panel 10 [" & $Panel_Name_10 & "]|"& "Panel 11 [" & $Panel_Name_11 & "]", $Value)
+	GUICtrlSetData($Combo_Panel_Tool_2, "Panel 1 [" & $Panel_Name_1 & "]|" & "Panel 2 [" & $Panel_Name_2 & "]|" & "Panel 3 [" & $Panel_Name_3 & "]|" & "Panel 4 [" & $Panel_Name_4 & "]|" & "Panel 5 [" & $Panel_Name_5 & "]|" & "Panel 6 [" & $Panel_Name_6 & "]|" & "Panel 7 [" & $Panel_Name_7 & "]|" & "Panel 8 [" & $Panel_Name_8 & "]|" & "Panel 9 [" & $Panel_Name_9 & "]", $Value)
 
 	$Value = IniRead($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Value_Panel_NR & "_appearance", "Panel_width", "")
 	GUICtrlSetData($Combo_Panel_width, "")
@@ -12635,21 +13452,45 @@ Func _Set_SteamVR_Home_Panel_GUI_Data()
 
 	GUICtrlSetData($Panel_Nr_Selection_Input_Name, $Panel_Name_temp)
 	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\", "*.ini", 1)
+	$Array_Result = $Value_Array
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
+
+	Local $NR_Files_Temp = $Value_Array[0]
 
 	$Value = "Custom Layout"
-	For $Loop = 1 To $Value_Array[0]
-		$Value = $Value & "|" & $Value_Array[$Loop]
-	Next
+	Local $Layout_File_Name = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Layout", "")
+	Local $Layout_File_Temp = $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\" & $Layout_File_Name
+	;If FileExists($Layout_File_Temp) Then $Value = $Layout_File_Name
+
+	If IsArray($Value_Array) Then
+		For $Loop = 1 To $NR_Files_Temp
+			;MsgBox(0, "$Value", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
+			$Value = $Value & "|" & StringReplace($Value_Array[$Loop], '.ini', '')
+		Next
+	EndIf
+
+
+
 	GUICtrlSetData($Combo_Panel_Layout, "")
-	GUICtrlSetData($Combo_Panel_Layout, $Value, "Custom Layout")
+	GUICtrlSetData($Combo_Panel_Layout, $Value, $Layout_File_Name)
+
+	;MsgBox(0, "1 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
 
 	GUICtrlSetState($Combo_Panel_background_color, $GUI_FOCUS)
 	GUICtrlSetState($Combo_Panel_border_color, $GUI_FOCUS)
 	GUICtrlSetState($Combo_Panel_Text_Color, $GUI_FOCUS)
+
+	;MsgBox(0, "2 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
+
 	GUICtrlSetState($Combo_Panel_Icon_border_color_hover, $GUI_FOCUS)
 	GUICtrlSetState($Combo_Panel_Scroll_button_color, $GUI_FOCUS)
 	GUICtrlSetState($Panel_Nr_Selection_Input, $GUI_FOCUS)
 
+	;MsgBox(0, "3 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
 
 	$Value = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", "")
 	If $Value = "true" Then
@@ -12659,23 +13500,239 @@ Func _Set_SteamVR_Home_Panel_GUI_Data()
 		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_DISABLE)
 	EndIf
 
+	;MsgBox(0, "4 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
+
 	$Value_dvd_cover_template = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "dvd_cover_template", "")
-	Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Templates\", "*.jpg", 1)
-	$Value = ""
-	For $Loop = 1 To $Value_Array[0]
-		$Value = $Value & "|" & $Value_Array[$Loop]
-	Next
+
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Templates\") Then
+		Local $Value_Array = _FileListToArray($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Templates\", "*.jpg", 1)
+		$Array_Result = $Value_Array
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileListToArray_Error_Handler()
+		$Value = ""
+
+		If IsArray($Value_Array) Then
+			For $Loop = 1 To $Value_Array[0]
+				$Value = $Value & "|" & $Value_Array[$Loop]
+			Next
+		EndIf
+	Else
+		$Value = ""
+	EndIf
+
 	GUICtrlSetData($Combo_DVD_Cover_Template, $Value, $Value_dvd_cover_template)
 
-
-	$Value = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", "")
-	If $Value = "true" Then GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_CHECKED)
+	;MsgBox(0, "5 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
 
 
+	;$Value = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", "")
+	;If $Value = "true" Then GUICtrlSetState($Checkbox_Arcade_Machine_1, $GUI_CHECKED)
+
+	;MsgBox(0, "6 draussen", $NR_Files_Temp & @CRLF & $Loop & @CRLF & $Value)
+
+
+	Local $Checkbox_HL_Environment_Enable_Row_1_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "")
+	Local $Checkbox_HL_Environment_Enable_Row_2_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", "")
+	Local $Checkbox_HL_Environment_Enable_Row_3_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_3", "")
+	Local $Checkbox_HL_Environment_Enable_Row_4_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_4", "")
+	Local $Checkbox_HL_Environment_Enable_Row_5_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_5", "")
+	Local $Checkbox_HL_Environment_Enable_Row_6_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_6", "")
+	Local $Checkbox_HL_Environment_Enable_Row_7_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_7", "")
+	Local $Checkbox_HL_Environment_Enable_Row_8_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_8", "")
+	Local $Checkbox_HL_Environment_Enable_Row_9_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_9", "")
+
+	If $Checkbox_HL_Environment_Enable_Row_1_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_1, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_1, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_2_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_2, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_2, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_3_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_3, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_3, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_4_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_4, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_4, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_5_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_5, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_5, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_6_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_6, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_6, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_7_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_7, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_7, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_8_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_8, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_8, $GUI_DISABLE)
+	EndIf
+
+	If $Checkbox_HL_Environment_Enable_Row_9_Value = "true" Then
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_CHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_9, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_9, $GUI_DISABLE)
+	EndIf
+
+
+	$Panel_Name_1 = IniRead($Config_INI, "Settings", "TAB1_Name", "Steam Library")
+	$Panel_Name_2 = IniRead($Config_INI, "Settings", "TAB2_Name", "Non-Steam_Appl")
+	$Panel_Name_3 = IniRead($Config_INI, "Settings", "TAB3_Name", "Custom 1")
+	$Panel_Name_4 = IniRead($Config_INI, "Settings", "TAB4_Name", "Custom 2")
+	$Panel_Name_5 = IniRead($Config_INI, "Settings", "TAB5_Name", "Custom 3")
+	$Panel_Name_6 = IniRead($Config_INI, "Settings", "TAB6_Name", "Custom 4")
+	$Panel_Name_7 = IniRead($Config_INI, "Settings", "TAB7_Name", "Viveport Applications")
+	$Panel_Name_8 = IniRead($Config_INI, "Settings", "TAB8_Name", "Oculus Applications")
+	Local $Panel_Name_9 = "DVD Case Models"
+
+	Local $Category_Row_1_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_1", $Panel_Name_1)
+	Local $Category_Row_2_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_2", $Panel_Name_2)
+	Local $Category_Row_3_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_3", $Panel_Name_3)
+	Local $Category_Row_4_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_4", $Panel_Name_4)
+	Local $Category_Row_5_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_5", $Panel_Name_5)
+	Local $Category_Row_6_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_6", $Panel_Name_6)
+	Local $Category_Row_7_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_7", $Panel_Name_7)
+	Local $Category_Row_8_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_8", $Panel_Name_8)
+	Local $Category_Row_9_Value = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_9", $Panel_Name_9)
+
+
+
+	$Value = $Panel_Name_1 & "|" & $Panel_Name_2 & "|" & $Panel_Name_3 & "|" & $Panel_Name_4 & "|" & $Panel_Name_5 & "|" & $Panel_Name_6 & "|" & $Panel_Name_7 & "|" & $Panel_Name_8 & "|" & $Panel_Name_9
+
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_1, $Value, $Category_Row_1_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_2, $Value, $Category_Row_2_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_3, $Value, $Category_Row_3_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_4, $Value, $Category_Row_4_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_5, $Value, $Category_Row_5_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_6, $Value, $Category_Row_6_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_7, $Value, $Category_Row_7_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_8, $Value, $Category_Row_8_Value)
+	GUICtrlSetData($Combo_HomeLoader_Menu_Category_Row_9, $Value, $Category_Row_9_Value)
+	;GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_9, $GUI_DISABLE)
+
+	Local $Panel_Distance = IniRead($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Panel_Distance", "")
+	If $Panel_Distance = "" Then
+		$Panel_Distance = "70 [Default]"
+		IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Panel_Distance", $Panel_Distance)
+	EndIf
+	$Value = "46.2 [Close]" & "|" & "50" & "|" & "55" & "|" & "60" & "|" & "65" & "|" & "70 [Default]" & "|" & "75" & "|" & "80" & "|" & "85" & "|" &"90" & "|" & "95" & "|" & "100" & "|" & "105" & "|" & "110" & "|" & "115" & "|" & "120 [Far away]"
+	GUICtrlSetData($Combo_HomeLoader_Menu_Panel_Distance_1, $Value, $Panel_Distance)
+
+
+	Local $Environment_Map = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", "")
+	If $Environment_Map = "" Then
+		$Environment_Map = "homeloader_default"
+		IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", $Environment_Map)
+	EndIf
+
+	Local $FileList_Maps = _FileListToArray($HomeLoader_Map_Folder, "*", $FLTA_FOLDERS)
+
+	$Value = ""
+	Local $Map_Name = ""
+	If IsArray($FileList_Maps) Then
+		For $Loop = 1 To $FileList_Maps[0]
+			$Map_Name = StringReplace($FileList_Maps[$Loop], '.vpk', "")
+			If FileExists($HomeLoader_Map_Folder & $FileList_Maps[$Loop] & "\map_" & $FileList_Maps[$Loop] & ".vpk") Then
+				$Value = $Value & $Map_Name & "|"
+			EndIf
+		Next
+	EndIf
+
+	GUICtrlSetData($Combo_HomeLoader_Environment_Map, $Value, $Environment_Map)
+
+	$HomeLoader_Map_Image = $HomeLoader_Map_Folder & $Environment_Map & "\" & "preview_image.jpg"
+	If FileExists($HomeLoader_Map_Image) Then
+		GUICtrlSetImage($Map_Preview_Image, $HomeLoader_Map_Image)
+
+		Local $Map_INI = $HomeLoader_Map_Folder & $Environment_Map & "\map.ini"
+		Local $Map_Name = IniRead($Map_INI, "Map", "Name", "")
+		Local $Map_Environment_by = IniRead($Map_INI, "Map", "Environment_by", "")
+		Local $Map_Environment_source = IniRead($Map_INI, "Map", "Environment_source", "")
+		Local $Map_Model_by = IniRead($Map_INI, "Map", "Model_by", "")
+		Local $Map_Model_source = IniRead($Map_INI, "Map", "Model_source", "")
+
+		GUICtrlSetTip($Map_Preview_Image, "Map Name: " & @TAB & @TAB & $Map_Name & @CRLF & _
+											"Environment by: " & @TAB & @TAB & $Map_Environment_by & @CRLF & _
+											"Environment source: " & @TAB & $Map_Environment_source & @CRLF & _
+											"Model by: " & @TAB & @TAB & $Map_Model_by & @CRLF & _
+											"Model source: " & @TAB & @TAB & $Map_Model_source & @CRLF)
+	Else
+		GUICtrlSetImage($Map_Preview_Image, $HomeLoader_Map_Image_Template)
+	EndIf
+
+
+	Local $steamtours_addons_Content_Map_Folder = $SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\homeloader\maps\"
+	Local $FileList = _FileListToArray($steamtours_addons_Content_Map_Folder, "*.vmap", 1)
+	If IsArray($FileList) Then
+		If $FileList[0] < 1 Then GUICtrlSetState($Button_Environment_Edit_Map, $GUI_DISABLE)
+	Else
+		GUICtrlSetState($Button_Environment_Edit_Map, $GUI_DISABLE)
+	EndIf
+
+	Local $steamtours_addons_Game_Map_Folder = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\homeloader\maps\"
+	Local $FileList = _FileListToArray($steamtours_addons_Game_Map_Folder, "*.vpk", 1)
+	If IsArray($FileList) Then
+		If $FileList[0] < 1 Then GUICtrlSetState($Button_Environment_Save_Map, $GUI_DISABLE)
+	Else
+		GUICtrlSetState($Button_Environment_Save_Map, $GUI_DISABLE)
+	EndIf
+
+
+	GUICtrlSetState($Checkbox_Panel_2, $GUI_DISABLE)
+	GUICtrlSetState($Checkbox_Panel_7, $GUI_DISABLE)
+	GUICtrlSetState($Checkbox_Panel_8, $GUI_DISABLE)
+	GUICtrlSetState($Checkbox_Panel_9, $GUI_DISABLE)
+
+
+	GUISetState(@SW_SHOW, $SteamVR_Home_Panels_GUI)
+	GUIDelete($GUI_Loading)
 EndFunc
 
 
 Func _Checkbox_Panel_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13472) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_1()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_1)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12686,6 +13743,7 @@ Func _Checkbox_Panel_1()
 EndFunc
 
 Func _Checkbox_Panel_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13483) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_2()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_2)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12696,6 +13754,7 @@ Func _Checkbox_Panel_2()
 EndFunc
 
 Func _Checkbox_Panel_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13494) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_3()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_3)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12706,6 +13765,7 @@ Func _Checkbox_Panel_3()
 EndFunc
 
 Func _Checkbox_Panel_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13505) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_4()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_4)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12716,6 +13776,7 @@ Func _Checkbox_Panel_4()
 EndFunc
 
 Func _Checkbox_Panel_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13516) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_5()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_5)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12726,6 +13787,7 @@ Func _Checkbox_Panel_5()
 EndFunc
 
 Func _Checkbox_Panel_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13527) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_6()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_6)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12736,6 +13798,7 @@ Func _Checkbox_Panel_6()
 EndFunc
 
 Func _Checkbox_Panel_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13538) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_7()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_7)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12746,6 +13809,7 @@ Func _Checkbox_Panel_7()
 EndFunc
 
 Func _Checkbox_Panel_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13549) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_8()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_8)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12756,6 +13820,7 @@ Func _Checkbox_Panel_8()
 EndFunc
 
 Func _Checkbox_Panel_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13560) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_9()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_9)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12766,6 +13831,7 @@ Func _Checkbox_Panel_9()
 EndFunc
 
 Func _Checkbox_Panel_10()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13571) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_10()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_10)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12776,6 +13842,7 @@ Func _Checkbox_Panel_10()
 EndFunc
 
 Func _Checkbox_Panel_11()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13582) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_11()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_11)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12786,6 +13853,7 @@ Func _Checkbox_Panel_11()
 EndFunc
 
 Func _Checkbox_Panel_Turorials()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13593) :(' & @MIN & ':' & @SEC & ') _Checkbox_Panel_Turorials()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_Panel_Tutorials)
 	If $Value = 1 Then
 		$Value = "true"
@@ -12796,16 +13864,19 @@ Func _Checkbox_Panel_Turorials()
 EndFunc
 
 Func _Combo_Panel_Tool_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13604) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Tool_1()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Combo_Panel_Tool_1)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_1", $Value)
 EndFunc
 
 Func _Combo_Panel_Tool_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13610) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Tool_2()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Combo_Panel_Tool_2)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_Tool_2", $Value)
 EndFunc
 
 Func _Panel_Nr_Selection_Updown()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13616) :(' & @MIN & ':' & @SEC & ') _Panel_Nr_Selection_Updown()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Panel_Nr_Selection_Input)
 	If $Value > 11 Then $Value = 11
 	If $Value < 1 Then $Value = 1
@@ -12815,18 +13886,21 @@ Func _Panel_Nr_Selection_Updown()
 EndFunc
 
 Func _Combo_Panel_width()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13626) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_width()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_width)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Panel_width", $Value)
 EndFunc
 
 Func _Combo_Panel_height()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13633) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_height()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_height)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Panel_height", $Value)
 EndFunc
 
 Func _Combo_Panel_background_color()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13640) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_background_color()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_background_color)
 
@@ -12848,12 +13922,14 @@ Func _Combo_Panel_background_color()
 EndFunc
 
 Func _Combo_Panel_border()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13662) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_border()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_border)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Border", $Value)
 EndFunc
 
 Func _Combo_Panel_border_color()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13669) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_border_color()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_border_color)
 
@@ -12874,30 +13950,35 @@ Func _Combo_Panel_border_color()
 EndFunc
 
 Func _Combo_Panel_border_radius()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13690) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_border_radius()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead(_Combo_Panel_border_radius)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Border_radius", $Value)
 EndFunc
 
 Func _Combo_Panel_saturation()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13697) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_saturation()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_saturation)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Saturation", $Value)
 EndFunc
 
 Func _Combo_Panel_scale()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13704) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_scale()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_scale)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scale", $Value)
 EndFunc
 
 Func _Combo_Panel_Text_size()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13711) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Text_size()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Text_size)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_size", $Value)
 EndFunc
 
 Func _Combo_Panel_Text_Color()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13718) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Text_Color()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Text_Color)
 
@@ -12918,36 +13999,42 @@ Func _Combo_Panel_Text_Color()
 EndFunc
 
 Func _Combo_Panel_text_position()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13739) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_text_position()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_text_position)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_position", $Value)
 EndFunc
 
 Func _Combo_Panel_Text_distance()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13746) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Text_distance()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Text_distance)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Text_distance", $Value)
 EndFunc
 
 Func _Combo_Panel_Icon_distance()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13753) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_distance()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_distance)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_distance", $Value)
 EndFunc
 
 Func _Combo_Panel_Icon_width()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13760) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_width()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_width)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_width", $Value)
 EndFunc
 
 Func _Combo_Panel_Icon_height()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13767) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_height()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_height)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_height", $Value)
 EndFunc
 
 Func _Combo_Panel_Icon_radius()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13774) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_radius()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_radius)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_radius", $Value)
@@ -12955,12 +14042,14 @@ EndFunc
 
 
 Func _Combo_Panel_Icon_border_hover()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13782) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_border_hover()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_hover)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_border_hover", $Value)
 EndFunc
 
 Func _Combo_Panel_Icon_border_color_hover()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13789) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_border_color_hover()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_color_hover)
 
@@ -12981,30 +14070,35 @@ Func _Combo_Panel_Icon_border_color_hover()
 EndFunc
 
 Func _Combo_Panel_Icon_border_radius_hover()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13810) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Icon_border_radius_hover()' & @CR) ;### Function Trace
 		Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Icon_border_radius_hover)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Icon_border_radius_hover", $Value)
 EndFunc
 
 Func _Combo_Panel_Scroll_button_position()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13817) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Scroll_button_position()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_position)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_position", $Value)
 EndFunc
 
 Func _Combo_Panel_Scroll_button_width()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13824) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Scroll_button_width()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_width)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_width", $Value)
 EndFunc
 
 Func _Combo_Panel_Scroll_button_height()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13831) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Scroll_button_height()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_height)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_height", $Value)
 EndFunc
 
 Func _Combo_Panel_Scroll_button_color()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13838) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Scroll_button_color()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_color)
 
@@ -13025,6 +14119,7 @@ Func _Combo_Panel_Scroll_button_color()
 EndFunc
 
 Func _Combo_Panel_Scroll_button_border_radius()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13859) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Scroll_button_border_radius()' & @CR) ;### Function Trace
 	Local $Panel_Nr_temp = IniRead($SteamVR_Home_Panel_Settings_INI, "Settings", "Panel_NR", "1")
 	Local $Value = GUICtrlRead($Combo_Panel_Scroll_button_border_radius)
 	IniWrite($SteamVR_Home_Panel_Settings_INI, "Panel_" & $Panel_Nr_temp & "_appearance", "Scroll_button_border_radius", $Value)
@@ -13032,110 +14127,745 @@ EndFunc
 
 
 Func _Combo_Environment_Name()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13867) :(' & @MIN & ':' & @SEC & ') _Combo_Environment_Name()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Combo_Environment_Name)
 	IniWrite($Config_INI, "Settings", "SteamVR_Environment_Name", $Value)
 	$SteamVR_Environment_Name = IniRead($Config_INI, "Settings", "SteamVR_Environment_Name", "homeloader")
 EndFunc
 
 Func _Checkbox_DVD_Case_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13874) :(' & @MIN & ':' & @SEC & ') _Checkbox_DVD_Case_1()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Checkbox_DVD_Case_1)
-	If $Value = 1 Then
-		$Value = "true"
-		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_ENABLE)
+
+	Local $DVD_Case_Cover_Check = "false"
+	Local $DVD_Case_Material_Check = "false"
+	Local $DVD_Case_Model_Check = "false"
+	Local $DVD_Case_Templates_Check = "false"
+
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Cover\") Then  $DVD_Case_Cover_Check = "true"
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Material\") Then  $DVD_Case_Material_Check = "true"
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Model\") Then  $DVD_Case_Model_Check = "true"
+	If FileExists($Install_DIR & "Apps\SteamVR_Home\DVD_Case_Templates\") Then  $DVD_Case_Templates_Check = "true"
+
+	If $DVD_Case_Cover_Check = "true" And $DVD_Case_Material_Check = "true" And $DVD_Case_Model_Check = "true" And $DVD_Case_Templates_Check = "true" Then
+		If $Value = 1 Then
+			$Value = "true"
+			GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_ENABLE)
+		Else
+			$Value = "false"
+			GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_DISABLE)
+		EndIf
+		IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", $Value)
 	Else
 		$Value = "false"
+		GUICtrlSetState($Checkbox_DVD_Case_1, $GUI_UNCHECKED)
 		GUICtrlSetState($Combo_DVD_Cover_Template, $GUI_DISABLE)
+		IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", $Value)
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing DVD Case Files", "The HomeLoader DVD case files are missing. Download the DVD case files first and copy them to the appropriate folder.")
 	EndIf
-	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", $Value)
 EndFunc
 
 Func _Combo_DVD_Cover_Template()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13887) :(' & @MIN & ':' & @SEC & ') _Combo_DVD_Cover_Template()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Combo_DVD_Cover_Template)
 	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "dvd_cover_template", $Value)
 EndFunc
 
 Func _Checkbox_Arcade_Machine_1()
-	Local $Value = GUICtrlRead($Checkbox_Arcade_Machine_1)
-	If $Value = 1 Then
-		$Value = "true"
-	Else
-		$Value = "false"
-	EndIf
-	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", $Value)
+	;If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13893) :(' & @MIN & ':' & @SEC & ') _Checkbox_Arcade_Machine_1()' & @CR) ;### Function Trace
+	;Local $Value = GUICtrlRead($Checkbox_Arcade_Machine_1)
+	;If $Value = 1 Then
+	;	$Value = "true"
+	;Else
+	;	$Value = "false"
+	;EndIf
+	;IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_Arcade_Machine", $Value)
 EndFunc
 
 
 
+Func _Checkbox_HL_Environment_Enable_Row_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13906) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_1()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_1)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_1, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_1, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_1)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13941) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_2()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_2)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_2, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_2, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_2)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (13976) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_3()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_3)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_3, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_3, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_3)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_3", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_3", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_3", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_3", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14011) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_4()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_4)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_4, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_4, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_4)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_4", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_4", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_4", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_4", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14046) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_5()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_5)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_5, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_5, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_5)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_5", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_5", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_5", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_5", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14081) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_6()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_6)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_6, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_6, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_6)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_6", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_6", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_6", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_6", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14116) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_7()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_7)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_7, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_7, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_7)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_7", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_7", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_7", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_7", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14151) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_8()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_8)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_8, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_8, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_8)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_8", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_8", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_8", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_8", $Value)
+EndFunc
+
+Func _Checkbox_HL_Environment_Enable_Row_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14186) :(' & @MIN & ':' & @SEC & ') _Checkbox_HL_Environment_Enable_Row_9()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Checkbox_HL_Environment_Enable_Row_9)
+	If $Value = 1 Then
+		$Value = "true"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_9, $GUI_ENABLE)
+	Else
+		$Value = "false"
+		GUICtrlSetState($Combo_HomeLoader_Menu_Category_Row_9, $GUI_DISABLE)
+	EndIf
+
+	If $HomeApp <> "SteamVR Home" Then
+		Local $Value_Combo = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_9)
+
+		If $Value_Combo = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_9", "false")
+			$Value = "false"
+		ElseIf $Value_Combo = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_9", "false")
+			$Value = ""
+		ElseIf $Value_Combo = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_9", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_9", $Value)
+EndFunc
+
+
+Func _Combo_HomeLoader_Menu_Category_Row_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14222) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_1()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_1)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_1, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_1", "false")
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_1", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14248) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_2()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_2)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Enable_Row_2", "false")
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_2, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_2", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14272) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_3()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_3)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_3, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_3", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14295) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_4()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_4)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_4, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_4", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14318) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_5()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_5)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_5, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_5", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_6()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14341) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_6()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_6)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_6, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_6", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_7()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14364) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_7()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_7)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_7, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_7", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_8()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14387) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_8()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_8)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_8, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_8", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Menu_Category_Row_9()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14410) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Category_Row_9()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Category_Row_9)
+
+	If $HomeApp <> "SteamVR Home" Then
+		If $Value = "Non-Library Appl." Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Non-Library Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Viveport Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Viveport Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			$Value = ""
+		ElseIf $Value = "Oculus Applications" Then
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "You need to select SteamVR as Home App to be able to start Oculus Applications.")
+			GUICtrlSetState($Checkbox_HL_Environment_Enable_Row_9, $GUI_UNCHECKED)
+			$Value = ""
+		EndIf
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Category_Row_9", $Value)
+EndFunc
+
+
+Func _Combo_HomeLoader_Menu_Panel_Distance_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14434) :(' & @MIN & ':' & @SEC & ') _Combo_HomeLoader_Menu_Panel_Distance_1()' & @CR) ;### Function Trace
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Menu_Panel_Distance_1)
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "HomeLoader_Menu", "Panel_Distance", $Value)
+EndFunc
+
+Func _Combo_HomeLoader_Environment_Map()
+	;MsgBox(0, "_Combo_HomeLoader_Environment_Map()", "_Combo_HomeLoader_Environment_Map()")
+
+	Local $Value = GUICtrlRead($Combo_HomeLoader_Environment_Map)
+
+	Local $Environment_Map = $Value
+	If $Environment_Map = "" Then
+		$Environment_Map = "homeloader_default"
+	EndIf
+
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", $Environment_Map)
+
+	$HomeLoader_Map_Image = $HomeLoader_Map_Folder & $Environment_Map & "\" & "preview_image.jpg"
+	If FileExists($HomeLoader_Map_Image) Then
+		GUICtrlSetImage($Map_Preview_Image, $HomeLoader_Map_Image)
+
+		Local $Map_INI = $HomeLoader_Map_Folder & $Environment_Map & "\map.ini"
+		Local $Map_Name = IniRead($Map_INI, "Map", "Name", "")
+		Local $Map_Environment_by = IniRead($Map_INI, "Map", "Environment_by", "")
+		Local $Map_Environment_source = IniRead($Map_INI, "Map", "Environment_source", "")
+		Local $Map_Model_by = IniRead($Map_INI, "Map", "Model_by", "")
+		Local $Map_Model_source = IniRead($Map_INI, "Map", "Model_source", "")
+
+		GUICtrlSetTip($Map_Preview_Image, "Map Name: " & @TAB & @TAB & $Map_Name & @CRLF & _
+											"Environment by: " & @TAB & @TAB & $Map_Environment_by & @CRLF & _
+											"Environment source: " & @TAB & $Map_Environment_source & @CRLF & _
+											"Model by: " & @TAB & @TAB & $Map_Model_by & @CRLF & _
+											"Model source: " & @TAB & @TAB & $Map_Model_source & @CRLF)
+	Else
+		GUICtrlSetImage($Map_Preview_Image, $HomeLoader_Map_Image_Template)
+	EndIf
+EndFunc
+
+
+
+
 Func _Button_Panel_Settings_Apply()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14441) :(' & @MIN & ':' & @SEC & ') _Button_Panel_Settings_Apply()' & @CR) ;### Function Trace
+
 	Local $SteamVR_Home_Environment_Enable_DVD_Case = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Enable_DVD_Case", "")
 
 	;If $HomeApp = "SteamVR Home" Then
+
+		Local $Timer = TimerInit()
+
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment started.")
 		If WinExists("HomeLoader - Library") Then
 			_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment [1/2], please wait..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 		EndIf
 
 		If WinExists("HomeLoader - Library") Then
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+			GUICtrlSetData($Anzeige_Fortschrittbalken_2, 5)
 		EndIf
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[1]")
 		_Create_SteamVR_Home_GamePages()
 
-		If WinExists("HomeLoader - Library") Then
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 20)
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 20)
+
+		If $SteamVR_Home_Environment_Enable_DVD_Case = "true" Then
+			_Create_Environment_Control_Panel()
 		EndIf
+
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 35)
+
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[2]")
 		_Create_Panel_CSS()
 
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 45)
+
+		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[3]")
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+		_Create_Menu_Panel()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 30)
+		_Create_Menu_LUA()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
+		_Create_Tool_S_LUA_Files()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 70)
+		_Create_LUA_Files()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 90)
+		_Create_Map_Script_LUA()
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		Sleep(500)
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+
+
+		If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 50)
+		Sleep(500)
+
 		If $SteamVR_Home_Environment_Enable_DVD_Case = "true" Then
 			If WinExists("HomeLoader - Library") Then
-				GUICtrlSetData($Anzeige_Fortschrittbalken, 40)
-			EndIf
-			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[3]")
-			_Create_LUA_Files()
-			_Create_Map_Script_LUA()
-
-			If WinExists("HomeLoader - Library") Then
-				GUICtrlSetData($Anzeige_Fortschrittbalken, 50)
+				GUICtrlSetData($Anzeige_Fortschrittbalken_2, 55)
 			EndIf
 			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[4]")
+
+			If WinExists("HomeLoader - Library") Then
+				GUICtrlSetData($Anzeige_Fortschrittbalken_2, 60)
+			EndIf
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[5]")
 			_Add_DVD_Case_Models()
 
 			If WinExists("HomeLoader - Library") Then
-				GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+				GUICtrlSetData($Anzeige_Fortschrittbalken_2, 65)
 			EndIf
-			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[5]")
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[6]")
 			_Add_DVD_Case_Materials()
 
 			If WinExists("HomeLoader - Library") Then
-				GUICtrlSetData($Anzeige_Fortschrittbalken, 80)
+				GUICtrlSetData($Anzeige_Fortschrittbalken_2, 70)
 			EndIf
-			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[6]")
+			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[7]")
 			_Create_DVD_Case_Cover_JPG()
 			If WinExists("HomeLoader - Library") Then
-				GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+				GUICtrlSetData($Anzeige_Fortschrittbalken_2, 75)
 			EndIf
 		EndIf
 
 
 		If WinExists("HomeLoader - Library") Then
 			_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment [2/2], please wait..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+			GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+			GUICtrlSetData($Anzeige_Fortschrittbalken_2, 80)
 			Sleep(1000)
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
 		EndIf
 
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[7]")
 		_Compile_SteamVR_Files()
 
 		If WinExists("HomeLoader - Library") Then
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 95)
+			GUICtrlSetData($Anzeige_Fortschrittbalken_2, 90)
+		EndIf
+
+		If $SteamVR_Home_Environment_Enable_DVD_Case = "true" Then
+			_Add_Empty_DVD_Cases()
+		EndIf
+
+		If WinExists("HomeLoader - Library") Then
+			GUICtrlSetData($Anzeige_Fortschrittbalken_2, 95)
 		EndIf
 		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[8]")
-		;_Copy_Compile_To_SteamVR_Environment_Folder()
+
+		If $Use_unpacked_workshop_environment = "false" Then
+			_Pack_Environment_Final()
+		EndIf
+
 		Sleep(1000)
 
 		If WinExists("HomeLoader - Library") Then
-			GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+			GUICtrlSetData($Anzeige_Fortschrittbalken_2, 100)
 		EndIf
 		If WinExists("HomeLoader - Library") Then
 			_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
@@ -13151,9 +14881,24 @@ Func _Button_Panel_Settings_Apply()
 	If WinExists("HomeLoader - Library") Then
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
 	EndIf
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
+	EndIf
+
+	$HomeApp = IniRead($Config_INI, "Settings_HomeAPP", "HomeApp", "")
+	;If $HomeApp <> "SteamVR Home" Then _StartUp_Radio_1()
+
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 EndFunc
 
+
 Func _RM_Button_SteamVRHome_Panel_Settings_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14555) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_1()' & @CR) ;### Function Trace
 	Local $Timer = TimerInit()
 	_Button_Panel_Settings_Apply()
 	Local $TimerDiff = TimerDiff($Timer)
@@ -13165,6 +14910,7 @@ Func _RM_Button_SteamVRHome_Panel_Settings_1()
 EndFunc
 
 Func _RM_Button_SteamVRHome_Panel_Settings_2()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14567) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_2()' & @CR) ;### Function Trace
 	Local $Timer = TimerInit()
 	If WinExists("HomeLoader - Library") Then
 		_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment...please wait..." & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
@@ -13191,6 +14937,10 @@ Func _RM_Button_SteamVRHome_Panel_Settings_2()
 		_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	EndIf
 
+	If $Use_unpacked_workshop_environment = "false" Then
+		_Pack_Environment_Final()
+	EndIf
+
 	Local $TimerDiff = TimerDiff($Timer)
 	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
 	Local $min = Round(($sec / 60), 2) ; min
@@ -13200,6 +14950,48 @@ Func _RM_Button_SteamVRHome_Panel_Settings_2()
 EndFunc
 
 Func _RM_Button_SteamVRHome_Panel_Settings_3()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14603) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_3()' & @CR) ;### Function Trace
+	Local $Timer = TimerInit()
+	If WinExists("HomeLoader - Library") Then
+		_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment...please wait..." & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 10)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[1]")
+	_Create_Menu_Panel()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 40)
+	EndIf
+	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Preparing SteamVR Home Environment[2]")
+	_Create_Menu_LUA()
+	_Create_Tool_S_LUA_Files()
+
+	If WinExists("HomeLoader - Library") Then
+		GUICtrlSetData($Anzeige_Fortschrittbalken, 60)
+	EndIf
+	_Compile_HomeLoader_Menu()
+
+	If $Use_unpacked_workshop_environment = "false" Then
+		_Pack_Environment_Final()
+	EndIf
+
+	If WinExists("HomeLoader - Library") Then
+		;GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
+		Sleep(500)
+		;GUICtrlSetData($Anzeige_Fortschrittbalken, 0)
+		_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	EndIf
+
+	Local $TimerDiff = TimerDiff($Timer)
+	Local $sec = Round(($TimerDiff / 1000), 2) ; sec
+	Local $min = Round(($sec / 60), 2) ; min
+	Local $TimerDiff_temp = $sec & " seconds"
+	If $sec > 60 Then $TimerDiff_temp = $min & " minutes"
+	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+EndFunc
+
+Func _RM_Button_SteamVRHome_Panel_Settings_4()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14640) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_4()' & @CR) ;### Function Trace
 	Local $Timer = TimerInit()
 	If WinExists("HomeLoader - Library") Then
 		_GUICtrlStatusBar_SetText($Statusbar, "Preparing SteamVR Home Environment...please wait..." & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
@@ -13232,6 +15024,10 @@ Func _RM_Button_SteamVRHome_Panel_Settings_3()
 	EndIf
 	_Compile_DVD_Case_Models()
 
+	If $Use_unpacked_workshop_environment = "false" Then
+		_Pack_Environment_Final()
+	EndIf
+
 	If WinExists("HomeLoader - Library") Then
 		GUICtrlSetData($Anzeige_Fortschrittbalken, 100)
 		Sleep(500)
@@ -13247,15 +15043,211 @@ Func _RM_Button_SteamVRHome_Panel_Settings_3()
 	_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & @TAB & "Environment Updated in: " & $TimerDiff_temp & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 EndFunc
 
-Func _RM_Button_SteamVRHome_Panel_Settings_4()
+Func _RM_Button_SteamVRHome_Panel_Settings_5()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14689) :(' & @MIN & ':' & @SEC & ') _RM_Button_SteamVRHome_Panel_Settings_5()' & @CR) ;### Function Trace
 	MsgBox(0, "_RM_Button_SteamVRHome_Panel_Settings_4()", "_RM_Button_SteamVRHome_Panel_Settings_4()")
+	_Compile_HomeLoader_Maps()
+EndFunc
+
+Func _RM_Selection_Prepare_Environment_Button()
+	MouseClick($MOUSE_CLICK_RIGHT)
+EndFunc
+
+Func _RM_Prepare_Environment_Item_1()
+	;MsgBox(0, "_RM_Prepare_Environment_Item_1", "_RM_Prepare_Environment_Item_1")
+	ShellExecute($SteamVR_Environment_URL)
+EndFunc
+
+Func _RM_Prepare_Environment_Item_2()
+	;MsgBox(0, "_RM_Prepare_Environment_Item_2", "_RM_Prepare_Environment_Item_2")
+	_Update_HomeLoader_Environment_Workshop_Files_Folders()
+EndFunc
+
+Func _RM_Prepare_Environment_Item_3()
+	;MsgBox(0, "_RM_Prepare_Environment_Item_3", "_RM_Prepare_Environment_Item_3")
+	;_Select_New_Workshop_Environment_File()
+EndFunc
+
+Func _RM_Prepare_Environment_Item_4()
+	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Use_unpacked_workshop_environment", "true")
+	GUICtrlSetState($RM_Prepare_Environment_Item_4, $GUI_CHECKED)
+	GUICtrlSetState($RM_Prepare_Environment_Item_5, $GUI_UNCHECKED)
+	$Use_unpacked_workshop_environment = "true"
+EndFunc
+
+Func _RM_Prepare_Environment_Item_5()
+	Local $HomeLoader_VPK_Folder = $Install_DIR & "Apps\SteamVR_Home\VPK\"
+	Local $VPK_Path = $HomeLoader_VPK_Folder & "vpk.exe"
+
+	If Not FileExists($VPK_Path) Then
+		_Check_VPK()
+	EndIf
+
+	If FileExists($VPK_Path) Then
+		IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Use_unpacked_workshop_environment", "false")
+		GUICtrlSetState($RM_Prepare_Environment_Item_4, $GUI_UNCHECKED)
+		GUICtrlSetState($RM_Prepare_Environment_Item_5, $GUI_CHECKED)
+		$Use_unpacked_workshop_environment = "false"
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Attention.", "vpk.exe File could not be found." & @CRLF & _
+															"Try again after one of the mentioned games is installed " & _
+															"or after copying the vpk.exe manually to the following folder." & @CRLF & @CRLF & _
+															$HomeLoader_VPK_Folder & @CRLF)
+	EndIf
+EndFunc
+
+Func _RM_Prepare_Environment_Item_6()
+	;MsgBox(0, "_RM_Prepare_Environment_Item_6", "_RM_Prepare_Environment_Item_6")
+	_Pack_Environment_Final()
+EndFunc
+
+Func _RM_Map_Preview_Image()
+	MouseClick($MOUSE_CLICK_RIGHT)
+EndFunc
+
+Func _RM_Button_RM_Map_Preview_Image_1()
+	Local $Value_Map = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", "")
+
+	Local $Environment_Map = $Value_Map
+	If $Environment_Map = "" Then
+		$Environment_Map = "homeloader_default"
+	EndIf
+
+	Local $Map_INI = $HomeLoader_Map_Folder & $Environment_Map & "\map.ini"
+	Local $Map_Environment_source = IniRead($Map_INI, "Map", "Environment_source", "")
+
+	If StringLeft($Map_Environment_source, 4) = "http" Then
+		ShellExecute($Map_Environment_source)
+	EndIf
+EndFunc
+
+Func _RM_Button_RM_Map_Preview_Image_2()
+	Local $Value_Map = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", "")
+
+	Local $Environment_Map = $Value_Map
+	If $Environment_Map = "" Then
+		$Environment_Map = "homeloader_default"
+	EndIf
+
+	Local $Map_INI = $HomeLoader_Map_Folder & $Environment_Map & "\map.ini"
+	Local $Map_Model_source = IniRead($Map_INI, "Map", "Model_source", "")
+
+	If StringLeft($Map_Model_source, 4) = "http" Then
+		ShellExecute($Map_Model_source)
+	EndIf
 EndFunc
 
 
+
+
+
+Func _Button_Environment_Apply_Map()
+	_Copy_Map_Files()
+	Local $Environment_Map = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Map", "")
+	$NR_Applications = IniRead($ApplicationList_SteamLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
+
+	Sleep(500)
+	If WinExists("HomeLoader - Library") Then
+		Sleep(250)
+		_GUICtrlStatusBar_SetText($Statusbar, "Ready for use..." & $Scan_Duration & @TAB & "Apps: " & $NR_ApplicationsCheck & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
+	EndIf
+	If WinExists("HomeLoader - Library") Then GUICtrlSetData($Anzeige_Fortschrittbalken_2, 0)
+EndFunc
+
+Func _Button_Environment_Create_New_Map()
+	Local $SteamtoursCFG_EXE = $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtourscfg.exe"
+	Local $New_Map_Name = ""
+
+	$New_Map_Name = InputBox("Map Name.", "Enter the name of your new map. Use only lowercase letters and continue with 'OK'", "new_map", "", 270, 140)
+
+	;Local $Template_Folder = $Install_DIR & "Apps\SteamVR_Home\Maps\homeloader_template\"
+	Local $Template_Folder = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & "homeloader" & "\maps\homeloader_template\"
+	;Local $Template_File = $Install_DIR & "Apps\SteamVR_Home\Maps\homeloader_template\map_homeloader_template.vmap"
+	Local $Template_File = $Template_Folder & "map_homeloader_template.vmap"
+	Local $New_Map_File = $SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\" & "homeloader" & "\maps\" & $New_Map_Name & ".vmap"
+
+	;Local $Template_Cache_File = $Install_DIR & "Apps\SteamVR_Home\Maps\homeloader_template\map_homeloader_template_bakeresourcecache.vpk"
+	Local $Template_Cache_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & "homeloader" & "\maps\homeloader_template\map_homeloader_template_bakeresourcecache.vpk"
+	Local $New_Map_Cache_File = $SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\" & "homeloader" & "\maps\map_" & $New_Map_Name & "_bakeresourcecache.vpk"
+
+	If $New_Map_Name <> "" Then
+		DirCopy($Template_Folder & "graphs", $Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\graphs")
+		Sleep(100)
+		;FileCopy($Template_Folder & "map.ini", $Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", $FC_OVERWRITE + $FC_CREATEPATH)
+		;Sleep(100)
+		FileCopy($Template_Folder & "preview_image.jpg", $Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\preview_image.jpg", $FC_OVERWRITE + $FC_CREATEPATH)
+		Sleep(100)
+
+		FileCopy($Template_File, $New_Map_File, $FC_OVERWRITE + $FC_CREATEPATH)
+		FileCopy($Template_Cache_File, $New_Map_Cache_File, $FC_OVERWRITE + $FC_CREATEPATH)
+
+		IniWrite($Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", "Map", "Name", $New_Map_Name)
+		IniWrite($Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", "Map", "Environment_by", "")
+		IniWrite($Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", "Map", "Environment_source", "")
+		IniWrite($Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", "Map", "Model_by", "")
+		IniWrite($Install_DIR & "Apps\SteamVR_Home\Maps\" & $New_Map_Name & "\map.ini", "Map", "Model_source", "")
+
+		ShellExecute($SteamtoursCFG_EXE)
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing Environment Name.", "Enter an Name for the Environment and try again." & @CRLF)
+	EndIf
+EndFunc
+
+Func _Button_Environment_Edit_Map()
+	Local $SteamtoursCFG_EXE = $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtourscfg.exe"
+	Local $steamtours_addons_Content_Map_Folder = $SteamVR_Path & "tools\steamvr_environments\content\steamtours_addons\homeloader\maps\"
+
+	Local $FileList = _FileListToArray($steamtours_addons_Content_Map_Folder, "*.vmap", 1)
+
+	If IsArray($FileList) Then
+		If $FileList[0] > 0 Then
+			ShellExecute($SteamtoursCFG_EXE)
+		Else
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing Map File.", "Missing Map File. Create a New Map and try again." & @CRLF)
+		EndIf
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing Map File.", "Missing Map File. Create a New Map and try again." & @CRLF)
+	EndIf
+EndFunc
+
+Func _Button_Environment_Save_Map()
+	Local $Map_Name, $Map_File_source, $Map_File_target, $AIN_File_source, $AIN_File_target
+	Local $SteamtoursCFG_EXE = $SteamVR_Path & "tools\steamvr_environments\game\bin\win64\steamtourscfg.exe"
+	Local $steamtours_addons_Game_Map_Folder = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\homeloader\maps\"
+	Local $Maps_Folder = $Install_DIR & "Apps\SteamVR_Home\Maps\"
+
+	Local $FileList = _FileListToArray($steamtours_addons_Game_Map_Folder, "*.vpk", 1)
+
+	If IsArray($FileList) Then
+		If $FileList[0] > 0 Then
+			For $Loop = 1 To $FileList[0]
+				If FileExists($steamtours_addons_Game_Map_Folder & $FileList[$Loop]) Then
+					$Map_Name = StringReplace($FileList[$Loop], '.vpk', '')
+					$Map_File_source = $steamtours_addons_Game_Map_Folder & $FileList[$Loop]
+					$Map_File_target = $Maps_Folder & $Map_Name & "\" & $FileList[$Loop]
+					$AIN_File_source = $steamtours_addons_Game_Map_Folder & "graphs\" & $Map_Name & ".ain"
+					$AIN_File_target = $Maps_Folder & $Map_Name & "\graphs\" & $Map_Name & ".ain"
+
+					FileCopy($Map_File_source, $Map_File_target, $FC_OVERWRITE + $FC_CREATEPATH)
+					FileCopy($AIN_File_source, $AIN_File_target, $FC_OVERWRITE + $FC_CREATEPATH)
+				EndIf
+			Next
+		Else
+			MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing Map File.", "Missing Map File. Build the Map with the Hammer editor first and try again." & @CRLF)
+		EndIf
+	Else
+		MsgBox($MB_OK + $MB_ICONINFORMATION, "Missing Map File.", "Missing Map File. Build the Map with the Hammer editor first and try again." & @CRLF)
+	EndIf
+EndFunc
+
+
+
+
+
 Func _Combo_Panel_Layout()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14695) :(' & @MIN & ':' & @SEC & ') _Combo_Panel_Layout()' & @CR) ;### Function Trace
 	Local $Value = GUICtrlRead($Combo_Panel_Layout)
 	IniWrite($SteamVR_Home_Environment_Settings_INI, "Settings", "Layout", $Value)
-	$SteamVR_Home_Environment_Settings_INI = IniRead($SteamVR_Home_Environment_Settings_INI, "Settings", "Layout", "")
 	If FileExists($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\" & $Value & ".ini") Then
 		FileCopy($Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Layouts\" & $Value & ".ini", $Install_DIR & "Apps\SteamVR_Home\SteamVR_Home_Panel_Settings.ini", $FC_OVERWRITE + $FC_CREATEPATH)
 	EndIf
@@ -13263,11 +15255,13 @@ Func _Combo_Panel_Layout()
 EndFunc
 
 Func _Close_Button_SteamVRHome_Panel_Settings_GUI()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14705) :(' & @MIN & ':' & @SEC & ') _Close_Button_SteamVRHome_Panel_Settings_GUI()' & @CR) ;### Function Trace
 	GUIDelete($SteamVR_Home_Panels_GUI)
 EndFunc
 #EndRegion Func Create Game Pages
 
 Func _Start_Revive_Oculus_App()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14711) :(' & @MIN & ':' & @SEC & ') _Start_Revive_Oculus_App()' & @CR) ;### Function Trace
 	If $ScanOnlyVR = "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamVRLibrary_ALL_INI
 	If $ScanOnlyVR <> "true" Then $ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
 
@@ -13297,10 +15291,16 @@ EndFunc
 
 #Region Read/Write Steam Files
 Func _Read_steamapps_vrmanifest()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14741) :(' & @MIN & ':' & @SEC & ') _Read_steamapps_vrmanifest()' & @CR) ;### Function Trace
 	If FileExists($ApplicationList_SteamVRLibrary_ALL_INI) Then FileDelete($ApplicationList_SteamVRLibrary_ALL_INI)
 	Local $ApplicationList_NR_TEMP = IniRead($ApplicationList_SteamVRLibrary_ALL_INI, "ApplicationList", "NR_Applications", "")
 	Local $FileLines = _FileCountLines($Steamapps_vrmanifest_FilePath)
-	_FileReadToArray($Steamapps_vrmanifest_FilePath, $Steamapps_vrmanifest_Array)
+	$Array_Result = _FileReadToArray($Steamapps_vrmanifest_FilePath, $Steamapps_vrmanifest_Array)
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 
 	$Loop_End_1 = $Steamapps_vrmanifest_Array[0]
 
@@ -13331,7 +15331,12 @@ Func _Read_steamapps_vrmanifest()
 					$ApplicationList_NR_TEMP = $ApplicationList_NR_TEMP + 1
 
 					Local $sFill = $Steam_app_Name_TEMP & "|" & $SteamAppID_TEMP
-					_ArrayAdd($Array_Sorted, $sFill)
+					$Array_Result = _ArrayAdd($Array_Sorted, $sFill)
+					If @error Then
+						$ScriptLineNumber_Temp = @ScriptLineNumber
+						$AtError_Result = @error
+					EndIf
+					If $AtError_Result <> "" Or $Array_Result = -1 Then _ArrayAdd_Error_Handler()
 
 					If WinExists("HomeLoader - Library") Then
 						_GUICtrlStatusBar_SetText($Statusbar, "" & "Scan SteamLibrary: " & "Nr: " & $ApplicationList_NR_TEMP & " - " & "Name: " & $Steam_app_Name_TEMP & " - " & "SteamAppID: " & $SteamAppID_TEMP & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
@@ -13389,8 +15394,14 @@ Func _Read_steamapps_vrmanifest()
 EndFunc   ;==>_Read_steamapps_vrmanifest
 
 Func _Read_SteamVR_VRSettings()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14844) :(' & @MIN & ':' & @SEC & ') _Read_SteamVR_VRSettings()' & @CR) ;### Function Trace
 	Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
-	_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+	$Array_Result = _FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+	If @error Then
+		$ScriptLineNumber_Temp = @ScriptLineNumber
+		$AtError_Result = @error
+	EndIf
+	If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 
 	If FileExists($Steamvr_vrsettings_FilePath) Then
 		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
@@ -13520,6 +15531,7 @@ Func _Read_SteamVR_VRSettings()
 EndFunc   ;==>_Read_SteamVR_VRSettings
 
 Func _Write_to_SteamVR_VRSettings()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (14981) :(' & @MIN & ':' & @SEC & ') _Write_to_SteamVR_VRSettings()' & @CR) ;### Function Trace
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	If $Add_SS_per_game = "true" Then
 		$ButtonTAB_State = IniRead($Config_INI, "Settings", "ButtonTAB_State", "")
@@ -13543,7 +15555,12 @@ Func _Write_to_SteamVR_VRSettings()
 		;MsgBox(0, "11580", $Steam_app_Name & @CRLF & $Game_ID)
 
 		Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
-		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		$Array_Result = _FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
 
 		$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
@@ -13635,6 +15652,7 @@ Func _Write_to_SteamVR_VRSettings()
 EndFunc   ;==>_Write_to_SteamVR_VRSettings
 
 Func _RM_Write_to_SteamVR_VRSettings()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15102) :(' & @MIN & ':' & @SEC & ') _RM_Write_to_SteamVR_VRSettings()' & @CR) ;### Function Trace
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	$Add_SS_per_game = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
 	If $Add_SS_per_game = "true" Then
@@ -13659,7 +15677,12 @@ Func _RM_Write_to_SteamVR_VRSettings()
 		;MsgBox(0, "11580", $Steam_app_Name & @CRLF & $Game_ID)
 
 		Local $FileLines = _FileCountLines($Steamvr_vrsettings_FilePath)
-		_FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		$Array_Result = _FileReadToArray($Steamvr_vrsettings_FilePath, $Steamvr_vrsettings_Array)
+		If @error Then
+			$ScriptLineNumber_Temp = @ScriptLineNumber
+			$AtError_Result = @error
+		EndIf
+		If $AtError_Result <> "" Or $Array_Result = -1 Then _FileReadToArray_Error_Handler()
 		$Loop_End_1 = $Steamvr_vrsettings_Array[0]
 
 		$ApplicationList_INI_TEMP = $ApplicationList_SteamLibrary_ALL_INI
@@ -13764,6 +15787,7 @@ EndFunc   ;==>_RM_Write_to_SteamVR_VRSettings
 
 
 Func _Sync_All_INI_Files_1()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15237) :(' & @MIN & ':' & @SEC & ') _Sync_All_INI_Files_1()' & @CR) ;### Function Trace
 	Local $GameID_Temp = IniRead($Config_INI, "TEMP", "GameID", "")
 
 	If $ScanOnlyVR = "true" Then
@@ -13774,6 +15798,9 @@ Func _Sync_All_INI_Files_1()
 
 	Local $MotionSmoothingOverride_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "motionSmoothingOverride", "")
 	Local $ResolutionScale_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "resolutionScale", "")
+	Local $PO_right_now_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "right_now", "")
+	Local $PO_24h_peak_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "24h_peak", "")
+	Local $PO_all_time_peak_TEMP = IniRead($ApplicationList_TEMP, "Application_" & $GameID_Temp, "all_time_peak", "")
 
 	;MsgBox(0, "", $ApplicationList_TEMP)
 
@@ -13794,8 +15821,15 @@ Func _Sync_All_INI_Files_1()
 			If $ID_Exist_Check_1 <> "" Then
 				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "motionSmoothingOverride", $MotionSmoothingOverride_TEMP)
 				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "resolutionScale", $ResolutionScale_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "right_now", $PO_right_now_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "24h_peak", $PO_24h_peak_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $ApplicationList_NR_TEMP, "all_time_peak", $PO_all_time_peak_TEMP)
+
 				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "motionSmoothingOverride", $MotionSmoothingOverride_TEMP)
 				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "resolutionScale", $ResolutionScale_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "right_now", $PO_right_now_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "24h_peak", $PO_24h_peak_TEMP)
+				IniWrite($ApplicationList_TEMP_RS, "Application_" & $GameID_Temp, "all_time_peak", $PO_all_time_peak_TEMP)
 			EndIf
 		Next
 	EndIf
@@ -13803,9 +15837,17 @@ Func _Sync_All_INI_Files_1()
 EndFunc
 
 
+Func _Check_PO_Data_on_Start()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15278) :(' & @MIN & ':' & @SEC & ') _Check_PO_Data_on_Start()' & @CR) ;### Function Trace
+	;MsgBox(0, "Check PO Data", "Check PO Data")
+	_RM_Button_Scan_Get_PO_Data()
+	_Sync_All_INI_Files_1()
+	;_Read_from_INI_ADD_2_ListView()
+EndFunc
 
 #Region ERROR handler
 Func MyErrFunc()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15287) :(' & @MIN & ':' & @SEC & ') MyErrFunc()' & @CR) ;### Function Trace
 	Local $HexNumber
 	Local $strMsg
 
@@ -13813,10 +15855,289 @@ Func MyErrFunc()
 	$strMsg = "Error Number: " & $HexNumber & " - "
 	$strMsg &= "WinDescription: " & $oMyError.WinDescription & " - "
 	$strMsg &= "Script Line: " & $oMyError.ScriptLine & " - "
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " ---> Error [MyErrFunc()]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. Error retrieving URL... " & $strMsg & " - " & $name & " - " & $appid & "<--- " & "[" & _Now() & "]")
+
+	Local $Error_Explanation_Write = "[" & _Now() & "]" & " ---> Error [MyErrFunc()]: " & "ObjCreate 'WinHttp.WinHttpRequest.5.1'" & " The requested action with this object has failed. Error retrieving URL... " & $strMsg & " - " & $name & " - " & $appid & "<--- " & "[" & _Now() & "]"
+
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
 	If WinExists("HomeLoader - Library") Then
 		_GUICtrlStatusBar_SetText($Statusbar, "" & "Error retrieving URL... " & $strMsg & " - " & $name & " - " & $appid & @TAB & "" & @TAB & "'V" & $Version & "' " & "'HomeLoader by Cogent'")
 	EndIf
 	SetError(1)
 EndFunc   ;==>MyErrFunc
+
+Func _ArrayAdd_Error_Handler()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15308) :(' & @MIN & ':' & @SEC & ') _ArrayAdd_Error_Handler()' & @CR) ;### Function Trace
+	Local $Error_From = "_ArrayAdd_Error_Handler"
+	Local $HexNumber
+	Local $strMsg
+	Local $Error_Explanation = ""
+	Local $Error_Explanation_Details = ""
+	Local $Log_NR_Lines =_FileCountLines($function_log_FILE)
+	$Error_Explanation_Details = FileReadLine($function_log_FILE, $Log_NR_Lines - 2)
+
+	Local $Check_String_NR = StringInStr($Error_Explanation_Details, ':')
+	Local $Script_Line = StringReplace(StringLeft($Error_Explanation_Details, $Check_String_NR - 3), '@@ (', '')
+	;$Script_Line = StringReplace($Script_Line, ') ', '')
+
+
+	$HexNumber = Hex($oMyError.Number, 8)
+	$strMsg = "HomeLoader Version: " & $Version & @CRLF
+	$strMsg &= "Error Number: " & $HexNumber & @CRLF
+	$strMsg &= "WinDescription: " & $oMyError.WinDescription & @CRLF
+	$strMsg &= "Script Line: " & $Script_Line & " (" & $ScriptLineNumber_Temp & ")" ;& @CRLF
+
+
+	If $Array_Result = -1 Then $Error_Explanation = "-1 - Failure @error flag to non-zero"
+	If $AtError_Result = 1 Then $Error_Explanation = "1 - $aArray is not an array"
+	If $AtError_Result = 2 Then $Error_Explanation = "2 - $aArray is not a 1 or 2 dimensional array"
+	If $AtError_Result = 3 Then $Error_Explanation = "3 - $vValue has too many columns to fit into $aArray"
+	If $AtError_Result = 4 Then $Error_Explanation = "4 - $iStart outside array bounds (2D only)"
+	If $AtError_Result = 5 Then $Error_Explanation = "5 - Number of dimensions for $avArray and $vValue arrays do not match"
+
+
+	If $Error_Explanation = "" Then $Error_Explanation = "(No explanation available)"
+
+	Local $Error_Explanation_Write = "An error occurred." & " - " & "[" & _Now() & "]" & @CRLF & _
+										"HomeLoader has written some informations in to the" & @CRLF & _
+										"log file and cancels the current action." & @CRLF & @CRLF & _
+										$Error_From & @CRLF & @CRLF & _
+										"Description:" & @CRLF & _
+										$strMsg & @CRLF & @CRLF & _
+										"Explanation:" & @CRLF & _
+										$Error_Explanation & @CRLF & _
+										$Error_Explanation_Details & @CRLF
+
+
+	;FileWriteLine($error_log_FILE, "@error '_ArrayAdd' " & "[" & _Now() & "]" & " : " & $strMsg & " - " & $AtError_Result & @CRLF)
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
+	;Local $Abfrage = MsgBox($MB_YESNO + $MB_TOPMOST + $MB_TASKMODAL + $MB_ICONERROR, "An error occurred", $Error_Explanation_Write & @CRLF & @CRLF & @CRLF & _
+	;																					"Do you want to open the folder with the log files for further investigation?" & @CRLF & @CRLF)
+
+	;If $Abfrage = 6 Then
+	;	ShellExecute($Install_DIR & "System\logs\")
+	;EndIf
+
+	SetError(1)
+EndFunc
+
+Func _FileListToArray_Error_Handler()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15365) :(' & @MIN & ':' & @SEC & ') _FileListToArray_Error_Handler()' & @CR) ;### Function Trace
+	Local $Error_From = "_FileListToArray_Error_Handler"
+	Local $HexNumber
+	Local $strMsg
+	Local $Error_Explanation = ""
+	Local $Error_Explanation_Details = ""
+	Local $Log_NR_Lines =_FileCountLines($function_log_FILE)
+	$Error_Explanation_Details = FileReadLine($function_log_FILE, $Log_NR_Lines - 2)
+
+	Local $Check_String_NR = StringInStr($Error_Explanation_Details, ':')
+	Local $Script_Line = StringReplace(StringLeft($Error_Explanation_Details, $Check_String_NR - 3), '@@ (', '')
+	;$Script_Line = StringReplace($Script_Line, ') ', '')
+
+
+	$HexNumber = Hex($oMyError.Number, 8)
+	$strMsg = "HomeLoader Version: " & $Version & @CRLF
+	$strMsg &= "Error Number: " & $HexNumber & @CRLF
+	$strMsg &= "WinDescription: " & $oMyError.WinDescription & @CRLF
+	$strMsg &= "Script Line: " & $Script_Line & " (" & $ScriptLineNumber_Temp & ")" ;& @CRLF
+
+	If $Array_Result = 0 Then $Error_Explanation = "0 - @error flag set to non-zero and $vReturn is set to 0."
+	If $AtError_Result = 1 Then $Error_Explanation = "1 - Error opening specified file"
+	If $AtError_Result = 2 Then $Error_Explanation = "2 - Unable to split the file"
+	If $AtError_Result = 3 Then $Error_Explanation = "3 - File lines have different numbers of fields (only if $FRTA_INTARRAYS flag not set)"
+	If $AtError_Result = 4 Then $Error_Explanation = "4 - No delimiters found (only if $FRTA_INTARRAYS flag not set)"
+
+
+	If $Error_Explanation = "" Then $Error_Explanation = "(No explanation available)"
+
+	Local $Error_Explanation_Write = "An error occurred." & " - " & "[" & _Now() & "]" & @CRLF & _
+										"HomeLoader has written some informations in to the" & @CRLF & _
+										"log file and cancels the current action." & @CRLF & @CRLF & _
+										$Error_From & @CRLF & @CRLF & _
+										"Description:" & @CRLF & _
+										$strMsg & @CRLF & @CRLF & _
+										"Explanation:" & @CRLF & _
+										$Error_Explanation & @CRLF & _
+										$Error_Explanation_Details & @CRLF
+
+
+	;FileWriteLine($error_log_FILE, "@error '_ArrayAdd' " & "[" & _Now() & "]" & " : " & $strMsg & " - " & $AtError_Result & @CRLF)
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
+	;Local $Abfrage = MsgBox($MB_YESNO + $MB_TOPMOST + $MB_TASKMODAL + $MB_ICONERROR, "An error occurred", $Error_Explanation_Write & @CRLF & @CRLF & @CRLF & _
+	;																					"Do you want to open the folder with the log files for further investigation?" & @CRLF & @CRLF)
+
+	;If $Abfrage = 6 Then
+	;	ShellExecute($Install_DIR & "System\logs\")
+	;EndIf
+
+	SetError(1)
+EndFunc
+
+Func _FileReadToArray_Error_Handler()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15420) :(' & @MIN & ':' & @SEC & ') _FileReadToArray_Error_Handler()' & @CR) ;### Function Trace
+	Local $Error_From = "_FileReadToArray_Error_Handler"
+	Local $HexNumber
+	Local $strMsg
+	Local $Error_Explanation = ""
+	Local $Error_Explanation_Details = ""
+	Local $Log_NR_Lines =_FileCountLines($function_log_FILE)
+	$Error_Explanation_Details = FileReadLine($function_log_FILE, $Log_NR_Lines - 2)
+
+	Local $Check_String_NR = StringInStr($Error_Explanation_Details, ':')
+	Local $Script_Line = StringReplace(StringLeft($Error_Explanation_Details, $Check_String_NR - 3), '@@ (', '')
+	;$Script_Line = StringReplace($Script_Line, ') ', '')
+
+
+	$HexNumber = Hex($oMyError.Number, 8)
+	$strMsg = "HomeLoader Version: " & $Version & @CRLF
+	$strMsg &= "Error Number: " & $HexNumber & @CRLF
+	$strMsg &= "WinDescription: " & $oMyError.WinDescription & @CRLF
+	$strMsg &= "Script Line: " & $Script_Line & " (" & $ScriptLineNumber_Temp & ")" ;& @CRLF
+
+	If $AtError_Result = 1 Then $Error_Explanation = "1 - Folder not found or invalid"
+	If $AtError_Result = 2 Then $Error_Explanation = "2 - Invalid $sFilter"
+	If $AtError_Result = 3 Then $Error_Explanation = "3 - Invalid $iFlag"
+	If $AtError_Result = 4 Then $Error_Explanation = "4 - No File(s) Found"
+
+
+	If $Error_Explanation = "" Then $Error_Explanation = "(No explanation available)"
+
+	Local $Error_Explanation_Write = "An error occurred." & " - " & "[" & _Now() & "]" & @CRLF & _
+										"HomeLoader has written some informations in to the" & @CRLF & _
+										"log file and cancels the current action." & @CRLF & @CRLF & _
+										$Error_From & @CRLF & @CRLF & _
+										"Description:" & @CRLF & _
+										$strMsg & @CRLF & @CRLF & _
+										"Explanation:" & @CRLF & _
+										$Error_Explanation & @CRLF & _
+										$Error_Explanation_Details & @CRLF
+
+
+	;FileWriteLine($error_log_FILE, "@error '_ArrayAdd' " & "[" & _Now() & "]" & " : " & $strMsg & " - " & $AtError_Result & @CRLF)
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
+	;Local $Abfrage = MsgBox($MB_YESNO + $MB_TOPMOST + $MB_TASKMODAL + $MB_ICONERROR, "An error occurred", $Error_Explanation_Write & @CRLF & @CRLF & @CRLF & _
+	;																					"Do you want to open the folder with the log files for further investigation?" & @CRLF & @CRLF)
+
+	;If $Abfrage = 6 Then
+	;	ShellExecute($Install_DIR & "System\logs\")
+	;EndIf
+
+	SetError(1)
+EndFunc
+
+Func _StringSplit_Error_Handler()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15474) :(' & @MIN & ':' & @SEC & ') _StringSplit_Error_Handler()' & @CR) ;### Function Trace
+	Local $Error_From = "_StringSplit_Error_Handler"
+	Local $HexNumber
+	Local $strMsg
+	Local $Error_Explanation = ""
+	Local $Error_Explanation_Details = ""
+	Local $Log_NR_Lines =_FileCountLines($function_log_FILE)
+	$Error_Explanation_Details = FileReadLine($function_log_FILE, $Log_NR_Lines - 2)
+
+	Local $Check_String_NR = StringInStr($Error_Explanation_Details, ':')
+	Local $Script_Line = StringReplace(StringLeft($Error_Explanation_Details, $Check_String_NR - 3), '@@ (', '')
+	;$Script_Line = StringReplace($Script_Line, ') ', '')
+
+
+	$HexNumber = Hex($oMyError.Number, 8)
+	$strMsg = "HomeLoader Version: " & $Version & @CRLF
+	$strMsg &= "Error Number: " & $HexNumber & @CRLF
+	$strMsg &= "WinDescription: " & $oMyError.WinDescription & @CRLF
+	$strMsg &= "Script Line: " & $Script_Line & " (" & $ScriptLineNumber_Temp & ")" ;& @CRLF
+
+	If $AtError_Result = 1 Then $Error_Explanation = "1 - Folder not found or invalid"
+	If $AtError_Result = 2 Then $Error_Explanation = "2 - Invalid $sFilter"
+	If $AtError_Result = 3 Then $Error_Explanation = "3 - Invalid $iFlag"
+	If $AtError_Result = 4 Then $Error_Explanation = "4 - No File(s) Found"
+
+
+	If $Error_Explanation = "" Then $Error_Explanation = "(No explanation available)"
+
+	Local $Error_Explanation_Write = "An error occurred." & " - " & "[" & _Now() & "]" & @CRLF & _
+										"HomeLoader has written some informations in to the" & @CRLF & _
+										"log file and cancels the current action." & @CRLF & @CRLF & _
+										$Error_From & @CRLF & @CRLF & _
+										"Description:" & @CRLF & _
+										$strMsg & @CRLF & @CRLF & _
+										"Explanation:" & @CRLF & _
+										$Error_Explanation & @CRLF & _
+										$Error_Explanation_Details & @CRLF
+
+
+	;FileWriteLine($error_log_FILE, "@error '_ArrayAdd' " & "[" & _Now() & "]" & " : " & $strMsg & " - " & $AtError_Result & @CRLF)
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
+	;Local $Abfrage = MsgBox($MB_YESNO + $MB_TOPMOST + $MB_TASKMODAL + $MB_ICONERROR, "An error occurred", $Error_Explanation_Write & @CRLF & @CRLF & @CRLF & _
+	;																					"Do you want to open the folder with the log files for further investigation?" & @CRLF & @CRLF)
+
+	;If $Abfrage = 6 Then
+	;	ShellExecute($Install_DIR & "System\logs\")
+	;EndIf
+
+	SetError(1)
+EndFunc
+
+Func _URL_Download_Error_Handler()
+	If $Debug_Mode = "true" Then FileWriteLine($function_log_FILE, @CRLF & '@@ (15528) :(' & @MIN & ':' & @SEC & ') _URL_Download_Error_Handler()' & @CR) ;### Function Trace
+	Local $Error_From = "_URL_Download_Error_Handler"
+	Local $HexNumber
+	Local $strMsg
+	Local $Error_Explanation = ""
+	Local $Error_Explanation_Details = ""
+	Local $Log_NR_Lines =_FileCountLines($function_log_FILE)
+	$Error_Explanation_Details = FileReadLine($function_log_FILE, $Log_NR_Lines - 2)
+
+	Local $Check_String_NR = StringInStr($Error_Explanation_Details, ':')
+	Local $Script_Line = StringReplace(StringLeft($Error_Explanation_Details, $Check_String_NR - 3), '@@ (', '')
+	;$Script_Line = StringReplace($Script_Line, ') ', '')
+
+
+	$HexNumber = Hex($oMyError.Number, 8)
+	$strMsg = "HomeLoader Version: " & $Version & @CRLF
+	$strMsg &= "Error Number: " & $HexNumber & @CRLF
+	$strMsg &= "WinDescription: " & $oMyError.WinDescription & @CRLF
+	$strMsg &= "Script Line: " & $Script_Line & " (" & $ScriptLineNumber_Temp & ")" ;& @CRLF
+
+	If $AtError_Result = 1 Then $Error_Explanation = "1 - Folder not found or invalid"
+	If $AtError_Result = 2 Then $Error_Explanation = "2 - Invalid $sFilter"
+	If $AtError_Result = 3 Then $Error_Explanation = "3 - Invalid $iFlag"
+	If $AtError_Result = 4 Then $Error_Explanation = "4 - No File(s) Found"
+
+
+	If $Error_Explanation = "" Then $Error_Explanation = "(No explanation available)"
+
+	Local $Error_Explanation_Write = "An error occurred." & " - " & "[" & _Now() & "]" & @CRLF & _
+										"HomeLoader has written some informations in to the" & @CRLF & _
+										"log file and cancels the current action." & @CRLF & @CRLF & _
+										$Error_From & @CRLF & @CRLF & _
+										"Description:" & @CRLF & _
+										$strMsg & @CRLF & @CRLF & _
+										"Explanation:" & @CRLF & _
+										$Error_Explanation & @CRLF & _
+										$Error_Explanation_Details & @CRLF
+
+
+	;FileWriteLine($error_log_FILE, "@error '_ArrayAdd' " & "[" & _Now() & "]" & " : " & $strMsg & " - " & $AtError_Result & @CRLF)
+	FileWriteLine($error_log_FILE, @CRLF & $Error_Explanation_Write & @CRLF)
+	FileWriteLine($error_log_FILE, "--------------------------------------------------------------------------------------" & @CRLF)
+
+	;Local $Abfrage = MsgBox($MB_YESNO + $MB_TOPMOST + $MB_TASKMODAL + $MB_ICONERROR, "An error occurred", $Error_Explanation_Write & @CRLF & @CRLF & @CRLF & _
+	;																					"Do you want to open the folder with the log files for further investigation?" & @CRLF & @CRLF)
+
+	;If $Abfrage = 6 Then
+		;ShellExecute($Install_DIR & "System\logs\")
+	;EndIf
+
+	SetError(1)
+EndFunc
 #EndRegion ERROR handler

@@ -1,9 +1,9 @@
 
 #Region Includes
-#include <File.au3>
-#include <Date.au3>
-#include <MsgBoxConstants.au3>
-#include <TrayConstants.au3>
+;#include <File.au3>
+;#include <Date.au3>
+;#include <MsgBoxConstants.au3>
+;#include <TrayConstants.au3>
 #endregion
 
 #Region Declare Variables/Const 1
@@ -15,6 +15,12 @@ Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 	If StringRight($Install_DIR, 1) <> "\" Then $Install_DIR = $Install_DIR & "\"
 Global $System_DIR = $Install_DIR & "System\"
 Global $Version = IniRead($Config_INI, "Settings", "Version", "")
+
+Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
+Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
+Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
+
+Global $Viveport_Bat_File_Folder = $installdir & "WebPage\Viveport\"
 
 Global $PIN_HTML_GamePage_Value = IniRead($Config_INI, "Settings", "PIN_HTML_GamePage", "")
 
@@ -472,6 +478,7 @@ Func _Keep_HomeLoader_SteamVR_Home_Allive_Check()
 
 	Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
 	FileDelete($Check_File)
+
 	Do
 		Local $Content_File = FileRead($Check_File)
 		;MsgBox(0, "$Content_File", $Content_File)
@@ -484,11 +491,64 @@ Func _Keep_HomeLoader_SteamVR_Home_Allive_Check()
 			Sleep(500)
 			FileDelete($Check_File)
 		EndIf
-		If StringLeft($Content_File, 14) = "Viveport.appid" Then
-			ShellExecute("steam://rungameid/645370")
+		If StringLeft($Content_File, 13) = "Viveport.Appl" Then
+			Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+			If $ScanOnlyVR = "true" Then
+				Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamVRLibrary_ALL.ini"
+			Else
+				Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+			EndIf
+			Local $ID = StringReplace($Content_File, 'Viveport.Appl=', '')
+			Local $installdir = IniRead($ApplicationList_Temp_INI, "Application_" & $ID, "binary_path_windows", "")
+			Local $Execute_Path = $Viveport_Bat_File_Folder & $ID & ".bat"
+			Local $Working_Dir = StringLeft($installdir, StringInStr($installdir, "\", 0, -1) - 1)
+			If FileExists($installdir) Then
+				If Not ProcessExists("Vive.exe") Then
+					If FileExists($HTCVive_Path & "PCClient\Vive.exe") Then
+						ShellExecute($HTCVive_Path & "PCClient\Vive.exe")
+						Do
+							Sleep(1000)
+						Until ProcessExists("Vive.exe")
+						Sleep(2000)
+					EndIf
+				EndIf
+				;MsgBox(0, "", $installdir & @CRLF & @CRLF & $Working_Dir)
+				;ShellExecute($Execute_Path)
+				ShellExecute($installdir, "", $Working_Dir)
+				;Run($installdir, $Working_Dir, @SW_SHOW)
+				Sleep(500)
+				FileDelete($Check_File)
+				FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Viveport_Application started. --> Exit" & " [" & _Now() & "]")
+				Exit
+			EndIf
 		EndIf
-		If StringLeft($Content_File, 12) = "Oculus.appid" Then
-			ShellExecute("steam://rungameid/645370")
+		If StringLeft($Content_File, 11) = "Oculus.Appl" Then
+			If $ScanOnlyVR = "true" Then
+				Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamVRLibrary_ALL.ini"
+			Else
+				Local $ApplicationList_Temp_INI = $ApplicationList_Folder & "ApplicationList_SteamLibrary_ALL.ini"
+			EndIf
+			Local $ID = StringReplace($Content_File, 'Oculus.Appl=', '')
+			Local $installdir = $Install_DIR & "WebPage\Revive\" & $ID & ".bat"
+			If FileExists($installdir) Then
+				ShellExecute($installdir)
+				Sleep(500)
+				FileDelete($Check_File)
+				FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Oculus_Application started. --> Exit" & " [" & _Now() & "]")
+				Exit
+			EndIf
+		EndIf
+		If StringLeft($Content_File, 14) = "Non.Steam.Appl" Then
+			Local $HLNSG_ID = StringReplace($Content_File, 'Non.Steam.Appl=', '')
+			Local $HLNSG_installdir = IniRead($ApplicationList_Non_Steam_Appl_INI, "Application_" & $HLNSG_ID, "installdir", "")
+
+			If $HLNSG_installdir <> "" Then
+				ShellExecute($HLNSG_installdir)
+				Sleep(500)
+				FileDelete($Check_File)
+				FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " Non-Steam_Application started. --> Exit" & " [" & _Now() & "]")
+				Exit
+			EndIf
 		EndIf
 		_Exit_Check()
 		Sleep(500)
@@ -496,8 +556,9 @@ Func _Keep_HomeLoader_SteamVR_Home_Allive_Check()
 
 	_Exit_Check()
 
-	FileWrite($stats_log_FILE, @CRLF & "[" & _Now() & "]" & " SteamVR Home, Steamtours Check 2.")
+	FileWrite($stats_log_FILE, "[" & _Now() & "]" & " SteamVR Home, Steamtours Check 2.")
 	Sleep(1000)
+	If FileExists($Check_File) Then FileDelete($Check_File)
 	Exit
 EndFunc
 

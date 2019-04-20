@@ -1,9 +1,9 @@
 
 #Region Includes
-#include <File.au3>
-#include <Date.au3>
-#include <Array.au3>
-#include <String.au3>
+;#include <File.au3>
+;#include <Date.au3>
+;#include <Array.au3>
+;#include <String.au3>
 #include "HomeLoaderLibrary.au3"
 #EndRegion Includes
 
@@ -166,9 +166,17 @@ If $TAB6_Label = "" Then $TAB6_Label = "Page 4"
 #EndRegion Declare Names
 
 #Region Start Check
+Local $Check_File = $SteamVR_Path & "tools\steamvr_environments\game\steamtours_addons\" & $SteamVR_Environment_Name & "\temp\log.txt"
+If FileExists($Check_File) Then FileDelete($Check_File)
+
 Local $Parameter_1 = ""
 If $CmdLine[0] Then
 	$Parameter_1 = $CmdLine[1]
+EndIf
+
+If $Parameter_1 = "Uninstall_HomeLoader" Then
+	_Restore_Default_SteamVR_Home()
+	Exit
 EndIf
 
 If $Parameter_1 = "StartHomeLoaderHomeApp" Then
@@ -205,7 +213,7 @@ EndIf
 
 #Region Func MAIN
 Func _StartSteamVRHome()
-	FileWrite($stats_log_FILE, @CRLF & "[Start SteamVR and HomeLoader StartUp Process: " & _Now() & "]" & @CRLF)
+	FileWrite($stats_log_FILE, @CRLF & @CRLF & "[Start SteamVR and HomeLoader StartUp Process: " & _Now() & "]" & @CRLF)
 	$stats_log_FILE = @ScriptDir & "\System\Logs\stats_log.txt"
 	#Region Start Check
 	If $Open_HTML_GamePage_OnStart = "true" Then
@@ -238,180 +246,6 @@ Func _StartSteamVRHome()
 	Exit
 	;_Exit()
 EndFunc   ;==>_StartSteamVRHome
-
-
-
-Func _Read_from_VRUB_PersistentStore_File_Backup()
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Read_from_VRUB_PersistentStore_File()'")
-	$HomeApp_Overlay = ""
-	$HomeLoaderOverlaySteamID_Overlay = ""
-
-	Local $filePath = _PathFull("VRUtilityBelt\PersistentStore\custom_vrub_HomeLoader.json", @AppDataDir)
-	Local $sText = FileRead($filePath)
-	Local $aArray = StringSplit($sText, ',', $STR_ENTIRESPLIT)
-
-	Local $Update_Settings = ""
-
-	For $i1 = 1 To $aArray[0]
-		Local $StringReplaced1 = StringReplace($aArray[$i1], '{', '')
-		Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
-		Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
-		Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
-
-		If $StringSplit[1] = "Update_Settings" Then
-			Local $OverlaySettings_Update_Settings = $StringSplit[2]
-			If $OverlaySettings_Update_Settings = "true" Then
-				$Update_Settings = "true"
-			EndIf
-			ExitLoop
-		EndIf
-	Next
-
-	If $Update_Settings = "true" Then
-		FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Updating Overlay Settings...")
-		For $i2 = 1 To $aArray[0]
-			Local $StringReplaced1 = StringReplace($aArray[$i2], '{', '')
-			Local $StringReplaced2 = StringReplace($StringReplaced1, '}', '')
-			Local $StringReplaced3 = StringReplace($StringReplaced2, '"', '')
-			Local $StringSplit = StringSplit($StringReplaced3, ':', $STR_ENTIRESPLIT)
-
-			Local $CurrentValue_CheckBox_1 = IniRead($Config_INI, "Settings", "ScanLibrary_OnStart", "")
-			Local $CurrentValue_CheckBox_2 = IniRead($Config_INI, "Settings", "Request_Steamdb_info", "")
-			Local $CurrentValue_CheckBox_3 = IniRead($Config_INI, "Settings", "Use_Steam_Tags", "")
-			Local $CurrentValue_CheckBox_4 = IniRead($Config_INI, "Settings", "ScanVIVEApps", "")
-			Local $CurrentValue_CheckBox_5 = IniRead($Config_INI, "Settings", "ScanOculusApps", "")
-			Local $CurrentValue_CheckBox_6 = IniRead($Config_INI, "Settings", "Sort_Alphabetical_order", "")
-			Local $CurrentValue_CheckBox_7 = IniRead($Config_INI, "Settings", "Add_Apps_Tags_to_categories", "")
-			Local $CurrentValue_CheckBox_8 = IniRead($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", "")
-			Local $CurrentValue_CheckBox_9 = IniRead($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", "")
-			Local $CurrentValue_CheckBox_10 = IniRead($Config_INI, "Settings", "Add_SS_to_Icons", "")
-			Local $CurrentValue_CheckBox_11 = IniRead($Config_INI, "Settings", "Add_SS_per_game", "")
-			Local $CurrentValue_CheckBox_12 = IniRead($Config_INI, "Settings", "Create_HTML_GamePage", "")
-			Local $CurrentValue_CheckBox_13 = IniRead($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", "")
-
-			If $StringSplit[1] = "OverlaySettings_Checkbox1" Then
-				$OverlaySettings_Checkbox1 = $StringSplit[2] ;;; Scan with HomeApp Start ;;;
-				If $OverlaySettings_Checkbox1 <> "" Then
-					If $OverlaySettings_Checkbox1 <> $CurrentValue_CheckBox_1 Then
-						IniWrite($Config_INI, "Settings", "ScanLibrary_OnStart", $OverlaySettings_Checkbox1)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox1 = <" & $OverlaySettings_Checkbox1 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox2" Then
-				$OverlaySettings_Checkbox2 = $StringSplit[2] ;;; Request Steamdb Info ;;;
-				If $OverlaySettings_Checkbox2 <> "" Then
-					If $OverlaySettings_Checkbox2 <> $CurrentValue_CheckBox_2 Then
-						IniWrite($Config_INI, "Settings", "Request_Steamdb_info", $OverlaySettings_Checkbox2)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox2 = <" & $OverlaySettings_Checkbox2 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox3" Then
-				$OverlaySettings_Checkbox3 = $StringSplit[2] ;;; Request Steamdb Tags ;;;
-				If $OverlaySettings_Checkbox3 <> "" Then
-					If $OverlaySettings_Checkbox3 <> $CurrentValue_CheckBox_3 Then
-						IniWrite($Config_INI, "Settings", "Use_Steam_Tags", $OverlaySettings_Checkbox3)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox3 = <" & $OverlaySettings_Checkbox3 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox4" Then
-				$OverlaySettings_Checkbox4 = $StringSplit[2] ;;; Scan for Viveport Apps ;;;
-				If $OverlaySettings_Checkbox4 <> "" Then
-					If $OverlaySettings_Checkbox4 <> $CurrentValue_CheckBox_4 Then
-						IniWrite($Config_INI, "Settings", "ScanVIVEApps", $OverlaySettings_Checkbox4)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox4 = <" & $OverlaySettings_Checkbox4 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox5" Then
-				$OverlaySettings_Checkbox5 = $StringSplit[2] ;;; Scan for Oculus Apps ;;;
-				If $OverlaySettings_Checkbox5 <> "" Then
-					If $OverlaySettings_Checkbox5 <> $CurrentValue_CheckBox_5 Then
-						IniWrite($Config_INI, "Settings", "ScanOculusApps", $OverlaySettings_Checkbox5)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox5 = <" & $OverlaySettings_Checkbox5 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox6" Then
-				$OverlaySettings_Checkbox6 = $StringSplit[2] ;;; Sort Apps in Alphabetical order ;;;
-				If $OverlaySettings_Checkbox6 <> "" Then
-					If $OverlaySettings_Checkbox6 <> $CurrentValue_CheckBox_6 Then
-						IniWrite($Config_INI, "Settings", "Sort_Alphabetical_order", $OverlaySettings_Checkbox6)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox6 = <" & $OverlaySettings_Checkbox6 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox7" Then
-				$OverlaySettings_Checkbox7 = $StringSplit[2] ;;; Add Apps based on their Tags to the Categories ;;;
-				If $OverlaySettings_Checkbox7 <> "" Then
-					If $OverlaySettings_Checkbox7 <> $CurrentValue_CheckBox_7 Then
-						IniWrite($Config_INI, "Settings", "Add_Apps_Tags_to_categories", $OverlaySettings_Checkbox7)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox7 = <" & $OverlaySettings_Checkbox7 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox8" Then
-				$OverlaySettings_Checkbox8 = $StringSplit[2] ;;; Allow multiple Tag assigments ;;;
-				If $OverlaySettings_Checkbox8 <> "" Then
-					If $OverlaySettings_Checkbox8 <> $CurrentValue_CheckBox_8 Then
-						IniWrite($Config_INI, "Settings", "Allow_Multiple_Tag_Assignments", $OverlaySettings_Checkbox8)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox8 = <" & $OverlaySettings_Checkbox8 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox9" Then
-				$OverlaySettings_Checkbox9 = $StringSplit[2] ;;; Add number of current Players to the game Icons ;;;
-				If $OverlaySettings_Checkbox9 <> "" Then
-					If $OverlaySettings_Checkbox9 <> $CurrentValue_CheckBox_9 Then
-						IniWrite($Config_INI, "Settings", "Add_PlayersOnline_to_Icons", $OverlaySettings_Checkbox9)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox9 = <" & $OverlaySettings_Checkbox9 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox10" Then
-				$OverlaySettings_Checkbox10 = $StringSplit[2] ;;; Add the Resolution Scale Value to the game Icons ;;;
-				If $OverlaySettings_Checkbox10 <> "" Then
-					If $OverlaySettings_Checkbox10 <> $CurrentValue_CheckBox_10 Then
-						IniWrite($Config_INI, "Settings", "Add_SS_to_Icons", $OverlaySettings_Checkbox10)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox10 = <" & $OverlaySettings_Checkbox10 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox11" Then
-				$OverlaySettings_Checkbox11 = $StringSplit[2] ;;; Allow Read/Write of the Resolution Scale Value;;;
-				If $OverlaySettings_Checkbox11 <> "" Then
-					If $OverlaySettings_Checkbox11 <> $CurrentValue_CheckBox_11 Then
-						IniWrite($Config_INI, "Settings", "Add_SS_per_game", $OverlaySettings_Checkbox11)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox11 = <" & $OverlaySettings_Checkbox11 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox12" Then
-				$OverlaySettings_Checkbox12 = $StringSplit[2] ;;; Create HTML Game Pages ;;;
-				If $OverlaySettings_Checkbox12 <> "" Then
-					If $OverlaySettings_Checkbox12 <> $CurrentValue_CheckBox_12 Then
-						IniWrite($Config_INI, "Settings", "Create_HTML_GamePage", $OverlaySettings_Checkbox12)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox12 = <" & $OverlaySettings_Checkbox12 & ">")
-			EndIf
-			If $StringSplit[1] = "OverlaySettings_Checkbox13" Then
-				$OverlaySettings_Checkbox13 = $StringSplit[2] ;;; Delete old HomeLoader Library Data first ;;;
-				If $OverlaySettings_Checkbox13 <> "" Then
-					If $OverlaySettings_Checkbox13 <> $CurrentValue_CheckBox_13 Then
-						IniWrite($Config_INI, "Settings", "DeleteHomeLoaderLibraryData", $OverlaySettings_Checkbox13)
-					EndIf
-				EndIf
-				FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " PersistentStore: " & "OverlaySettings_Checkbox13 = <" & $OverlaySettings_Checkbox13 & ">")
-			EndIf
-		Next
-		_Write_UpdateLibrary_to_VRUB_PersistentStore_File()
-	EndIf
-	_Read_Scan_Settings()
-	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating Overlay.")
-EndFunc   ;==>_Read_from_VRUB_PersistentStore_File_Backup
 
 Func _Start_Home_APP()
 	$SteamVR_was_started = "false"
@@ -666,7 +500,6 @@ Func _Check_VRUB_PersistentStore_TEMP_Files()
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " End Updating Overlay.")
 EndFunc   ;==>_Read_from_VRUB_PersistentStore_File
-
 
 Func _Read_from_VRUB_PersistentStore_File()
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " StartSteamVRHome: Start Func --> '_Read_from_VRUB_PersistentStore_File()'")
@@ -1385,7 +1218,6 @@ Func _Write_ResolutionScale_OVERLAY_to_SteamVR_VRSettings()
 				"Enable it in the Settings to be able to use this function.")
 	EndIf
 EndFunc   ;==>_Write_ResolutionScale_OVERLAY_to_SteamVR_VRSettings
-
 
 Func _Write_ALL_Categories_to_VRUB_PersistentStore_File()
 	Local $NEW_sText = ""
