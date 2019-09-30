@@ -3,6 +3,7 @@
 
 # SteamVR Home Workshop HomeLoader Environment:
 [Steam Download: SteamVR Home Environment](https://steamcommunity.com/sharedfiles/filedetails/?id=1620667283)
+[How to prepare a SteamVR Home Workshop Environment for use with the HomeLoader Desktop App](https://github.com/CogentHub/HomeLoader/blob/master/HomeLoader_Prepare_new_SteamVRHome_Environment_Guide.pdf)
 
 # Home Loader Guide:
 Please read the Home Loader Guide for further explanations and information to the program.
