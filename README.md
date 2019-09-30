@@ -26,4 +26,6 @@ Home Loader - First Start Preview: https://youtu.be/0F6zeGrc8KA
 
 ![logo](preview/HL_Library_Settings.jpg) 
 
+![logo](preview/HL_Library_Game_Page_Mode.jpg) 
+
 ![logo](preview/Preview_0.jpg) 
