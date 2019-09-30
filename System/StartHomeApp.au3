@@ -16,6 +16,8 @@ Global $Install_DIR = StringReplace(@ScriptDir, 'System', '')
 Global $System_DIR = $Install_DIR & "System\"
 Global $Version = IniRead($Config_INI, "Settings", "Version", "")
 
+Global $Debug_Mode = IniRead($Config_INI, "Settings", "Debug_Mode", "")
+
 Global $HTCVive_Path_REG = RegRead('HKEY_CURRENT_USER\Software\HTC\HTC Vive\', "ViveHelperPath")
 Global $HTCVive_Path_StringReplace_1 = StringReplace($HTCVive_Path_REG, 'PCClient\ViveportDesktopHelper.exe', '')
 Global $HTCVive_Path = StringReplace($HTCVive_Path_StringReplace_1, '/', '\')
@@ -94,40 +96,43 @@ Func _StartHomeApp()
 	$stats_log_FILE = @ScriptDir & "\System\Logs\stats_log.txt"
 	;MsgBox(0, "$stats_log_FILE 2", $stats_log_FILE)
 #region Start LOG
-	FileWrite($stats_log_FILE, @CRLF & "[Start _StartHomeApp: " & _Now() & "]" & @CRLF & _
-									"- Home App: " & $HomeApp & @CRLF & _
-									"- Home App Path: " & $Home_Path & @CRLF & _
-									"- Home App Window Name: " & $WinName & @CRLF & _
-									"- ScanLibrary_OnStart_SettingValue: " & $ScanLibrary_OnStart_SettingValue & @CRLF & _
-									"- Steam_Path: " & $Steam_Path & @CRLF & _
-									"- SteamVR_Path: " & $SteamVR_Path & @CRLF & _
-									"- Default_vrsettings_File: " & $default_vrsettings_File & @CRLF & _
-									"- Steam_tools_vrmanifest_File: " & $Steam_tools_vrmanifest_File & @CRLF & _
-									"- Steamvr_vrsettings_FilePath: " & $Steamvr_vrsettings_FilePath & @CRLF & _
-									"- Steamapps_vrmanifest_FilePath: " & $Steamapps_vrmanifest_FilePath & @CRLF & _
-									"- Steam_AppConfig_Json: " & $Steam_AppConfig_Json & @CRLF & _
-									"- HomeLoader_Overlay_Folder: " & $HomeLoader_Overlay_Folder & @CRLF & _
-									"- VRToolBox_Steam_Folder: " & $VRToolBox_Steam_Folder & @CRLF & _
-									"- HTCVive_Path: " & $HTCVive_Path & @CRLF & _
-									"- Revive_Path: " & $Revive_Path & @CRLF & _
-									"- Revive_revive_vrmanifest_FilePath: " & $Revive_revive_vrmanifest_FilePath & @CRLF & _
-									"- Revive_support_vrmanifest_FilePath " & $Revive_support_vrmanifest_FilePath & @CRLF & _
-									"- DeleteHomeLoaderLibraryData: " & $DeleteHomeLoaderLibraryData & @CRLF & _
-									"- Request_Steamdb_info: " & $Request_Steamdb_info & @CRLF & _
-									"- ScanOnlyVR: " & $ScanOnlyVR & @CRLF & _
-									"- ScanVIVEApps: " & $ScanVIVEApps & @CRLF & _
-									"- ScanOculusApps: " & $ScanOculusApps & @CRLF & _
-									"- Sort_Alphabetical_order: " & $Sort_Alphabetical_order & @CRLF & _
-									"- Use_Steam_Tags: " & $Use_Steam_Tags & @CRLF & _
-									"- Allow_Multiple_Tag_Assignments: " & $Allow_Multiple_Tag_Assignments & @CRLF & _
-									"- Add_Apps_Tags_to_categories: " & $Add_Apps_Tags_to_categories & @CRLF & _
-									"- Create_HTML_GamePage: " & $Create_HTML_GamePage & @CRLF & _
-									"- Add_Back_to_HTML_GamePage: " & $Add_Back_to_HTML_GamePage & @CRLF & _
-									"- Add_PlayersOnline_to_Icons: " & $Add_PlayersOnline_to_Icons & @CRLF & _
-									"- Add_SS_to_Icons: " & $Add_SS_to_Icons & @CRLF & _
-									"- Add_SS_per_game: " & $Add_SS_per_game & @CRLF & _
-									"- Autostart VRUB: " & $State_Checkbox_Autostart_VRUB & @CRLF & _
-									"- HomeLoader Overlay SteamID: " & $HomeLoaderOverlaySteamID & @CRLF)
+	If $Debug_Mode = "true" Then
+		FileWrite($stats_log_FILE, @CRLF & "[Start _StartHomeApp: " & _Now() & "]" & @CRLF & _
+										"- Home App: " & $HomeApp & @CRLF & _
+										"- Home App Path: " & $Home_Path & @CRLF & _
+										"- Home App Window Name: " & $WinName & @CRLF & _
+										"- ScanLibrary_OnStart_SettingValue: " & $ScanLibrary_OnStart_SettingValue & @CRLF & _
+										"- Steam_Path: " & $Steam_Path & @CRLF & _
+										"- SteamVR_Path: " & $SteamVR_Path & @CRLF & _
+										"- Default_vrsettings_File: " & $default_vrsettings_File & @CRLF & _
+										"- Steam_tools_vrmanifest_File: " & $Steam_tools_vrmanifest_File & @CRLF & _
+										"- Steamvr_vrsettings_FilePath: " & $Steamvr_vrsettings_FilePath & @CRLF & _
+										"- Steamapps_vrmanifest_FilePath: " & $Steamapps_vrmanifest_FilePath & @CRLF & _
+										"- Steam_AppConfig_Json: " & $Steam_AppConfig_Json & @CRLF & _
+										"- HomeLoader_Overlay_Folder: " & $HomeLoader_Overlay_Folder & @CRLF & _
+										"- VRToolBox_Steam_Folder: " & $VRToolBox_Steam_Folder & @CRLF & _
+										"- HTCVive_Path: " & $HTCVive_Path & @CRLF & _
+										"- Revive_Path: " & $Revive_Path & @CRLF & _
+										"- Revive_revive_vrmanifest_FilePath: " & $Revive_revive_vrmanifest_FilePath & @CRLF & _
+										"- Revive_support_vrmanifest_FilePath " & $Revive_support_vrmanifest_FilePath & @CRLF & _
+										"- DeleteHomeLoaderLibraryData: " & $DeleteHomeLoaderLibraryData & @CRLF & _
+										"- Request_Steamdb_info: " & $Request_Steamdb_info & @CRLF & _
+										"- ScanOnlyVR: " & $ScanOnlyVR & @CRLF & _
+										"- ScanVIVEApps: " & $ScanVIVEApps & @CRLF & _
+										"- ScanOculusApps: " & $ScanOculusApps & @CRLF & _
+										"- Sort_Alphabetical_order: " & $Sort_Alphabetical_order & @CRLF & _
+										"- Use_Steam_Tags: " & $Use_Steam_Tags & @CRLF & _
+										"- Allow_Multiple_Tag_Assignments: " & $Allow_Multiple_Tag_Assignments & @CRLF & _
+										"- Add_Apps_Tags_to_categories: " & $Add_Apps_Tags_to_categories & @CRLF & _
+										"- Create_HTML_GamePage: " & $Create_HTML_GamePage & @CRLF & _
+										"- Add_Back_to_HTML_GamePage: " & $Add_Back_to_HTML_GamePage & @CRLF & _
+										"- Add_PlayersOnline_to_Icons: " & $Add_PlayersOnline_to_Icons & @CRLF & _
+										"- Add_SS_to_Icons: " & $Add_SS_to_Icons & @CRLF & _
+										"- Add_SS_per_game: " & $Add_SS_per_game & @CRLF & _
+										"- Autostart VRUB: " & $State_Checkbox_Autostart_VRUB & @CRLF & _
+										"- HomeLoader Overlay SteamID: " & $HomeLoaderOverlaySteamID & @CRLF)
+	EndIf
+
 #endregion
 
 	FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " Start Home APP:")
@@ -136,7 +141,6 @@ Func _StartHomeApp()
 
 	;_Exit_Check()
 	_Start_actions_before()
-
 
 	If $HomeApp <> "None" And $HomeApp <> "" Then
 		Local $HomeApp_Arguments = "-vr -retail -useappid SteamVRAppID -nowindow -vconport 29009"
@@ -161,26 +165,17 @@ Func _StartHomeApp()
 	;_Exit_Check()
 	_Start_actions_after()
 
-	If $Autostart_VRUB = "true" Then
-		_Write_Settings_to_VRUB_PersistentStore_File()
-		;_Write_ALL_Categories_to_VRUB_PersistentStore_File()
-		If Not ProcessExists("VRUtilityBelt.exe") Then
-			ShellExecute("steam://rungameid/645370")
-			FileWriteLine($stats_log_FILE, "[" & _Now() & "]" & " --- VRUB " & "VRUtilityBelt" & " started --- " & "[" & _Now() & "]")
-			Sleep(3000)
-			_Start_HomeLoader_VROverlay()
-		EndIf
-	EndIf
-
 	;If $Open_HTML_GamePage_OnStart = "true" Or $HomeApp = "SteamVR Home" Then
 	;	_Keep_HomeLoader_Allive_Check()
 	;EndIf
 
 	;MsgBox(0, "", $Open_HTML_GamePage_OnStart & @CRLF & $HomeApp)
 
-	If $Open_HTML_GamePage_OnStart = "true" Or $HomeApp = "SteamVR Home" Then
+	If $Open_HTML_GamePage_OnStart = "true" Then
 		_Keep_HomeLoader_SteamVR_Home_Allive_Check()
 	EndIf
+
+	Exit
 EndFunc
 
 

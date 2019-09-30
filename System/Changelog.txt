@@ -1,6 +1,3 @@
-HomeLoader 0.78 Changelog:
-- Added Map Support. Select map in HomeLoader and apply it to the scene and/or create/add new maps.
-- Fixed potential error during Scan where an variable was empty or if an folder was empty.
-- Environment can now be packed for faster loading times (needs vpk.exe).
-- Loading bar changed to match the order of the new functions.
-- Some minor fixes
+HomeLoader 0.80 Changelog:
+- Added new Environment Settings like locomotion and new panels
+- Removed all DVD case related things (they don't work anymore due to an change in the SteamVR Workshop source2).

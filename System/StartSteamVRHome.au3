@@ -180,14 +180,22 @@ If $Parameter_1 = "Uninstall_HomeLoader" Then
 EndIf
 
 If $Parameter_1 = "StartHomeLoaderHomeApp" Then
-	_Start_HomeLoader_HomeApp()
-	_Start_HomeLoader_UpdateLibrary()
+	;_Start_HomeLoader_HomeApp()
+	;_Start_HomeLoader_UpdateLibrary()
+
+	If $ScanLibrary_OnStart_SettingValue = "true" Then
+		MsgBox(0, "_Start_HomeLoader_UpdateLibrary()", "_Start_HomeLoader_UpdateLibrary()")
+		_Start_HomeLoader_UpdateLibrary()
+	EndIf
+
+	_StartSteamVRHome()
+
 	Exit
 EndIf
 
-If $Parameter_1 = "StartSteamVRHome" Then
-	_StartSteamVRHome()
-EndIf
+;If $Parameter_1 = "StartSteamVRHome" Then
+	;_StartSteamVRHome()
+;EndIf
 
 If $Parameter_1 = "GamePageMode" Then
 	_Create_HTMLGamePage_GUI()
@@ -235,10 +243,6 @@ Func _StartSteamVRHome()
 	EndIf
 
 	FileWrite($stats_log_FILE, "[End SteamVR and HomeLoader StartUp Process: " & _Now() & "]" & @CRLF & @CRLF)
-
-	If $ScanLibrary_OnStart_SettingValue = "true" Then
-		_Start_HomeLoader_UpdateLibrary()
-	EndIf
 
 	;FileWrite($stats_log_FILE, @CRLF & "[End SteamVR and HomeLoader StartUp Process: " & _Now() & "]" & @CRLF)
 	#EndRegion Start Check

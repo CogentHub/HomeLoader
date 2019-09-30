@@ -1,5 +1,6 @@
 
 #Region Includes
+;#include <Constants.au3>
 #include <File.au3>
 #include <Date.au3>
 #include <Array.au3>
@@ -84,10 +85,10 @@ If $CmdLine[0] Then
 	$Parameter_1 = $CmdLine[1]
 EndIf
 
-If $Parameter_1 = "StartHomeLoaderHomeApp" Then
-	_Start_HomeLoader_HomeApp()
-	Exit
-EndIf
+;If $Parameter_1 = "StartHomeLoaderHomeApp" Then
+	;_Start_HomeLoader_HomeApp()
+	;Exit
+;EndIf
 
 If $Parameter_1 = "Update_completed" Then
 	If $First_Start = "Update" Then
