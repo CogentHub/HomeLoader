@@ -15,11 +15,12 @@ Home Loader - First Start Preview: https://youtu.be/0F6zeGrc8KA
 
 # Pictures:
 
-![logo](preview/Settings_1.jpg) 
+![logo](preview/HL_Library.jpg) 
 
-![logo](preview/HomeLoader_pics_1.jpg) 
+![logo](preview/HL_Library_Environment_Settings.jpg) 
 
-![logo](preview/Preview_0.jpg) 
+![logo](preview/HL_Library_Settings.jpg) 
 
-![logo](preview/Tut_img_2.png) 
-![logo](preview/Tut_img_5.png) 
+![logo](preview/HL_Library_SteamVR_Start_Settings.png) 
+
+![logo](preview/Preview_0.png) 
