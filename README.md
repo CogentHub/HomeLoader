@@ -31,3 +31,12 @@ Home Loader - First Start Preview: https://youtu.be/0F6zeGrc8KA
 ![logo](preview/HL_Library_Game_Page_Mode.jpg) 
 
 ![logo](preview/Preview_0.jpg) 
+
+# Regarding locomotion in the SteamVR Home Environment:
+I am using a modified version of the Environment Menu from Rectus (Scripted Item Test Range)..
+
+https://github.com/Rectus/destinations_range
+
+https://steamcommunity.com/sharedfiles/filedetails/?id=929520573
+
+https://steamcommunity.com/sharedfiles/filedetails/?id=1466953613
